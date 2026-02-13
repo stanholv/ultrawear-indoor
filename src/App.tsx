@@ -5,6 +5,7 @@ import { Navigation } from './components/Layout/Navigation';
 import { LoginForm } from './components/Auth/LoginForm';
 import { ProtectedRoute } from './components/Auth/ProtectedRoute';
 import { StatsTable } from './components/Stats/StatsTable';
+import { AdminDashboard } from './components/Dashboard/AdminDashboard';
 import { WedstrijdForm } from './components/Wedstrijden/WedstrijdForm';
 import './styles/globals.css';
 
@@ -20,6 +21,14 @@ function App() {
             <Routes>
               <Route path="/" element={<StatsTable />} />
               <Route path="/login" element={<LoginForm />} />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute adminOnly>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/wedstrijd" 
                 element={

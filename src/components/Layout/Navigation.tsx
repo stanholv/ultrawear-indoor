@@ -15,12 +15,21 @@ export const Navigation = () => {
         </NavLink>
         
         {user && isAdmin && (
-          <NavLink 
-            to="/wedstrijd" 
-            className={({ isActive }) => isActive ? 'tab active' : 'tab'}
-          >
-            ⚽ Wedstrijd Invoeren
-          </NavLink>
+          <>
+            <NavLink 
+              to="/dashboard" 
+              className={({ isActive }) => isActive ? 'tab active' : 'tab'}
+            >
+              📈 Dashboard
+            </NavLink>
+            
+            <NavLink 
+              to="/wedstrijd" 
+              className={({ isActive }) => isActive ? 'tab active' : 'tab'}
+            >
+              ⚽ Wedstrijd
+            </NavLink>
+          </>
         )}
         
         {!user && (
