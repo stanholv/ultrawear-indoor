@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const authListener = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         loadProfile(session.user.id);
@@ -42,9 +42,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-return () => subscription.unsubscribe();
-
-    return () => subscription.unsubscribe();
+    return () => {
+      authListener.data.subscription.unsubscribe();
+    };
   }, []);
 
   const loadProfile = async (userId: string) => {
