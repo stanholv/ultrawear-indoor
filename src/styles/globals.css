@@ -876,3 +876,338 @@ body {
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+/* NUMBER INPUT COMPONENT */
+.number-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.number-label {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.number-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+
+.btn-number {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border: none;
+  background: var(--color-bg-elevated);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.btn-number:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: white;
+  transform: scale(1.1);
+}
+
+.btn-number:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.btn-number:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.number-display {
+  width: 50px;
+  text-align: center;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  -moz-appearance: textfield;
+}
+
+.number-display::-webkit-outer-spin-button,
+.number-display::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-display:focus {
+  outline: none;
+}
+
+/* RADIO GROUP FOR MATCH TYPES */
+.radio-group {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.radio-label:hover {
+  border-color: var(--color-primary);
+}
+
+.radio-label:has(input:checked) {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.radio-label input[type="radio"] {
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.radio-text {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* MATCH TYPE BADGE */
+.match-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  color: white;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.match-badge-sm {
+  padding: 2px 8px;
+  font-size: 0.675rem;
+}
+
+.match-badge-md {
+  padding: 4px 12px;
+  font-size: 0.75rem;
+}
+
+.match-badge-lg {
+  padding: 6px 16px;
+  font-size: 0.875rem;
+}
+
+.match-badge-icon {
+  font-size: 1em;
+}
+
+.match-badge-text {
+  font-weight: 700;
+}
+
+/* TOPSCORER TABLE (Homepage) */
+.topscorer-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.topscorer-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 60px;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.topscorer-row:hover {
+  background: var(--color-primary-glow);
+  transform: translateX(4px);
+}
+
+.topscorer-rank {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.topscorer-name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.topscorer-goals {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  text-align: right;
+}
+
+/* FILTER TABS (Detailed Stats) */
+.filter-tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-2xl);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: var(--spacing-xs);
+}
+
+.filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-tab {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.filter-tab:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.filter-tab.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+/* STATS DETAILED GRID */
+.stats-detailed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.stat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.stat-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  transition: all var(--transition-fast);
+}
+
+.stat-list-item:last-child {
+  border-bottom: none;
+}
+
+.stat-list-item:hover {
+  background: var(--color-surface);
+  padding-left: var(--spacing-lg);
+}
+
+.stat-list-rank {
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin-right: var(--spacing-md);
+  min-width: 30px;
+}
+
+.stat-list-player {
+  flex: 1;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.stat-list-value {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--color-primary);
+}
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 768px) {
+  .btn-number {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+  
+  .number-display {
+    width: 60px;
+    font-size: 1.125rem;
+  }
+  
+  .stats-detailed-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .topscorer-row {
+    grid-template-columns: 35px 1fr 50px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .topscorer-rank {
+    font-size: 1rem;
+  }
+  
+  .topscorer-goals {
+    font-size: 1.25rem;
+  }
+  
+  .radio-group {
+    width: 100%;
+  }
+  
+  .radio-label {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-tabs {
+    gap: var(--spacing-xs);
+  }
+  
+  .filter-tab {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+  }
+}

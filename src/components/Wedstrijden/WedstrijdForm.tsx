@@ -1,9 +1,11 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Users, Trophy, Save, AlertCircle } from 'lucide-react';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
 import { SPELERS } from '../../lib/types';
 import { toast } from 'sonner';
+import { NumberInput } from '../UI/NumberInput';
+import { COPY } from '../../lib/copy';
 
 interface SpelerInput {
   naam: string;
@@ -30,6 +32,7 @@ export const WedstrijdForm = () => {
     }))
   );
   const [loading, setLoading] = useState(false);
+  const [matchType, setMatchType] = useState<'competitie' | 'beker'>('competitie');
 
   const handleSpelerChange = (index: number, field: keyof SpelerInput, value: boolean | number) => {
     const newSpelers = [...spelers];
@@ -37,60 +40,64 @@ export const WedstrijdForm = () => {
     setSpelers(newSpelers);
   };
 
-  const calculateLiveStats = () => {
+  const liveStats = useMemo(() => {
     const aanwezig = spelers.filter(s => s.aanwezig).length;
     const totalGoals = spelers.reduce((sum, s) => sum + s.doelpunten, 0);
     const totalCorners = spelers.reduce((sum, s) => sum + s.corner, 0);
     const totalPenalties = spelers.reduce((sum, s) => sum + s.penalty, 0);
     return { aanwezig, totalGoals, totalCorners, totalPenalties };
-  };
-
-  const liveStats = calculateLiveStats();
+  }, [spelers]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const result = await createWedstrijd({
-      datum,
-      tijd,
-      thuisploeg: 'Ultrawear Indoor',
-      uitploeg,
-      uitslag,
-      opmerkingen,
-      spelers,
-    });
+    try {
+      const result = await createWedstrijd({
+        datum,
+        tijd,
+        thuisploeg: 'Ultrawear Indoor',
+        uitploeg,
+        uitslag,
+        type: matchType,
+        opmerkingen,
+        spelers,
+      });
 
-    if (result.success) {
-      toast.success('Wedstrijd succesvol opgeslagen! 🎉');
-      // Reset form
-      setDatum('');
-      setTijd('');
-      setUitploeg('');
-      setUitslag('');
-      setOpmerkingen('');
-      setSpelers(SPELERS.map(naam => ({
-        naam,
-        aanwezig: false,
-        doelpunten: 0,
-        penalty: 0,
-        corner: 0,
-      })));
-    } else {
-      toast.error(`Fout: ${result.error}`);
+      if (result.success) {
+        toast.success(COPY.FORM_SUCCESS || 'Wedstrijd succesvol opgeslagen! 🎉');
+
+        // Reset form
+        setDatum('');
+        setTijd('');
+        setUitploeg('');
+        setUitslag('');
+        setOpmerkingen('');
+        setSpelers(
+          SPELERS.map(naam => ({
+            naam,
+            aanwezig: false,
+            doelpunten: 0,
+            penalty: 0,
+            corner: 0,
+          }))
+        );
+      } else {
+        toast.error(`${COPY.FORM_ERROR || 'Fout'}: ${result.error || 'Onbekende fout'}`);
+      }
+    } catch (err) {
+      toast.error('Er is een onverwachte fout opgetreden.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <div className="main-content">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="page-header">
-          <h1 className="page-title">⚽ Nieuwe Wedstrijd Invoeren</h1>
-          <p className="page-subtitle">Vul de wedstrijdgegevens en spelerstatistieken in</p>
+          <h1 className="page-title">{COPY.FORM_TITLE}</h1>
+          <p className="page-subtitle">{COPY.FORM_SUBTITLE}</p>
         </div>
 
         {liveStats.aanwezig > 0 && (
@@ -98,56 +105,60 @@ export const WedstrijdForm = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             className="card glass"
-            style={{ 
+            style={{
               marginBottom: 'var(--spacing-xl)',
               padding: 'var(--spacing-lg)',
-              borderLeft: '4px solid var(--color-primary)'
+              borderLeft: '4px solid var(--color-primary)',
             }}
           >
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 'var(--spacing-sm)',
-              marginBottom: 'var(--spacing-md)',
-              fontWeight: '600'
-            }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-sm)',
+                marginBottom: 'var(--spacing-md)',
+                fontWeight: '600',
+              }}
+            >
               <Trophy size={20} color="var(--color-primary)" />
               Wedstrijd Overzicht
             </div>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-              gap: 'var(--spacing-lg)' 
-            }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: 'var(--spacing-lg)',
+              }}
+            >
               <div>
-                <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-                  Aanwezigen
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>
+                <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Aanwezigen</div>
+                <div
+                  style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}
+                >
                   {liveStats.aanwezig}
                 </div>
               </div>
               <div>
-                <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-                  Doelpunten
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>
+                <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Doelpunten</div>
+                <div
+                  style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}
+                >
                   {liveStats.totalGoals}
                 </div>
               </div>
               <div>
-                <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-                  Corners
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>
+                <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Corners</div>
+                <div
+                  style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}
+                >
                   {liveStats.totalCorners}
                 </div>
               </div>
               <div>
-                <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-                  Penalties
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>
+                <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Penalties</div>
+                <div
+                  style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}
+                >
                   {liveStats.totalPenalties}
                 </div>
               </div>
@@ -156,6 +167,41 @@ export const WedstrijdForm = () => {
         )}
 
         <form onSubmit={handleSubmit} className="card">
+          {/* Match type radio buttons */}
+          <div className="form-group">
+            <label className="form-label">
+              <Trophy size={16} />
+              {COPY.LABEL_TYPE} *
+            </label>
+            <div className="radio-group">
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  name="type"
+                  value="competitie"
+                  checked={matchType === 'competitie'}
+                  onChange={() => setMatchType('competitie')}
+                />
+                <span className="radio-text">
+                  {COPY.TYPE_COMPETITIE_ICON} {COPY.TYPE_COMPETITIE}
+                </span>
+              </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  name="type"
+                  value="beker"
+                  checked={matchType === 'beker'}
+                  onChange={() => setMatchType('beker')}
+                />
+                <span className="radio-text">
+                  {COPY.TYPE_BEKER_ICON} {COPY.TYPE_BEKER}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* Datum en tijd */}
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">
@@ -186,6 +232,7 @@ export const WedstrijdForm = () => {
             </div>
           </div>
 
+          {/* Tegenstander */}
           <div className="form-group">
             <label className="form-label">
               <Users size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
@@ -201,6 +248,7 @@ export const WedstrijdForm = () => {
             />
           </div>
 
+          {/* Resultaat */}
           <div className="form-group">
             <label className="form-label">
               <Trophy size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
@@ -216,16 +264,19 @@ export const WedstrijdForm = () => {
             />
           </div>
 
+          {/* Speler statistieken */}
           <div style={{ marginTop: 'var(--spacing-xl)' }}>
-            <h3 style={{ 
-              marginBottom: 'var(--spacing-lg)',
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: 'var(--color-text-primary)'
-            }}>
+            <h3
+              style={{
+                marginBottom: 'var(--spacing-lg)',
+                fontSize: '1.125rem',
+                fontWeight: '600',
+                color: 'var(--color-text-primary)',
+              }}
+            >
               Speler Statistieken
             </h3>
-            
+
             <div style={{ overflowX: 'auto' }}>
               <table className="stats-table">
                 <thead>
@@ -248,54 +299,36 @@ export const WedstrijdForm = () => {
                           type="checkbox"
                           checked={speler.aanwezig}
                           onChange={(e) => handleSpelerChange(index, 'aanwezig', e.target.checked)}
-                          style={{ 
-                            width: '20px', 
-                            height: '20px', 
+                          style={{
+                            width: '20px',
+                            height: '20px',
                             cursor: 'pointer',
-                            accentColor: 'var(--color-primary)'
+                            accentColor: 'var(--color-primary)',
                           }}
                         />
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <input
-                          type="number"
-                          min="0"
+                        <NumberInput
                           value={speler.doelpunten}
-                          onChange={(e) => handleSpelerChange(index, 'doelpunten', parseInt(e.target.value) || 0)}
-                          className="form-input"
-                          style={{ 
-                            width: '60px', 
-                            textAlign: 'center',
-                            margin: '0 auto'
-                          }}
+                          onChange={(val) => handleSpelerChange(index, 'doelpunten', Number(val))}
+                          max={20}
+                          disabled={!speler.aanwezig}
                         />
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <input
-                          type="number"
-                          min="0"
+                        <NumberInput
                           value={speler.penalty}
-                          onChange={(e) => handleSpelerChange(index, 'penalty', parseInt(e.target.value) || 0)}
-                          className="form-input"
-                          style={{ 
-                            width: '60px', 
-                            textAlign: 'center',
-                            margin: '0 auto'
-                          }}
+                          onChange={(val) => handleSpelerChange(index, 'penalty', Number(val))}
+                          max={10}
+                          disabled={!speler.aanwezig}
                         />
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <input
-                          type="number"
-                          min="0"
+                        <NumberInput
                           value={speler.corner}
-                          onChange={(e) => handleSpelerChange(index, 'corner', parseInt(e.target.value) || 0)}
-                          className="form-input"
-                          style={{ 
-                            width: '60px', 
-                            textAlign: 'center',
-                            margin: '0 auto'
-                          }}
+                          onChange={(val) => handleSpelerChange(index, 'corner', Number(val))}
+                          max={20}
+                          disabled={!speler.aanwezig}
                         />
                       </td>
                     </tr>
@@ -305,6 +338,7 @@ export const WedstrijdForm = () => {
             </div>
           </div>
 
+          {/* Opmerkingen */}
           <div className="form-group" style={{ marginTop: 'var(--spacing-xl)' }}>
             <label className="form-label">
               <AlertCircle size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
@@ -319,9 +353,10 @@ export const WedstrijdForm = () => {
             />
           </div>
 
-          <button 
-            type="submit" 
-            disabled={loading} 
+          {/* Submit button */}
+          <button
+            type="submit"
+            disabled={loading}
             className="btn btn-primary"
             style={{ width: '100%', marginTop: 'var(--spacing-xl)' }}
           >

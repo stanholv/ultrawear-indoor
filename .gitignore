@@ -38,3 +38,6 @@ out
 # Misc
 .cache
 coverage
+
+.vercel
+.env*.local

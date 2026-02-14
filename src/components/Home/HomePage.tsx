@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
 import { Trophy, Target, Award, Users, Facebook } from 'lucide-react';
 import { NextMatchCard } from './NextMatchCard';
+import { TopScorerTable } from './TopScorerTable';
 import { useStats } from '../../hooks/useStats';
+import { COPY } from '../../lib/copy';
 
 const StatCard = ({ icon, title, player, value, subtitle, delay = 0 }: any) => (
   <motion.div
@@ -41,7 +43,7 @@ export const HomePage = () => {
   if (loading) {
     return (
       <div className="container" style={{ padding: 'var(--spacing-2xl) var(--spacing-xl)' }}>
-        <div className="animate-pulse">Laden...</div>
+        <div className="animate-pulse">{COPY.LOADING}</div>
       </div>
     );
   }
@@ -56,7 +58,6 @@ export const HomePage = () => {
     .filter(s => s.aanwezig >= 3)
     .map(s => ({
       ...s,
-      // Always keep ratio as a string so downstream parseFloat calls are safe
       ratio: s.aanwezig > 0 ? (s.doelpunten / s.aanwezig).toFixed(2) : '0.00'
     }))
     .sort((a, b) => parseFloat(b.ratio as string) - parseFloat(a.ratio as string))[0];
@@ -81,10 +82,10 @@ export const HomePage = () => {
             animate={{ opacity: 1, x: 0 }}
           >
             <h1 className="hero-title">
-              Welkom bij <span style={{ color: 'var(--color-primary)' }}>Ultrawear Indoor</span>
+              Welkom bij <span style={{ color: 'var(--color-primary)' }}>{COPY.HERO_TITLE}</span>
             </h1>
             <p className="hero-subtitle">
-              Always keep control!
+              {COPY.HERO_SUBTITLE}
             </p>
           </motion.div>
         </div>
@@ -100,7 +101,7 @@ export const HomePage = () => {
         <div className="stats-grid" style={{ marginTop: 'var(--spacing-2xl)' }}>
           <StatCard
             icon={<Trophy size={24} />}
-            title="Topscorer"
+            title={COPY.HOME_STAT_TOPSCORER}
             player={topScorer.speler_naam}
             value={topScorer.doelpunten}
             subtitle={`${topScorer.aanwezig} wedstrijden`}
@@ -109,7 +110,7 @@ export const HomePage = () => {
           
           <StatCard
             icon={<Target size={24} />}
-            title="Goals per Wedstrijd"
+            title={COPY.HOME_STAT_GOALS_PER_GAME}
             player={goalsPerGameLeader?.speler_naam || '-'}
             value={goalsPerGameLeader?.ratio || '0.00'}
             subtitle={`${goalsPerGameLeader?.doelpunten || 0} goals in ${goalsPerGameLeader?.aanwezig || 0} wedstrijden`}
@@ -118,14 +119,16 @@ export const HomePage = () => {
           
           <StatCard
             icon={<Award size={24} />}
-            title="Meeste Wedstrijden"
+            title={COPY.HOME_STAT_MOST_GAMES}
             player={mostGamesPlayers.length <= 2 
               ? mostGamesPlayers.join(' & ') 
               : `${mostGamesPlayers.length} spelers`}
             value={maxGames}
             subtitle={mostGamesPlayers.length > 2 
               ? mostGamesPlayers.slice(0, 3).join(', ') + '...'
-              : 'Echte clubman' + (mostGamesPlayers.length > 1 ? 'nen' : '')}
+              : mostGamesPlayers.length === 1 
+                ? COPY.HOME_STAT_LOYAL_PLAYER
+                : COPY.HOME_STAT_LOYAL_PLAYERS}
             delay={0.3}
           />
         </div>
@@ -141,7 +144,7 @@ export const HomePage = () => {
           <div className="card-header">
             <h2 className="card-title">
               <Users size={24} />
-              Seizoen Overzicht
+              {COPY.HOME_STATS_OVERVIEW_TITLE}
             </h2>
           </div>
           
@@ -157,7 +160,7 @@ export const HomePage = () => {
                 color: 'var(--color-text-secondary)',
                 marginBottom: 'var(--spacing-sm)'
               }}>
-                Totaal Wedstrijden
+                {COPY.HOME_TOTAL_MATCHES}
               </div>
               <div style={{ 
                 fontSize: '2rem', 
@@ -174,7 +177,7 @@ export const HomePage = () => {
                 color: 'var(--color-text-secondary)',
                 marginBottom: 'var(--spacing-sm)'
               }}>
-                Totaal Goals
+                {COPY.HOME_TOTAL_GOALS}
               </div>
               <div style={{ 
                 fontSize: '2rem', 
@@ -191,7 +194,7 @@ export const HomePage = () => {
                 color: 'var(--color-text-secondary)',
                 marginBottom: 'var(--spacing-sm)'
               }}>
-                Gemiddelde per Wedstrijd
+                {COPY.HOME_AVG_PER_MATCH}
               </div>
               <div style={{ 
                 fontSize: '2rem', 
@@ -208,7 +211,7 @@ export const HomePage = () => {
                 color: 'var(--color-text-secondary)',
                 marginBottom: 'var(--spacing-sm)'
               }}>
-                Actieve Spelers
+                {COPY.HOME_ACTIVE_PLAYERS}
               </div>
               <div style={{ 
                 fontSize: '2rem', 
@@ -220,6 +223,9 @@ export const HomePage = () => {
             </div>
           </div>
         </motion.div>
+        
+        {/* Top 5 Scorers Table */}
+        <TopScorerTable />
         
         {/* Call to Actions */}
         <div style={{ 
@@ -248,14 +254,47 @@ export const HomePage = () => {
                   marginBottom: 'var(--spacing-xs)',
                   color: 'var(--color-text-primary)'
                 }}>
-                  Volledige Rankings
+                  {COPY.HOME_CTA_FULL_RANKINGS}
                 </h3>
                 <p style={{ 
                   fontSize: '0.875rem', 
                   color: 'var(--color-text-secondary)',
                   margin: 0
                 }}>
-                  Bekijk alle speler statistieken
+                  {COPY.HOME_CTA_FULL_RANKINGS_SUB}
+                </p>
+              </div>
+            </div>
+          </motion.a>
+          
+          <motion.a
+            href="/statistieken/details"
+            className="card"
+            style={{ 
+              textDecoration: 'none',
+              borderLeft: '4px solid #f59e0b',
+              cursor: 'pointer'
+            }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+              <Target size={32} color="#f59e0b" />
+              <div>
+                <h3 style={{ 
+                  fontSize: '1.125rem', 
+                  fontWeight: '700',
+                  marginBottom: 'var(--spacing-xs)',
+                  color: 'var(--color-text-primary)'
+                }}>
+                  {COPY.HOME_CTA_DETAILED_STATS}
+                </h3>
+                <p style={{ 
+                  fontSize: '0.875rem', 
+                  color: 'var(--color-text-secondary)',
+                  margin: 0
+                }}>
+                  {COPY.HOME_CTA_DETAILED_STATS_SUB}
                 </p>
               </div>
             </div>
@@ -283,14 +322,14 @@ export const HomePage = () => {
                   marginBottom: 'var(--spacing-xs)',
                   color: 'var(--color-text-primary)'
                 }}>
-                  Volg Ons
+                  {COPY.FACEBOOK_LINK_TEXT}
                 </h3>
                 <p style={{ 
                   fontSize: '0.875rem', 
                   color: 'var(--color-text-secondary)',
                   margin: 0
                 }}>
-                  Blijf op de hoogte via Facebook
+                  {COPY.FACEBOOK_LINK_SUBTITLE}
                 </p>
               </div>
             </div>

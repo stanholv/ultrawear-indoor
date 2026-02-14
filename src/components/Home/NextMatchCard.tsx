@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
-import { Calendar, Clock, MapPin, TrendingUp } from 'lucide-react';
+import { Calendar, Clock, TrendingUp } from 'lucide-react';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
-import { useStats } from '../../hooks/useStats';
+import { COPY } from '../../lib/copy';
 
 export const NextMatchCard = () => {
   const { wedstrijden, loading } = useWedstrijden();
@@ -11,10 +11,15 @@ export const NextMatchCard = () => {
     .filter(w => new Date(w.datum) >= new Date())
     .sort((a, b) => new Date(a.datum).getTime() - new Date(b.datum).getTime())[0];
   
+  // Vind laatste gespeelde wedstrijd
+  const lastMatch = wedstrijden
+    .filter(w => new Date(w.datum) < new Date() && w.uitslag && w.uitslag !== '-')
+    .sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime())[0];
+  
   if (loading) {
     return (
       <div className="card card-hero animate-pulse" style={{ minHeight: '200px' }}>
-        <div style={{ color: 'rgba(255,255,255,0.7)' }}>Laden...</div>
+        <div style={{ color: 'rgba(255,255,255,0.7)' }}>{COPY.LOADING}</div>
       </div>
     );
   }
@@ -23,9 +28,9 @@ export const NextMatchCard = () => {
     return (
       <div className="card card-hero">
         <div className="card-header">
-          <h2 className="card-title">⚽ Volgende Wedstrijd</h2>
+          <h2 className="card-title">{COPY.HOME_NEXT_MATCH_TITLE}</h2>
         </div>
-        <p style={{ opacity: 0.9 }}>Geen geplande wedstrijden op dit moment</p>
+        <p style={{ opacity: 0.9 }}>{COPY.HOME_NEXT_MATCH_NONE}</p>
       </div>
     );
   }
@@ -33,7 +38,7 @@ export const NextMatchCard = () => {
   // Bepaal of thuis of uit
   const isHome = nextMatch.thuisploeg === 'Ultrawear Indoor';
   const opponent = isHome ? nextMatch.uitploeg : nextMatch.thuisploeg;
-  const location = isHome ? 'Thuis' : 'Uit';
+  const location = isHome ? COPY.MATCH_THUIS : COPY.MATCH_UIT;
   
   // Format datum
   const matchDate = new Date(nextMatch.datum);
@@ -46,6 +51,7 @@ export const NextMatchCard = () => {
   // Bereken expected goals (gemiddelde laatste 3 wedstrijden)
   const recentMatches = wedstrijden
     .filter(w => new Date(w.datum) < new Date() && w.uitslag && w.uitslag !== '-')
+    .sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime())
     .slice(0, 3);
   
   let expectedGoals = 0;
@@ -70,7 +76,7 @@ export const NextMatchCard = () => {
     >
       <div className="card-header" style={{ borderBottom: '2px solid rgba(255,255,255,0.2)' }}>
         <h2 className="card-title">
-          ⚽ Volgende Wedstrijd
+          {COPY.HOME_NEXT_MATCH_TITLE}
         </h2>
         <span className="badge" style={{ background: isHome ? '#10b981' : '#f59e0b' }}>
           {location}
@@ -84,7 +90,7 @@ export const NextMatchCard = () => {
           marginBottom: 'var(--spacing-md)',
           color: 'white'
         }}>
-          {isHome ? 'vs' : '@'} {opponent}
+          {isHome ? COPY.MATCH_VS : COPY.MATCH_AT} {opponent}
         </h3>
         
         <div style={{ 
@@ -113,8 +119,8 @@ export const NextMatchCard = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
               <TrendingUp size={20} style={{ opacity: 0.8 }} />
               <div>
-                <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>Verwacht</div>
-                <div style={{ fontWeight: '600' }}>{expectedGoals} goals</div>
+                <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>{COPY.MATCH_EXPECTED_GOALS}</div>
+                <div style={{ fontWeight: '600' }}>{expectedGoals} {COPY.MATCH_EXPECTED_SUFFIX}</div>
               </div>
             </div>
           )}
@@ -126,8 +132,29 @@ export const NextMatchCard = () => {
           borderRadius: 'var(--radius-md)',
           fontSize: '0.875rem'
         }}>
-          💪 {isHome ? 'Thuisvoordeel - Maak er een feest van!' : 'Uitwedstrijd - Laat zien wat we waard zijn!'}
+          💪 {isHome ? COPY.HOME_NEXT_MATCH_THUIS : COPY.HOME_NEXT_MATCH_UIT}
         </div>
+        
+        {/* Laatste Uitslag */}
+        {lastMatch && (
+          <div style={{ 
+            marginTop: 'var(--spacing-lg)',
+            paddingTop: 'var(--spacing-md)',
+            borderTop: '1px solid rgba(255,255,255,0.2)',
+            fontSize: '0.875rem',
+            opacity: 0.8
+          }}>
+            <div style={{ marginBottom: 'var(--spacing-xs)' }}>
+              {COPY.HOME_LAST_MATCH_LABEL}
+            </div>
+            <div style={{ fontWeight: '600' }}>
+              {lastMatch.thuisploeg === 'Ultrawear Indoor' ? 'vs' : '@'} {' '}
+              {lastMatch.thuisploeg === 'Ultrawear Indoor' 
+                ? lastMatch.uitploeg 
+                : lastMatch.thuisploeg} - {lastMatch.uitslag}
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );

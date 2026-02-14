@@ -37,21 +37,22 @@ export interface AggregatedStats {
   penalty: number;
   corner: number;
 }
-
+export interface SpelerInput {
+  naam: string;
+  aanwezig: boolean;
+  doelpunten: number;
+  penalty: number;
+  corner: number;
+}
 export interface WedstrijdFormData {
   datum: string;
   tijd: string;
   thuisploeg: string;
   uitploeg: string;
   uitslag: string;
+  type?: 'competitie' | 'beker' | 'oefenwedstrijd';  // ← NIEUW
   opmerkingen?: string;
-  spelers: {
-    naam: string;
-    aanwezig: boolean;
-    doelpunten: number;
-    penalty: number;
-    corner: number;
-  }[];
+  spelers: SpelerInput[];
 }
 
 export const SPELERS = [
