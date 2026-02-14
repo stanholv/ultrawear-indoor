@@ -113,12 +113,12 @@ export const StatsTable = () => {
 
               return (
                 <motion.tr key={stat.speler_naam} variants={item}>
-                  <td>
+                  <td data-label="#">
                     <div className={`rank-badge ${rankBadge.className}`}>
                       {rankBadge.icon}
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Speler">
                     <div className="player-cell">
                       <div
                         className="player-avatar"
@@ -136,7 +136,7 @@ export const StatsTable = () => {
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Aanwezig">
                     <div className="stat-bar-container">
                       <div className="stat-bar-wrapper">
                         <motion.div
@@ -152,7 +152,7 @@ export const StatsTable = () => {
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Doelpunten">
                     <div className="stat-bar-container">
                       <div className="stat-bar-wrapper">
                         <motion.div
@@ -168,7 +168,7 @@ export const StatsTable = () => {
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Corners">
                     <div className="stat-bar-container">
                       <div className="stat-bar-wrapper">
                         <motion.div
@@ -182,7 +182,7 @@ export const StatsTable = () => {
                       <div className="stat-value">{stat.corner}</div>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Penalties">
                     <div className="stat-number">{stat.penalty}</div>
                   </td>
                 </motion.tr>

@@ -7,6 +7,7 @@ import { LoginForm } from './components/Auth/LoginForm';
 import { ProtectedRoute } from './components/Auth/ProtectedRoute';
 import { StatsOverview } from './components/Stats/StatsOverview';
 import { StatsTable } from './components/Stats/StatsTable';
+import { HomePage } from './components/Home/HomePage';
 import { WedstrijdForm } from './components/Wedstrijden/WedstrijdForm';
 import './styles/globals.css';
 
@@ -43,7 +44,7 @@ function App() {
 
           <main style={{ flex: 1 }}>
             <Routes>
-              <Route path="/" element={<StatsPage />} />
+              <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginForm />} />
               <Route
                 path="/wedstrijd"
