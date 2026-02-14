@@ -51,9 +51,10 @@ export const NextMatchCard = () => {
   let expectedGoals = 0;
   if (recentMatches.length > 0) {
     const totalGoals = recentMatches.reduce((sum, match) => {
-      const scores = match.uitslag.split('-');
-      const ourScore = match.thuisploeg === 'Ultrawear Indoor' 
-        ? parseInt(scores[0]) 
+      const scores = (match.uitslag ?? '').split('-');
+      if (scores.length < 2) return sum;
+      const ourScore = match.thuisploeg === 'Ultrawear Indoor'
+        ? parseInt(scores[0])
         : parseInt(scores[1]);
       return sum + (isNaN(ourScore) ? 0 : ourScore);
     }, 0);

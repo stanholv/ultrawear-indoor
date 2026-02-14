@@ -56,9 +56,10 @@ export const HomePage = () => {
     .filter(s => s.aanwezig >= 3)
     .map(s => ({
       ...s,
-      ratio: s.aanwezig > 0 ? (s.doelpunten / s.aanwezig).toFixed(2) : 0
+      // Always keep ratio as a string so downstream parseFloat calls are safe
+      ratio: s.aanwezig > 0 ? (s.doelpunten / s.aanwezig).toFixed(2) : '0.00'
     }))
-    .sort((a, b) => parseFloat(b.ratio) - parseFloat(a.ratio))[0];
+    .sort((a, b) => parseFloat(b.ratio as string) - parseFloat(a.ratio as string))[0];
   
   // Meeste wedstrijden
   const maxGames = Math.max(...stats.map(s => s.aanwezig));
