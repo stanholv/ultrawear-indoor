@@ -10,6 +10,8 @@ import { LoginForm } from './components/Auth/LoginForm';
 import { ProtectedRoute } from './components/Auth/ProtectedRoute';
 import { AdminDashboard } from './components/Dashboard/AdminDashboard';
 import { useAuth } from './hooks/useAuth';
+import { AdminPage } from './components/Admin/AdminPage';
+import { UitslagenPage } from './components/Uitslagen/UitslagenPage';
 import './styles/globals.css';
 
 function App() {
@@ -41,6 +43,8 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/statistieken" element={<StatsPage />} />
             <Route path="/statistieken/details" element={<DetailedStatsPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/uitslagen" element={<UitslagenPage />} />
             <Route path="/login" element={
               user ? <Navigate to="/" replace /> : <LoginForm />
             } />

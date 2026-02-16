@@ -14,16 +14,18 @@ export const useStats = () => {
   const loadStats = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Haal alle speler stats op
+      const { data, error: fetchError } = await supabase
         .from('speler_stats')
         .select('*');
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
-      // Aggregate stats per speler
+      // Aggregeer per speler
       const aggregated: { [key: string]: AggregatedStats } = {};
-      
-      data?.forEach(stat => {
+
+      data?.forEach((stat) => {
         if (!aggregated[stat.speler_naam]) {
           aggregated[stat.speler_naam] = {
             speler_naam: stat.speler_naam,
@@ -33,35 +35,25 @@ export const useStats = () => {
             corner: 0,
           };
         }
-        
+
         if (stat.aanwezig) {
-          aggregated[stat.speler_naam].aanwezig++;
+          aggregated[stat.speler_naam].aanwezig += 1;
+          aggregated[stat.speler_naam].doelpunten += stat.doelpunten || 0;
+          aggregated[stat.speler_naam].penalty += stat.penalty || 0;
+          aggregated[stat.speler_naam].corner += stat.corner || 0;
         }
-        aggregated[stat.speler_naam].doelpunten += stat.doelpunten;
-        aggregated[stat.speler_naam].penalty += stat.penalty;
-        aggregated[stat.speler_naam].corner += stat.corner;
       });
 
-      // Convert to array and sort by doelpunten
-      const statsArray = Object.values(aggregated).sort((a, b) => {
-        if (b.doelpunten === a.doelpunten) {
-          return b.aanwezig - a.aanwezig;
-        }
-        return b.doelpunten - a.doelpunten;
-      });
-
+      const statsArray = Object.values(aggregated);
       setStats(statsArray);
+      setError(null);
     } catch (err: any) {
+      console.error('Error loading stats:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  return {
-    stats,
-    loading,
-    error,
-    loadStats,
-  };
+  return { stats, loading, error, refetch: loadStats };
 };

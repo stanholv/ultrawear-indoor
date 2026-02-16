@@ -1,39 +1,57 @@
 import { NavLink } from 'react-router-dom';
-import { BarChart3, PlusCircle, LogIn } from 'lucide-react';
+import { Home, TrendingUp, Calendar, Trophy, Shield } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 export const Navigation = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, profile } = useAuth();
+  const isAdmin = user && profile?.role === 'admin';
 
   return (
     <nav className="navigation">
       <div className="nav-tabs">
-        <NavLink
-          to="/"
-          className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
+        <NavLink 
+          to="/" 
+          className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}
         >
-          <BarChart3 size={20} />
-          Statistieken
+          <Home size={20} />
+          <span>Home</span>
         </NavLink>
-
-        {user && isAdmin && (
-          <NavLink
-            to="/wedstrijd"
-            className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
-          >
-            <PlusCircle size={20} />
-            Wedstrijd Invoeren
-          </NavLink>
-        )}
-
-        {!user && (
-          <NavLink
-            to="/login"
-            className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
-          >
-            <LogIn size={20} />
-            Inloggen
-          </NavLink>
+        
+        <NavLink 
+          to="/statistieken" 
+          className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}
+        >
+          <TrendingUp size={20} />
+          <span>Statistieken</span>
+        </NavLink>
+        
+        <NavLink 
+          to="/uitslagen" 
+          className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}
+        >
+          <Trophy size={20} />
+          <span>Uitslagen</span>
+        </NavLink>
+        
+        {/* Admin-only links */}
+        {isAdmin && (
+          <>
+            <NavLink 
+              to="/admin" 
+              className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}
+            >
+              <Shield size={20} />
+              <span>Admin</span>
+            </NavLink>
+            
+            <NavLink 
+              to="/wedstrijd-invoeren" 
+              className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}
+            >
+              <Calendar size={20} />
+              <span>Wedstrijd Invoeren</span>
+            </NavLink>
+          </>
         )}
       </div>
     </nav>

@@ -15,14 +15,14 @@ export const COPY = {
   // =========================
   // HOMEPAGE
   // =========================
-  HOME_NEXT_MATCH_TITLE: '⚽ Volgende Wedstrijd',
+  HOME_NEXT_MATCH_TITLE: 'Volgende Wedstrijd',
   HOME_NEXT_MATCH_THUIS: 'Thuisvoordeel - Maak er een feest van!',
   HOME_NEXT_MATCH_UIT: 'Uitwedstrijd - Laat zien wat we waard zijn!',
   HOME_NEXT_MATCH_NONE: 'Geen geplande wedstrijden op dit moment',
   HOME_LAST_MATCH_LABEL: 'Laatste wedstrijd:',
   
-  HOME_TOP_SCORERS_TITLE: '🏆 Top 5 Schutters',
-  HOME_STATS_OVERVIEW_TITLE: '👥 Seizoen Overzicht',
+  HOME_TOP_SCORERS_TITLE: 'Top 5 Schutters',
+  HOME_STATS_OVERVIEW_TITLE: 'Seizoen Overzicht',
   
   HOME_STAT_TOPSCORER: 'Topscorer',
   HOME_STAT_GOALS_PER_GAME: 'Goals per Wedstrijd',
@@ -92,6 +92,9 @@ export const COPY = {
   
   FORM_SECTION_DETAILS: 'Wedstrijdgegevens',
   FORM_SECTION_PLAYERS: 'Speler Statistieken',
+
+  FORM_LIVE_PRESENT: 'Aanwezig',
+
   
   // Labels
   LABEL_DATUM: 'Datum',

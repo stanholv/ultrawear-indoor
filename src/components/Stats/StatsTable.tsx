@@ -1,196 +1,136 @@
 import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, Award } from 'lucide-react';
-import { useStats } from '../../hooks/useStats';
+import { COPY } from '../../lib/copy';
+import { AggregatedStats } from '../../lib/types';
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05
-    }
-  }
-};
-
-const item = {
-  hidden: { opacity: 0, x: -20 },
-  show: { opacity: 1, x: 0 }
-};
+interface StatsTableProps {
+  stats: AggregatedStats[];
+}
 
 const getRankBadge = (rank: number) => {
-  if (rank === 1) return { icon: <Trophy size={14} />, className: 'rank-1' };
-  if (rank === 2) return { icon: <Award size={14} />, className: 'rank-2' };
-  if (rank === 3) return { icon: <Award size={14} />, className: 'rank-3' };
-  return { icon: rank, className: '' };
+  if (rank === 1) return { icon: '🥇', className: 'rank-1' };
+  if (rank === 2) return { icon: '🥈', className: 'rank-2' };
+  if (rank === 3) return { icon: '🥉', className: 'rank-3' };
+  return { icon: `${rank}.`, className: '' };
 };
 
-const getInitials = (name: string) => {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-};
-
-const getAvatarColor = (name: string) => {
-  const colors = [
-    'linear-gradient(135deg, #dc2626, #7c2d12)',
-    'linear-gradient(135deg, #f59e0b, #d97706)',
-    'linear-gradient(135deg, #10b981, #059669)',
-    'linear-gradient(135deg, #3b82f6, #2563eb)',
-    'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-    'linear-gradient(135deg, #ec4899, #db2777)',
-  ];
-  const index = name.charCodeAt(0) % colors.length;
-  return colors[index];
-};
-
-export const StatsTable = () => {
-  const { stats, loading, error } = useStats();
-
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p style={{ color: 'var(--color-text-secondary)' }}>Statistieken laden...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="card" style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
-        <p style={{ color: 'var(--color-error)' }}>Fout bij laden: {error}</p>
-      </div>
-    );
-  }
-
-  if (stats.length === 0) {
-    return (
-      <div className="card" style={{ padding: 'var(--spacing-xl)', textAlign: 'center' }}>
-        <Trophy size={48} style={{ color: 'var(--color-text-tertiary)', margin: '0 auto var(--spacing-md)' }} />
-        <p style={{ color: 'var(--color-text-secondary)' }}>Nog geen statistieken beschikbaar</p>
-      </div>
-    );
-  }
-
-  const maxAanwezig = Math.max(...stats.map(s => s.aanwezig));
-  const maxDoelpunten = Math.max(...stats.map(s => s.doelpunten));
+export const StatsTable = ({ stats }: StatsTableProps) => {
+  const sortedStats = [...stats].sort((a, b) => b.doelpunten - a.doelpunten);
+  
+  const maxAanwezig = Math.max(...stats.map(s => s.aanwezig), 0);
+  const maxDoelpunten = Math.max(...stats.map(s => s.doelpunten), 0);
 
   return (
-    <div className="card">
+    <div className="card" style={{ marginTop: 'var(--spacing-xl)' }}>
       <div className="card-header">
-        <h2 className="card-title">🏆 Speler Rankings</h2>
+        <h2 className="card-title">
+          <Trophy size={24} /> {COPY.STATS_RANKINGS_TITLE}
+        </h2>
         <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-          {stats.length} spelers
+          {stats.length} {COPY.STATS_PLAYERS_COUNT}
         </div>
       </div>
 
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-      >
-        <table className="stats-table">
+      <div className="rankings-container">
+        <table className="rankings-table">
           <thead>
             <tr>
               <th style={{ width: '50px' }}>#</th>
               <th>Speler</th>
-              <th>Aanwezig</th>
-              <th>Doelpunten</th>
-              <th>Corners</th>
-              <th>Penalties</th>
+              <th style={{ textAlign: 'center' }}>Aanwezig</th>
+              <th style={{ textAlign: 'center' }}>Doelpunten</th>
+              <th style={{ textAlign: 'center' }}>Corners</th>
+              <th style={{ textAlign: 'center' }}>Penalties</th>
             </tr>
           </thead>
           <tbody>
-            {stats.map((stat, index) => {
+            {sortedStats.map((stat, index) => {
               const rank = index + 1;
               const rankBadge = getRankBadge(rank);
               const aanwezigPercentage = maxAanwezig > 0 ? (stat.aanwezig / maxAanwezig) * 100 : 0;
               const doelpuntenPercentage = maxDoelpunten > 0 ? (stat.doelpunten / maxDoelpunten) * 100 : 0;
-              const cornerPercentage = stat.doelpunten > 0 ? (stat.corner / stat.doelpunten) * 100 : 0;
 
               return (
-                <motion.tr key={stat.speler_naam} variants={item}>
+               <motion.tr 
+                  key={stat.speler_naam}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
                   <td data-label="#">
                     <div className={`rank-badge ${rankBadge.className}`}>
                       {rankBadge.icon}
                     </div>
                   </td>
+                  
                   <td data-label="Speler">
-                    <div className="player-cell">
-                      <div
-                        className="player-avatar"
-                        style={{ background: getAvatarColor(stat.speler_naam) }}
-                      >
-                        {getInitials(stat.speler_naam)}
-                      </div>
-                      <div className="player-info">
-                        <div className="player-name">
-                          {stat.speler_naam}
-                          {rank === 1 && (
-                            <span style={{ fontSize: '1.25rem' }}>🔥</span>
-                          )}
-                        </div>
+                    <div style={{ fontWeight: '600', color: 'var(--color-text-primary)' }}>
+                      {stat.speler_naam}
+                      {rank === 1 && <span style={{ marginLeft: '8px' }}>🔥</span>}
+                    </div>
+                  </td>
+                  
+                  <td data-label="Aanwezig" style={{ textAlign: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ fontWeight: '600' }}>{stat.aanwezig}</div>
+                      <div style={{ 
+                        width: '100%', 
+                        maxWidth: '80px', 
+                        height: '4px', 
+                        background: 'var(--color-surface)', 
+                        borderRadius: '2px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{ 
+                          width: `${aanwezigPercentage}%`, 
+                          height: '100%', 
+                          background: 'var(--color-success)',
+                          transition: 'width 0.5s ease'
+                        }} />
                       </div>
                     </div>
                   </td>
-                  <td data-label="Aanwezig">
-                    <div className="stat-bar-container">
-                      <div className="stat-bar-wrapper">
-                        <motion.div
-                          className="stat-bar"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${aanwezigPercentage}%` }}
-                          transition={{ duration: 0.8, delay: index * 0.05 }}
-                        />
-                      </div>
-                      <div className="stat-value">
-                        <TrendingUp size={14} color="var(--color-success)" />
-                        {stat.aanwezig}
-                      </div>
-                    </div>
-                  </td>
-                  <td data-label="Doelpunten">
-                    <div className="stat-bar-container">
-                      <div className="stat-bar-wrapper">
-                        <motion.div
-                          className="stat-bar"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${doelpuntenPercentage}%` }}
-                          transition={{ duration: 0.8, delay: index * 0.05 }}
-                        />
-                      </div>
-                      <div className="stat-value">
-                        <Trophy size={14} color="var(--color-primary)" />
+                  
+                  <td data-label="Doelpunten" style={{ textAlign: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ 
+                        fontWeight: '700', 
+                        fontSize: '1.125rem',
+                        color: 'var(--color-primary)' 
+                      }}>
                         {stat.doelpunten}
                       </div>
-                    </div>
-                  </td>
-                  <td data-label="Corners">
-                    <div className="stat-bar-container">
-                      <div className="stat-bar-wrapper">
-                        <motion.div
-                          className="stat-bar"
-                          style={{ background: 'linear-gradient(90deg, #7c2d12, #dc2626)' }}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${cornerPercentage}%` }}
-                          transition={{ duration: 0.8, delay: index * 0.05 }}
-                        />
+                      <div style={{ 
+                        width: '100%', 
+                        maxWidth: '80px', 
+                        height: '4px', 
+                        background: 'var(--color-surface)', 
+                        borderRadius: '2px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{ 
+                          width: `${doelpuntenPercentage}%`, 
+                          height: '100%', 
+                          background: 'var(--color-primary)',
+                          transition: 'width 0.5s ease'
+                        }} />
                       </div>
-                      <div className="stat-value">{stat.corner}</div>
                     </div>
                   </td>
-                  <td data-label="Penalties">
-                    <div className="stat-number">{stat.penalty}</div>
+                  
+                  <td data-label="Corners" style={{ textAlign: 'center' }}>
+                    <div style={{ fontWeight: '600' }}>{stat.corner}</div>
+                  </td>
+                  
+                  <td data-label="Penalties" style={{ textAlign: 'center' }}>
+                    <div style={{ fontWeight: '600' }}>{stat.penalty}</div>
                   </td>
                 </motion.tr>
               );
             })}
           </tbody>
         </table>
-      </motion.div>
+      </div>
     </div>
   );
 };
