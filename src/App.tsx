@@ -12,6 +12,7 @@ import { AdminDashboard } from './components/Dashboard/AdminDashboard';
 import { useAuth } from './hooks/useAuth';
 import { AdminPage } from './components/Admin/AdminPage';
 import { UitslagenPage } from './components/Uitslagen/UitslagenPage';
+import { WedstrijdDetailPage } from './pages/WedstrijdDetailPage';
 import './styles/globals.css';
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
             <Route path="/statistieken/details" element={<DetailedStatsPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/uitslagen" element={<UitslagenPage />} />
+            <Route path="/uitslagen/:id" element={<WedstrijdDetailPage />} />
             <Route path="/login" element={
               user ? <Navigate to="/" replace /> : <LoginForm />
             } />

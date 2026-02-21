@@ -2,10 +2,12 @@ import { useState, FormEvent, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Users, Save, AlertCircle, Trophy, Info } from 'lucide-react';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
+import { useAuth } from '../../hooks/useAuth';
 import { SPELERS, WedstrijdFormData } from '../../lib/types';
 import { toast } from 'sonner';
 import { NumberInput } from '../UI/NumberInput';
 import { COPY } from '../../lib/copy';
+import { supabase } from '../../lib/supabase';
 
 interface SpelerInput {
   naam: string;
@@ -16,13 +18,14 @@ interface SpelerInput {
 }
 
 export const WedstrijdForm = () => {
-  const { wedstrijden, createWedstrijd, loading: wedstrijdenLoading } = useWedstrijden();
+  const { wedstrijden, createWedstrijd, updateWedstrijd, loading: wedstrijdenLoading } = useWedstrijden();
+  const { isAdmin } = useAuth();
+
   const [matchType, setMatchType] = useState<'competitie' | 'beker' | 'oefenwedstrijd'>('competitie');
-  
-  // Twee modes: maak nieuwe wedstrijd OF vul bestaande in
   const [mode, setMode] = useState<'create' | 'fill'>('fill');
   const [selectedWedstrijdId, setSelectedWedstrijdId] = useState('');
-  
+  const [isBestaandeWedstrijd, setIsBestaandeWedstrijd] = useState(false);
+
   const [datum, setDatum] = useState('');
   const [tijd, setTijd] = useState('');
   const [thuisploeg, setThuisploeg] = useState('');
@@ -41,78 +44,48 @@ export const WedstrijdForm = () => {
   );
   const [loading, setLoading] = useState(false);
 
-  // Filter wedstrijden zonder uitslag EN verwijder duplicaten op basis van datum+tijd+tegenstander
   const uniqueWedstrijden = wedstrijden.reduce((acc, current) => {
-    // Maak een unieke key voor deze wedstrijd
     const key = `${current.datum}-${current.tijd}-${current.thuisploeg}-${current.uitploeg}`;
-    
-    // Check of we deze combinatie al hebben
-    const exists = acc.find(item => 
+    const exists = acc.find(item =>
       `${item.datum}-${item.tijd}-${item.thuisploeg}-${item.uitploeg}` === key
     );
-    
     if (!exists) {
       acc.push(current);
     }
-    
     return acc;
   }, [] as typeof wedstrijden);
 
-  // FIXED: Filter alleen wedstrijden zonder uitslag, gesorteerd van oud naar nieuw
   const openWedstrijden = uniqueWedstrijden
     .filter(w => !w.uitslag || w.uitslag === '-')
-    .sort((a, b) => {
-      // Sorteer van OUD naar NIEUW voor chronologische weergave
-      const dateA = new Date(`${a.datum}T${a.tijd}`);
-      const dateB = new Date(`${b.datum}T${b.tijd}`);
-      return dateA.getTime() - dateB.getTime();
-    });
-  
-  // Wedstrijden die al ingevuld zijn
-  const ingevuldeWedstrijden = uniqueWedstrijden.filter(w => w.uitslag && w.uitslag !== '-');
-  
-  // FIXED: Suggest closest match (past of toekomst) - kies de dichtstbijzijnde wedstrijd bij huidige tijd
+    .sort((a, b) => new Date(`${a.datum}T${a.tijd}`).getTime() - new Date(`${b.datum}T${b.tijd}`).getTime());
+
+  const alleWedstrijden = [...uniqueWedstrijden].sort((a, b) =>
+    new Date(`${b.datum}T${b.tijd}`).getTime() - new Date(`${a.datum}T${a.tijd}`).getTime()
+  );
+
+  // Welke wedstrijden tonen in dropdown
+  const beschikbareWedstrijden = isAdmin ? alleWedstrijden : openWedstrijden;
+
   useEffect(() => {
     if (openWedstrijden.length > 0 && !selectedWedstrijdId && mode === 'fill') {
       const now = new Date();
-      
-      // Zoek eerst een wedstrijd die nog moet komen (toekomstige wedstrijden)
       const upcomingMatches = openWedstrijden
-        .filter(w => {
-          const matchDateTime = new Date(`${w.datum}T${w.tijd}`);
-          return matchDateTime >= now;
-        })
-        .sort((a, b) => {
-          const dateA = new Date(`${a.datum}T${a.tijd}`);
-          const dateB = new Date(`${b.datum}T${b.tijd}`);
-          return dateA.getTime() - dateB.getTime();
-        });
-      
-      // Als er toekomstige wedstrijden zijn, kies de eerste (dichtstbijzijnde)
+        .filter(w => new Date(`${w.datum}T${w.tijd}`) >= now)
+        .sort((a, b) => new Date(`${a.datum}T${a.tijd}`).getTime() - new Date(`${b.datum}T${b.tijd}`).getTime());
+
       let suggestedMatch = upcomingMatches[0];
-      
-      // Als er geen toekomstige wedstrijden zijn, neem de meest recente wedstrijd uit het verleden
+
       if (!suggestedMatch && openWedstrijden.length > 0) {
         const pastMatches = openWedstrijden
-          .filter(w => {
-            const matchDateTime = new Date(`${w.datum}T${w.tijd}`);
-            return matchDateTime < now;
-          })
-          .sort((a, b) => {
-            const dateA = new Date(`${a.datum}T${a.tijd}`);
-            const dateB = new Date(`${b.datum}T${b.tijd}`);
-            return dateB.getTime() - dateA.getTime(); // Sorteer reversed (meest recent eerst)
-          });
-        
+          .filter(w => new Date(`${w.datum}T${w.tijd}`) < now)
+          .sort((a, b) => new Date(`${b.datum}T${b.tijd}`).getTime() - new Date(`${a.datum}T${a.tijd}`).getTime());
         suggestedMatch = pastMatches[0];
       }
-      
-      // Als er helemaal geen wedstrijden zijn gevonden, neem gewoon de eerste
+
       if (!suggestedMatch && openWedstrijden.length > 0) {
         suggestedMatch = openWedstrijden[0];
       }
-      
-      // Pre-fill het formulier met de gesuggereerde wedstrijd
+
       if (suggestedMatch) {
         setSelectedWedstrijdId(suggestedMatch.id);
         setDatum(suggestedMatch.datum);
@@ -124,46 +97,60 @@ export const WedstrijdForm = () => {
     }
   }, [openWedstrijden, selectedWedstrijdId, mode]);
 
-  const handleWedstrijdSelect = (wedstrijdId: string) => {
+  const handleWedstrijdSelect = async (wedstrijdId: string) => {
     setSelectedWedstrijdId(wedstrijdId);
     const wedstrijd = wedstrijden.find(w => w.id === wedstrijdId);
-    if (wedstrijd) {
-      setDatum(wedstrijd.datum);
-      setTijd(wedstrijd.tijd);
-      setThuisploeg(wedstrijd.thuisploeg);
-      setUitploeg(wedstrijd.uitploeg);
-      setMatchType(wedstrijd.type || 'competitie');
-      
-      // Check of deze wedstrijd al ingevuld is
-      const bestaandeData = ingevuldeWedstrijden.find(w => 
-        w.datum === wedstrijd.datum && 
-        w.tijd === wedstrijd.tijd && 
-        w.thuisploeg === wedstrijd.thuisploeg &&
-        w.uitploeg === wedstrijd.uitploeg
-      );
-      
-      if (bestaandeData && bestaandeData.uitslag) {
-        // Parse de bestaande uitslag
-        const [thuis, uit] = bestaandeData.uitslag.split('-');
-        setThuisGoals(thuis);
-        setUitGoals(uit);
-        toast.info('Deze wedstrijd is al eerder ingevuld. Je kunt de gegevens aanpassen.');
+    if (!wedstrijd) return;
+
+    setDatum(wedstrijd.datum);
+    setTijd(wedstrijd.tijd);
+    setThuisploeg(wedstrijd.thuisploeg);
+    setUitploeg(wedstrijd.uitploeg);
+    setMatchType(wedstrijd.type || 'competitie');
+    setOpmerkingen(wedstrijd.opmerkingen || '');
+
+    const heeftUitslag = wedstrijd.uitslag && wedstrijd.uitslag !== '-';
+    setIsBestaandeWedstrijd(!!heeftUitslag);
+
+    if (heeftUitslag) {
+      const [thuis, uit] = wedstrijd.uitslag!.split('-');
+      setThuisGoals(thuis);
+      setUitGoals(uit);
+      toast.info('Bestaande wedstrijd geladen. Je kunt de gegevens aanpassen.');
+
+      // Laad bestaande spelersstatistieken
+      const { data: statsData } = await supabase
+        .from('speler_stats')
+        .select('*')
+        .eq('wedstrijd_id', wedstrijdId);
+
+      if (statsData && statsData.length > 0) {
+        setSpelers(SPELERS.map(naam => {
+          const bestaandeStat = statsData.find(s => s.speler_naam === naam);
+          return {
+            naam,
+            aanwezig: bestaandeStat?.aanwezig || false,
+            doelpunten: bestaandeStat?.doelpunten || 0,
+            penalty: bestaandeStat?.penalty || 0,
+            corner: bestaandeStat?.corner || 0,
+          };
+        }));
       } else {
-        setThuisGoals('');
-        setUitGoals('');
+        setSpelers(SPELERS.map(naam => ({ naam, aanwezig: false, doelpunten: 0, penalty: 0, corner: 0 })));
       }
+    } else {
+      setThuisGoals('');
+      setUitGoals('');
+      setSpelers(SPELERS.map(naam => ({ naam, aanwezig: false, doelpunten: 0, penalty: 0, corner: 0 })));
     }
   };
 
   const handleSpelerChange = (index: number, field: keyof SpelerInput, value: any) => {
     const newSpelers = [...spelers];
     newSpelers[index] = { ...newSpelers[index], [field]: value };
-    
-    // Auto-check aanwezig als goals/penalties/corners > 0
     if ((field === 'doelpunten' || field === 'penalty' || field === 'corner') && value > 0) {
       newSpelers[index].aanwezig = true;
     }
-    
     setSpelers(newSpelers);
   };
 
@@ -176,25 +163,17 @@ export const WedstrijdForm = () => {
   };
 
   const liveStats = calculateLiveStats();
-  
-  // Bereken wedstrijdresultaat
+
   const isUltrawearthuis = thuisploeg === 'Ultrawear Indoor';
   const ultraWearGoals = isUltrawearthuis ? parseInt(thuisGoals) || 0 : parseInt(uitGoals) || 0;
   const tegenstanderGoals = isUltrawearthuis ? parseInt(uitGoals) || 0 : parseInt(thuisGoals) || 0;
-  
+
   let resultaat = '';
   let punten = 0;
   if (thuisGoals && uitGoals) {
-    if (ultraWearGoals > tegenstanderGoals) {
-      resultaat = 'Gewonnen 🎉';
-      punten = 3;
-    } else if (ultraWearGoals === tegenstanderGoals) {
-      resultaat = 'Gelijkspel';
-      punten = 1;
-    } else {
-      resultaat = 'Verloren';
-      punten = 0;
-    }
+    if (ultraWearGoals > tegenstanderGoals) { resultaat = 'Gewonnen 🎉'; punten = 3; }
+    else if (ultraWearGoals === tegenstanderGoals) { resultaat = 'Gelijkspel'; punten = 1; }
+    else { resultaat = 'Verloren'; punten = 0; }
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -207,46 +186,73 @@ export const WedstrijdForm = () => {
     setLoading(true);
     try {
       const uitslag = thuisGoals && uitGoals ? `${thuisGoals}-${uitGoals}` : '';
-      
-      const formData: WedstrijdFormData = {
-        datum,
-        tijd,
-        thuisploeg: mode === 'create' ? 'Ultrawear Indoor' : thuisploeg,
-        uitploeg: mode === 'create' ? uitploeg : uitploeg,
-        uitslag,
-        type: matchType,
-        opmerkingen,
-        spelers: spelers.map(s => ({
-          naam: s.naam,
+
+      // Admin bewerkt bestaande wedstrijd
+      if (isAdmin && mode === 'fill' && selectedWedstrijdId) {
+        // Update wedstrijd basisgegevens
+        const updateResult = await updateWedstrijd(selectedWedstrijdId, {
+          datum,
+          tijd,
+          thuisploeg,
+          uitploeg,
+          uitslag,
+          type: matchType,
+          opmerkingen,
+        });
+
+        if (!updateResult.success) throw new Error(updateResult.error);
+
+        // Update spelersstatistieken: verwijder oude en voeg nieuwe in
+        await supabase.from('speler_stats').delete().eq('wedstrijd_id', selectedWedstrijdId);
+
+        const spelersData = spelers.map(s => ({
+          wedstrijd_id: selectedWedstrijdId,
+          speler_naam: s.naam,
           aanwezig: s.aanwezig,
           doelpunten: s.doelpunten,
           penalty: s.penalty,
-          corner: s.corner
-        }))
-      };
+          corner: s.corner,
+        }));
 
-      const result = await createWedstrijd(formData);
-      if (result.success) {
-        toast.success(COPY.FORM_SUCCESS);
-        // Reset form
-        setDatum('');
-        setTijd('');
-        setThuisploeg('');
-        setUitploeg('');
-        setThuisGoals('');
-        setUitGoals('');
-        setOpmerkingen('');
-        setSelectedWedstrijdId('');
-        setSpelers(SPELERS.map(naam => ({
-          naam,
-          aanwezig: false,
-          doelpunten: 0,
-          penalty: 0,
-          corner: 0,
-        })));
+        const { error: spelersError } = await supabase.from('speler_stats').insert(spelersData);
+        if (spelersError) throw spelersError;
+
+        toast.success('Wedstrijd succesvol bijgewerkt!');
       } else {
-        throw new Error(result.error);
+        // Normale flow: nieuwe wedstrijd aanmaken
+        const formData: WedstrijdFormData = {
+          datum,
+          tijd,
+          thuisploeg: mode === 'create' ? 'Ultrawear Indoor' : thuisploeg,
+          uitploeg,
+          uitslag,
+          type: matchType,
+          opmerkingen,
+          spelers: spelers.map(s => ({
+            naam: s.naam,
+            aanwezig: s.aanwezig,
+            doelpunten: s.doelpunten,
+            penalty: s.penalty,
+            corner: s.corner,
+          })),
+        };
+
+        const result = await createWedstrijd(formData);
+        if (!result.success) throw new Error(result.error);
+        toast.success(COPY.FORM_SUCCESS);
       }
+
+      // Reset formulier
+      setDatum('');
+      setTijd('');
+      setThuisploeg('');
+      setUitploeg('');
+      setThuisGoals('');
+      setUitGoals('');
+      setOpmerkingen('');
+      setSelectedWedstrijdId('');
+      setIsBestaandeWedstrijd(false);
+      setSpelers(SPELERS.map(naam => ({ naam, aanwezig: false, doelpunten: 0, penalty: 0, corner: 0 })));
     } catch (err: any) {
       toast.error(`${COPY.FORM_ERROR}: ${err.message}`);
     } finally {
@@ -262,9 +268,12 @@ export const WedstrijdForm = () => {
     );
   }
 
+  // Admin mag datum/tijd/tegenstander altijd aanpassen
+  const veldBewerkbaar = mode === 'create' || isAdmin;
+
   return (
     <div className="container" style={{ padding: 'var(--spacing-xl)' }}>
-      <motion.div 
+      <motion.div
         className="card"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -274,161 +283,110 @@ export const WedstrijdForm = () => {
           <p className="page-subtitle">{COPY.FORM_SUBTITLE}</p>
         </div>
 
-        {/* Mode Selector */}
+        {/* Mode selector */}
         <div style={{ padding: 'var(--spacing-lg)', borderBottom: '1px solid var(--color-border)' }}>
           <div className="radio-group">
             <label className="radio-label">
-              <input
-                type="radio"
-                name="mode"
-                checked={mode === 'fill'}
-                onChange={() => setMode('fill')}
-              />
+              <input type="radio" name="mode" checked={mode === 'fill'} onChange={() => setMode('fill')} />
               <span className="radio-text">📝 Bestaande Wedstrijd Invullen</span>
             </label>
             <label className="radio-label">
-              <input
-                type="radio"
-                name="mode"
-                checked={mode === 'create'}
-                onChange={() => setMode('create')}
-              />
+              <input type="radio" name="mode" checked={mode === 'create'} onChange={() => setMode('create')} />
               <span className="radio-text">➕ Nieuwe Wedstrijd Aanmaken</span>
             </label>
           </div>
+
+          {/* Admin info banner */}
+          {isAdmin && mode === 'fill' && (
+            <div style={{
+              marginTop: 'var(--spacing-md)',
+              padding: 'var(--spacing-sm) var(--spacing-md)',
+              background: 'rgba(200, 16, 46, 0.1)',
+              border: '1px solid var(--color-primary)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-sm)',
+            }}>
+              <Info size={16} color="var(--color-primary)" />
+              <span>Als admin zie je alle wedstrijden en kan je bestaande gegevens aanpassen.</span>
+            </div>
+          )}
         </div>
 
-        {/* Live Stats Preview */}
+        {/* Live stats preview */}
         {liveStats.aanwezig > 0 && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             className="card glass"
-            style={{ 
-              margin: 'var(--spacing-lg)',
-              padding: 'var(--spacing-lg)',
-              borderLeft: '4px solid var(--color-primary)',
-              background: 'var(--color-surface)'
-            }}
+            style={{ margin: 'var(--spacing-lg)', padding: 'var(--spacing-lg)', borderLeft: '4px solid var(--color-primary)', background: 'var(--color-surface)' }}
           >
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 'var(--spacing-sm)',
-              marginBottom: 'var(--spacing-md)',
-              fontWeight: '600'
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)', fontWeight: '600' }}>
               <Trophy size={20} color="var(--color-primary)" />
               {COPY.FORM_LIVE_STATS_TITLE}
             </div>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
-              gap: 'var(--spacing-lg)' 
-            }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 'var(--spacing-lg)' }}>
               <div>
-                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                  {COPY.FORM_LIVE_PRESENT}
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-success)' }}>
-                  {liveStats.aanwezig}
-                </div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{COPY.FORM_LIVE_PRESENT}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-success)' }}>{liveStats.aanwezig}</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                  {COPY.FORM_LIVE_GOALS}
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>
-                  {liveStats.totalGoals}
-                </div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{COPY.FORM_LIVE_GOALS}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>{liveStats.totalGoals}</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                  {COPY.FORM_LIVE_CORNERS}
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>
-                  {liveStats.totalCorners}
-                </div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{COPY.FORM_LIVE_CORNERS}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>{liveStats.totalCorners}</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                  {COPY.FORM_LIVE_PENALTIES}
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>
-                  {liveStats.totalPenalties}
-                </div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{COPY.FORM_LIVE_PENALTIES}</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>{liveStats.totalPenalties}</div>
               </div>
             </div>
           </motion.div>
         )}
 
-        {/* Resultaat Preview */}
+        {/* Resultaat preview */}
         {resultaat && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="card glass"
-            style={{ 
+            style={{
               margin: 'var(--spacing-lg)',
               padding: 'var(--spacing-lg)',
-              background: resultaat.includes('Gewonnen') ? 'rgba(16, 185, 129, 0.1)' : 
-                          resultaat.includes('Gelijkspel') ? 'rgba(245, 158, 11, 0.1)' :
-                          'rgba(239, 68, 68, 0.1)',
-              border: `2px solid ${resultaat.includes('Gewonnen') ? '#10b981' : 
-                                    resultaat.includes('Gelijkspel') ? '#f59e0b' : 
-                                    '#ef4444'}`
+              background: resultaat.includes('Gewonnen') ? 'rgba(16, 185, 129, 0.1)' : resultaat.includes('Gelijkspel') ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+              border: `2px solid ${resultaat.includes('Gewonnen') ? '#10b981' : resultaat.includes('Gelijkspel') ? '#f59e0b' : '#ef4444'}`
             }}
           >
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 'var(--spacing-md)' 
-            }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
               <div>
-                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
-                  Verwacht Resultaat
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>
-                  {resultaat}
-                </div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>Verwacht Resultaat</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{resultaat}</div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>
-                  Punten
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>
-                  {punten}
-                </div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '4px' }}>Punten</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{punten}</div>
               </div>
             </div>
           </motion.div>
         )}
 
         <form onSubmit={handleSubmit} style={{ padding: 'var(--spacing-lg)' }}>
-          
-          {/* Wedstrijd Selector (alleen in fill mode) */}
+
+          {/* Wedstrijd selector (fill mode) */}
           {mode === 'fill' && (
             <div className="form-group" style={{ marginBottom: 'var(--spacing-xl)' }}>
               <label className="form-label">
                 <Trophy size={16} /> {COPY.LABEL_WEDSTRIJD} *
               </label>
-              
-              {openWedstrijden.length === 0 ? (
-                <div style={{
-                  padding: 'var(--spacing-lg)',
-                  background: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-md)',
-                  textAlign: 'center',
-                  color: 'var(--color-text-secondary)'
-                }}>
+
+              {beschikbareWedstrijden.length === 0 ? (
+                <div style={{ padding: 'var(--spacing-lg)', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
                   <Info size={24} style={{ marginBottom: 'var(--spacing-sm)' }} />
-                  <p style={{ margin: 0 }}>Geen open wedstrijden beschikbaar.</p>
-                  <p style={{ margin: '8px 0 0 0', fontSize: '0.875rem' }}>
-                    Schakel over naar "Nieuwe Wedstrijd Aanmaken" om een wedstrijd toe te voegen.
-                  </p>
+                  <p style={{ margin: 0 }}>Geen wedstrijden beschikbaar.</p>
                 </div>
               ) : (
                 <>
@@ -439,13 +397,39 @@ export const WedstrijdForm = () => {
                     required
                   >
                     <option value="">{COPY.LABEL_SELECT_MATCH}</option>
-                    {openWedstrijden.map(match => {
+                    {isAdmin && (
+                      <>
+                        {openWedstrijden.length > 0 && (
+                          <optgroup label="📋 Open wedstrijden">
+                            {openWedstrijden.map(match => {
+                              const isThuis = match.thuisploeg === 'Ultrawear Indoor';
+                              const tegenstander = isThuis ? match.uitploeg : match.thuisploeg;
+                              return (
+                                <option key={match.id} value={match.id}>
+                                  {new Date(match.datum).toLocaleDateString('nl-BE')} - {isThuis ? 'THUIS' : 'UIT'} vs {tegenstander}
+                                </option>
+                              );
+                            })}
+                          </optgroup>
+                        )}
+                        <optgroup label="✅ Ingevulde wedstrijden">
+                          {alleWedstrijden.filter(w => w.uitslag && w.uitslag !== '-').map(match => {
+                            const isThuis = match.thuisploeg === 'Ultrawear Indoor';
+                            const tegenstander = isThuis ? match.uitploeg : match.thuisploeg;
+                            return (
+                              <option key={match.id} value={match.id}>
+                                {new Date(match.datum).toLocaleDateString('nl-BE')} - {isThuis ? 'THUIS' : 'UIT'} vs {tegenstander} ({match.uitslag})
+                              </option>
+                            );
+                          })}
+                        </optgroup>
+                      </>
+                    )}
+                    {!isAdmin && openWedstrijden.map(match => {
                       const matchDateTime = new Date(`${match.datum}T${match.tijd}`);
-                      const now = new Date();
-                      const isPast = matchDateTime < now;
+                      const isPast = matchDateTime < new Date();
                       const isThuis = match.thuisploeg === 'Ultrawear Indoor';
                       const tegenstander = isThuis ? match.uitploeg : match.thuisploeg;
-                      
                       return (
                         <option key={match.id} value={match.id}>
                           {new Date(match.datum).toLocaleDateString('nl-BE')} {match.tijd} - {isThuis ? 'THUIS' : 'UIT'} vs {tegenstander} {isPast ? '(gespeeld)' : ''}
@@ -453,25 +437,11 @@ export const WedstrijdForm = () => {
                       );
                     })}
                   </select>
-                  
-                  {ingevuldeWedstrijden.find(w => 
-                    w.datum === datum && 
-                    w.tijd === tijd && 
-                    w.thuisploeg === thuisploeg &&
-                    w.uitploeg === uitploeg
-                  ) && (
-                    <div style={{
-                      marginTop: 'var(--spacing-sm)',
-                      padding: 'var(--spacing-sm)',
-                      background: 'rgba(245, 158, 11, 0.1)',
-                      border: '1px solid #f59e0b',
-                      borderRadius: 'var(--radius-sm)',
-                      display: 'flex',
-                      gap: 'var(--spacing-sm)',
-                      fontSize: '0.875rem'
-                    }}>
+
+                  {isBestaandeWedstrijd && (
+                    <div style={{ marginTop: 'var(--spacing-sm)', padding: 'var(--spacing-sm)', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', borderRadius: 'var(--radius-sm)', display: 'flex', gap: 'var(--spacing-sm)', fontSize: '0.875rem' }}>
                       <Info size={16} color="#f59e0b" />
-                      <span>Deze wedstrijd is al eerder ingevuld. De bestaande data wordt hieronder getoond.</span>
+                      <span>{isAdmin ? 'Bestaande data geladen. Alle velden zijn aanpasbaar.' : 'Deze wedstrijd is al eerder ingevuld.'}</span>
                     </div>
                   )}
                 </>
@@ -479,7 +449,7 @@ export const WedstrijdForm = () => {
             </div>
           )}
 
-          {/* Type Selector (alleen in create mode) */}
+          {/* Type selector (create mode) */}
           {mode === 'create' && (
             <div className="form-group" style={{ marginBottom: 'var(--spacing-xl)' }}>
               <label className="form-label">
@@ -487,143 +457,150 @@ export const WedstrijdForm = () => {
               </label>
               <div className="radio-group">
                 <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="competitie"
-                    checked={matchType === 'competitie'}
-                    onChange={() => setMatchType('competitie')}
-                  />
-                  <span className="radio-text">
-                    {COPY.TYPE_COMPETITIE_ICON} {COPY.TYPE_COMPETITIE}
-                  </span>
+                  <input type="radio" name="type" value="competitie" checked={matchType === 'competitie'} onChange={() => setMatchType('competitie')} />
+                  <span className="radio-text">{COPY.TYPE_COMPETITIE_ICON} {COPY.TYPE_COMPETITIE}</span>
                 </label>
                 <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="beker"
-                    checked={matchType === 'beker'}
-                    onChange={() => setMatchType('beker')}
-                  />
-                  <span className="radio-text">
-                    {COPY.TYPE_BEKER_ICON} {COPY.TYPE_BEKER}
-                  </span>
+                  <input type="radio" name="type" value="beker" checked={matchType === 'beker'} onChange={() => setMatchType('beker')} />
+                  <span className="radio-text">{COPY.TYPE_BEKER_ICON} {COPY.TYPE_BEKER}</span>
                 </label>
               </div>
             </div>
           )}
 
-          {/* Wedstrijd Details */}
           {(mode === 'create' || (mode === 'fill' && selectedWedstrijdId)) && (
             <>
+              {/* Datum / Tijd / Tegenstander */}
               <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: 'var(--spacing-xl)' }}>
                 <div className="form-group">
-                  <label className="form-label">
-                    <Calendar size={16} /> {COPY.LABEL_DATUM} *
-                  </label>
-                  <input 
-                    type="date" 
-                    className="form-input" 
-                    value={datum} 
-                    onChange={e => setDatum(e.target.value)} 
-                    disabled={mode === 'fill'}
-                    required 
+                  <label className="form-label"><Calendar size={16} /> {COPY.LABEL_DATUM} *</label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={datum}
+                    onChange={e => setDatum(e.target.value)}
+                    disabled={!veldBewerkbaar}
+                    required
                   />
                 </div>
-                
+
                 <div className="form-group">
-                  <label className="form-label">
-                    <Clock size={16} /> {COPY.LABEL_TIJD} *
-                  </label>
-                  <input 
-                    type="time" 
-                    className="form-input" 
-                    value={tijd} 
-                    onChange={e => setTijd(e.target.value)} 
-                    disabled={mode === 'fill'}
-                    required 
+                  <label className="form-label"><Clock size={16} /> {COPY.LABEL_TIJD} *</label>
+                  <input
+                    type="time"
+                    className="form-input"
+                    value={tijd}
+                    onChange={e => setTijd(e.target.value)}
+                    disabled={!veldBewerkbaar}
+                    required
                   />
                 </div>
-                
+
                 {mode === 'create' && (
                   <div className="form-group">
                     <label className="form-label">{COPY.LABEL_TEGENSTANDER} *</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      value={uitploeg} 
-                      onChange={e => setUitploeg(e.target.value)} 
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={uitploeg}
+                      onChange={e => setUitploeg(e.target.value)}
                       placeholder={COPY.LABEL_TEGENSTANDER_PLACEHOLDER}
-                      required 
+                      required
                     />
                   </div>
                 )}
               </div>
-              
-              {/* Uitslag sectie - NIEUW met aparte velden voor thuis en uit */}
-              {mode === 'fill' && thuisploeg && uitploeg && (
+
+              {/* Wedstrijduitslag - MOBILE FIX */}
+              {(mode === 'fill' || mode === 'create') && thuisploeg && uitploeg && (
                 <div style={{ marginBottom: 'var(--spacing-xl)' }}>
                   <h3 className="form-label" style={{ marginBottom: 'var(--spacing-md)' }}>
                     <Trophy size={16} /> Wedstrijduitslag
                   </h3>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '1fr auto 1fr', 
-                    gap: 'var(--spacing-md)', 
-                    alignItems: 'center',
+                  <div style={{
                     padding: 'var(--spacing-lg)',
                     background: 'var(--color-surface)',
                     borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--color-border)'
+                    border: '1px solid var(--color-border)',
                   }}>
-                    <div>
-                      <label className="form-label" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                        {thuisploeg}
-                        {thuisploeg === 'Ultrawear Indoor' && <span style={{ marginLeft: '8px' }}>🏠</span>}
-                      </label>
-                      <input 
-                        type="number" 
-                        min="0"
-                        max="30"
-                        className="form-input" 
-                        value={thuisGoals} 
-                        onChange={e => setThuisGoals(e.target.value)} 
-                        placeholder="0"
-                        style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: '700' }}
-                      />
-                    </div>
-                    
-                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--color-text-secondary)' }}>
-                      -
-                    </div>
-                    
-                    <div>
-                      <label className="form-label" style={{ marginBottom: 'var(--spacing-sm)' }}>
-                        {uitploeg}
-                        {uitploeg === 'Ultrawear Indoor' && <span style={{ marginLeft: '8px' }}>✈️</span>}
-                      </label>
-                      <input 
-                        type="number" 
-                        min="0"
-                        max="30"
-                        className="form-input" 
-                        value={uitGoals} 
-                        onChange={e => setUitGoals(e.target.value)} 
-                        placeholder="0"
-                        style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: '700' }}
-                      />
+                    {/* Score rij */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr auto 1fr',
+                      gap: 'var(--spacing-md)',
+                      alignItems: 'center',
+                    }}>
+                      {/* Thuis */}
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          color: 'var(--color-text-secondary)',
+                          marginBottom: 'var(--spacing-sm)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {thuisploeg === 'Ultrawear Indoor' ? '🏠 Thuis' : thuisploeg}
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          max="30"
+                          className="form-input"
+                          value={thuisGoals}
+                          onChange={e => setThuisGoals(e.target.value)}
+                          placeholder="0"
+                          style={{ textAlign: 'center', fontSize: '1.25rem', fontWeight: '700', padding: 'var(--spacing-sm)' }}
+                        />
+                      </div>
+
+                      {/* Streepje */}
+                      <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-text-secondary)', textAlign: 'center' }}>
+                        –
+                      </div>
+
+                      {/* Uit */}
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          color: 'var(--color-text-secondary)',
+                          marginBottom: 'var(--spacing-sm)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {uitploeg === 'Ultrawear Indoor' ? '✈️ Uit' : uitploeg}
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          max="30"
+                          className="form-input"
+                          value={uitGoals}
+                          onChange={e => setUitGoals(e.target.value)}
+                          placeholder="0"
+                          style={{ textAlign: 'center', fontSize: '1.25rem', fontWeight: '700', padding: 'var(--spacing-sm)' }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Spelers Tabel */}
+              {/* Spelers Sectie */}
               <div style={{ marginBottom: 'var(--spacing-xl)' }}>
                 <h3 className="form-label" style={{ marginBottom: 'var(--spacing-md)' }}>
                   <Users size={16} /> {COPY.FORM_SECTION_PLAYERS}
                 </h3>
-                <div className="table-container">
+
+                {/* Desktop: Table */}
+                <div className="table-container desktop-only">
                   <table className="stats-table">
                     <thead>
                       <tr>
@@ -639,72 +616,111 @@ export const WedstrijdForm = () => {
                         <tr key={speler.naam}>
                           <td style={{ fontWeight: '600' }}>{speler.naam}</td>
                           <td style={{ textAlign: 'center' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={speler.aanwezig} 
+                            <input
+                              type="checkbox"
+                              checked={speler.aanwezig}
                               onChange={e => handleSpelerChange(index, 'aanwezig', e.target.checked)}
                               style={{ width: '20px', height: '20px', cursor: 'pointer' }}
                             />
                           </td>
                           <td style={{ textAlign: 'center' }}>
-                            <NumberInput 
-                              value={speler.doelpunten} 
-                              onChange={val => handleSpelerChange(index, 'doelpunten', val)}
-                              max={20}
-                              disabled={!speler.aanwezig}
-                            />
+                            <NumberInput value={speler.doelpunten} onChange={val => handleSpelerChange(index, 'doelpunten', val)} max={20} disabled={!speler.aanwezig} />
                           </td>
                           <td style={{ textAlign: 'center' }}>
-                            <NumberInput 
-                              value={speler.penalty} 
-                              onChange={val => handleSpelerChange(index, 'penalty', val)}
-                              max={10}
-                              disabled={!speler.aanwezig}
-                            />
+                            <NumberInput value={speler.penalty} onChange={val => handleSpelerChange(index, 'penalty', val)} max={10} disabled={!speler.aanwezig} />
                           </td>
                           <td style={{ textAlign: 'center' }}>
-                            <NumberInput 
-                              value={speler.corner} 
-                              onChange={val => handleSpelerChange(index, 'corner', val)}
-                              max={20}
-                              disabled={!speler.aanwezig}
-                            />
+                            <NumberInput value={speler.corner} onChange={val => handleSpelerChange(index, 'corner', val)} max={20} disabled={!speler.aanwezig} />
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+
+                {/* Mobile: Vertical Cards */}
+                <div className="mobile-spelers-cards mobile-only">
+                  {spelers.map((speler, index) => (
+                    <div
+                      key={speler.naam}
+                      style={{
+                        padding: 'var(--spacing-md)',
+                        background: 'var(--color-surface)',
+                        borderRadius: 'var(--radius-md)',
+                        border: speler.aanwezig ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        marginBottom: 'var(--spacing-md)',
+                        transition: 'border-color var(--transition-fast)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)', paddingBottom: 'var(--spacing-sm)', borderBottom: '1px solid var(--color-border)' }}>
+                        <span style={{ fontWeight: '700', fontSize: '1.125rem' }}>{speler.naam}</span>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                          <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{COPY.LABEL_AANWEZIG}</span>
+                          <input
+                            type="checkbox"
+                            checked={speler.aanwezig}
+                            onChange={e => handleSpelerChange(index, 'aanwezig', e.target.checked)}
+                            style={{ width: '24px', height: '24px', cursor: 'pointer' }}
+                          />
+                        </label>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>⚽ {COPY.LABEL_GOALS}</label>
+                          <NumberInput value={speler.doelpunten} onChange={val => handleSpelerChange(index, 'doelpunten', val)} max={20} disabled={!speler.aanwezig} />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>🎯 {COPY.LABEL_PENALTIES}</label>
+                          <NumberInput value={speler.penalty} onChange={val => handleSpelerChange(index, 'penalty', val)} max={10} disabled={!speler.aanwezig} />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>🚩 {COPY.LABEL_CORNERS}</label>
+                          <NumberInput value={speler.corner} onChange={val => handleSpelerChange(index, 'corner', val)} max={20} disabled={!speler.aanwezig} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Opmerkingen */}
               <div className="form-group">
-                <label className="form-label">
-                  <AlertCircle size={16} /> {COPY.LABEL_OPMERKINGEN}
-                </label>
-                <textarea 
-                  className="form-textarea" 
-                  value={opmerkingen} 
-                  onChange={e => setOpmerkingen(e.target.value)} 
+                <label className="form-label"><AlertCircle size={16} /> {COPY.LABEL_OPMERKINGEN}</label>
+                <textarea
+                  className="form-textarea"
+                  value={opmerkingen}
+                  onChange={e => setOpmerkingen(e.target.value)}
                   placeholder={COPY.LABEL_OPMERKINGEN_PLACEHOLDER}
-                  rows={3} 
+                  rows={3}
                 />
               </div>
 
-              {/* Submit Button */}
-              <button 
-                type="submit" 
-                disabled={loading} 
-                className="btn btn-primary" 
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary"
                 style={{ width: '100%', marginTop: 'var(--spacing-xl)' }}
               >
-                <Save size={20} /> 
-                {loading ? COPY.FORM_SAVING : COPY.BTN_SAVE_MATCH}
+                <Save size={20} />
+                {loading ? COPY.FORM_SAVING : (isBestaandeWedstrijd && isAdmin ? 'Wedstrijd Bijwerken' : COPY.BTN_SAVE_MATCH)}
               </button>
             </>
           )}
         </form>
       </motion.div>
+
+      {/* Responsive CSS */}
+      <style>{`
+        @media (max-width: 768px) {
+          .desktop-only { display: none !important; }
+          .mobile-only { display: block !important; }
+        }
+        @media (min-width: 769px) {
+          .desktop-only { display: block !important; }
+          .mobile-only { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 };

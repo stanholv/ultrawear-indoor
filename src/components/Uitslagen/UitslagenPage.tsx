@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, TrendingUp, TrendingDown, Minus, Calendar, Filter } from 'lucide-react';
+import { Trophy, TrendingUp, TrendingDown, Minus, Calendar, Filter, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
 
 export const UitslagenPage = () => {
   const { wedstrijden, loading } = useWedstrijden();
   const [filterType, setFilterType] = useState<'all' | 'competitie' | 'beker'>('all');
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -21,19 +23,19 @@ export const UitslagenPage = () => {
     if (!current.uitslag || current.uitslag === '-') {
       return acc;
     }
-    
+
     // Maak een unieke key
     const key = `${current.datum}-${current.tijd}-${current.thuisploeg}-${current.uitploeg}`;
-    
+
     // Check of we deze combinatie al hebben
-    const exists = acc.find(item => 
+    const exists = acc.find(item =>
       `${item.datum}-${item.tijd}-${item.thuisploeg}-${item.uitploeg}` === key
     );
-    
+
     if (!exists) {
       acc.push(current);
     }
-    
+
     return acc;
   }, [] as typeof wedstrijden);
 
@@ -41,10 +43,9 @@ export const UitslagenPage = () => {
   const filteredWedstrijden = uniqueWedstrijden
     .filter(w => filterType === 'all' || w.type === filterType)
     .sort((a, b) => {
-      // Sorteer van OUD naar NIEUW
       const dateA = new Date(a.datum + ' ' + a.tijd);
       const dateB = new Date(b.datum + ' ' + b.tijd);
-      return dateA.getTime() - dateB.getTime(); // OUD naar NIEUW
+      return dateA.getTime() - dateB.getTime();
     });
 
   // Bereken statistieken
@@ -215,6 +216,9 @@ export const UitslagenPage = () => {
             <h2 className="card-title">
               <Calendar size={24} /> Wedstrijden ({filteredWedstrijden.length})
             </h2>
+            <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+              Klik op een wedstrijd voor spelersstatistieken
+            </div>
           </div>
 
           <div style={{ padding: 'var(--spacing-lg)' }}>
@@ -223,7 +227,7 @@ export const UitslagenPage = () => {
                 Geen wedstrijden gevonden voor deze filter
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
                 {filteredWedstrijden.map((wedstrijd, index) => {
                   const result = getResultIcon(wedstrijd);
                   if (!result) return null;
@@ -238,18 +242,10 @@ export const UitslagenPage = () => {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.03 }}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'auto 1fr auto auto auto',
-                        gap: 'var(--spacing-md)',
-                        alignItems: 'center',
-                        padding: 'var(--spacing-md)',
-                        background: 'var(--color-surface)',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid var(--color-border)',
-                      }}
+                      onClick={() => navigate(`/uitslagen/${wedstrijd.id}`)}
+                      className="wedstrijd-row"
                     >
-                      {/* Result Icon */}
+                      {/* Result Bubble */}
                       <div
                         style={{
                           width: '40px',
@@ -260,15 +256,16 @@ export const UitslagenPage = () => {
                           justifyContent: 'center',
                           background: result.color + '20',
                           color: result.color,
-                          fontWeight: '700'
+                          fontWeight: '700',
+                          flexShrink: 0,
                         }}
                       >
                         {result.label}
                       </div>
 
                       {/* Match Info */}
-                      <div>
-                        <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontWeight: '600', fontSize: '1.125rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {isThuis ? 'vs' : '@'} {tegenstander}
                         </div>
                         <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
@@ -281,7 +278,7 @@ export const UitslagenPage = () => {
                       </div>
 
                       {/* Score */}
-                      <div style={{ textAlign: 'right' }}>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>
                           {isThuis ? `${thuis} - ${uit}` : `${uit} - ${thuis}`}
                         </div>
@@ -291,11 +288,12 @@ export const UitslagenPage = () => {
                       <span
                         className="badge"
                         style={{
-                          background: wedstrijd.type === 'beker' ? '#f59e0b' : 'var(--color-primary)',
-                          fontSize: '0.75rem'
+                          background: 'var(--color-secondary)',
+                          fontSize: '0.75rem',
+                          flexShrink: 0,
                         }}
                       >
-                        {wedstrijd.type === 'beker' ? '🏅' : '🏆'}
+                        {wedstrijd.type === 'beker' ? '🏆' : '🥇'}
                       </span>
 
                       {/* Location Badge */}
@@ -303,11 +301,15 @@ export const UitslagenPage = () => {
                         className="badge"
                         style={{
                           background: isThuis ? 'var(--color-success)' : '#f59e0b',
-                          fontSize: '0.75rem'
+                          fontSize: '0.75rem',
+                          flexShrink: 0,
                         }}
                       >
                         {isThuis ? '🏠' : '✈️'}
                       </span>
+
+                      {/* Chevron */}
+                      <ChevronRight size={18} color="var(--color-text-tertiary)" style={{ flexShrink: 0 }} />
                     </motion.div>
                   );
                 })}

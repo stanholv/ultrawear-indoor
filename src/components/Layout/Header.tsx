@@ -7,10 +7,10 @@ import { motion } from 'framer-motion';
 export const Header = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'light';
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' || 'dark';
     setTheme(savedTheme);
     document.documentElement.setAttribute('data-theme', savedTheme);
   }, []);
@@ -39,64 +39,66 @@ export const Header = () => {
   return (
     <header className="header">
       <div className="header-content">
+        {/* Logo + naam */}
         <motion.button
           onClick={() => navigate('/')}
           className="logo"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          style={{ 
-            background: 'none', 
-            border: 'none', 
+          style={{
+            background: 'none',
+            border: 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '16px'
+            gap: '12px',
+            flexShrink: 0,
           }}
         >
-          {/* Ultrawear Logo Icon */}
-          <div style={{ 
-            width: '48px', 
-            height: '48px', 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div style={{
+            width: '44px',
+            height: '44px',
+            minWidth: '44px',
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
             background: 'white',
-            borderRadius: '12px',
+            borderRadius: '10px',
             padding: '4px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
           }}>
-            <img 
+            <img
               src="https://usercontent.one/wp/webshop.ultrawear.be/wp-content/uploads/2020/03/cropped-Logo-ULTRAWEAR-1-1-600x466.png?media=1710336765"
               alt="Ultrawear Logo"
-              style={{ 
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain'
-              }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
           </div>
-          
-          {/* Team Name */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <h1 style={{ 
-              margin: 0, 
-              fontSize: '1.5rem', 
+
+          {/* Naam — verbergen op kleine schermen via CSS */}
+          <div className="header-logo-text">
+            <span style={{
+              margin: 0,
+              fontSize: '1.25rem',
               fontWeight: '800',
-              color: 'var(--color-text-primary)'
+              color: 'white',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              lineHeight: 1.2,
             }}>
               ULTRAWEAR INDOOR
-            </h1>
-            <div style={{ 
-              fontSize: '0.75rem', 
-              color: 'var(--color-text-secondary)',
+            </span>
+            <span style={{
+              fontSize: '0.7rem',
+              color: 'rgba(255,255,255,0.6)',
               fontWeight: '500',
-              marginTop: '2px'
+              display: 'block',
             }}>
               Powered by Ultrawear
-            </div>
+            </span>
           </div>
         </motion.button>
 
+        {/* Rechts: theme toggle + user */}
         <div className="header-actions">
           <motion.button
             className="theme-toggle"
@@ -109,17 +111,17 @@ export const Header = () => {
           </motion.button>
 
           {user ? (
-            // Logged in user menu
             <div className="user-menu">
               <div className="user-avatar">
                 {profile?.full_name ? getInitials(profile.full_name) : <User size={16} />}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              {/* Naam + rol — verbergen op kleine schermen */}
+              <div className="user-menu-info">
                 <span style={{ fontWeight: '600', fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>
                   {profile?.full_name || user.email}
                 </span>
                 {profile?.role === 'admin' && (
-                  <span className="badge">Admin</span>
+                  <span className="badge" style={{ fontSize: '0.65rem', padding: '2px 6px' }}>Admin</span>
                 )}
               </div>
               <motion.button
@@ -127,28 +129,21 @@ export const Header = () => {
                 onClick={handleSignOut}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label="Uitloggen"
               >
                 <LogOut size={16} />
-                Uitloggen
+                <span className="btn-logout-text">Uitloggen</span>
               </motion.button>
             </div>
           ) : (
-            // Login button for non-logged in users
             <motion.button
-              className="btn btn-primary"
+              className="btn btn-primary btn-login"
               onClick={() => navigate('/login')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 16px',
-                fontSize: '0.875rem'
-              }}
             >
               <LogIn size={18} />
-              <span>Inloggen</span>
+              <span className="btn-login-text">Inloggen</span>
             </motion.button>
           )}
         </div>

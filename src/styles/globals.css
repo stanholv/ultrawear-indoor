@@ -1211,3 +1211,212 @@ body {
     font-size: 0.875rem;
   }
 }
+
+/* =========================
+   WEDSTRIJD ROW - Clickable match row (UitslagenPage)
+   ========================= */
+.wedstrijd-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.wedstrijd-row:hover {
+  background: var(--color-primary-glow);
+  border-color: var(--color-primary);
+  transform: translateX(4px);
+}
+
+/* Naam kolom neemt beschikbare ruimte */
+.wedstrijd-row > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+/* =========================
+   PAGE HEADER
+   ========================= */
+.page-header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.page-title {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.page-subtitle {
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+@media (max-width: 768px) {
+  .wedstrijd-row {
+    flex-wrap: wrap;
+    padding: var(--spacing-md);
+  }
+
+  /* Score neemt volledige breedte op mobile */
+  .wedstrijd-row > div:nth-child(3) {
+    margin-left: auto;
+  }
+}
+
+/* =========================
+   MOBILE UX POLISH - v2.4
+   ========================= */
+
+/* Voorkom horizontale scroll op alle schermen */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* === HEADER MOBILE === */
+@media (max-width: 640px) {
+  .header-content {
+    padding: var(--spacing-md);
+    gap: var(--spacing-sm);
+  }
+
+  /* Verberg de tekstnaam op kleine schermen */
+  .header-logo-text {
+    display: none;
+  }
+
+  /* Compacter user menu */
+  .user-menu {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  /* Verberg naam/rol in user menu op mobile */
+  .user-menu-info {
+    display: none;
+  }
+
+  /* Verberg "Uitloggen" tekst, toon enkel icoon */
+  .btn-logout-text {
+    display: none;
+  }
+
+  .btn-logout {
+    padding: var(--spacing-sm);
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Login knop: enkel icoon op mobile */
+  .btn-login-text {
+    display: none;
+  }
+
+  .btn-login {
+    padding: var(--spacing-sm) !important;
+    min-width: 40px;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Toon tekst op grotere schermen */
+@media (min-width: 641px) {
+  .header-logo-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .user-menu-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .btn-logout-text {
+    display: inline;
+  }
+
+  .btn-login-text {
+    display: inline;
+  }
+}
+
+/* === NAVIGATIE MOBILE === */
+@media (max-width: 640px) {
+  .nav-tabs {
+    padding: 0 var(--spacing-sm);
+    justify-content: space-around;
+  }
+
+  .tab {
+    padding: var(--spacing-sm) var(--spacing-sm);
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.7rem;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .tab span {
+    font-size: 0.65rem;
+  }
+}
+
+/* === STATSPAGE KNOP MOBILE === */
+/* Op mobile: knop onder de titel i.p.v. naast */
+@media (max-width: 640px) {
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: var(--spacing-md);
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* === LIGHT MODE FIXES === */
+/* Header naam altijd wit (ook in light mode, want header is altijd donker) */
+.header h1,
+.header .header-logo-text span {
+  color: white !important;
+}
+
+/* Hero banner in light mode leesbaar maken */
+:root:not([data-theme="dark"]) .hero {
+  background: var(--color-secondary);
+}
+
+:root:not([data-theme="dark"]) .hero * {
+  color: white;
+}
+
+/* === ALGEMENE OVERFLOW FIX === */
+.card {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.main-content {
+  overflow-x: hidden;
+}
