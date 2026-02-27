@@ -4,6 +4,10 @@ export interface Profile {
   full_name: string;
   email: string;
   role: 'admin' | 'speler';
+  speler_naam?: string;
+  rugnummer?: number;
+  positie?: string;
+  bio?: string;
   created_at: string;
 }
 
@@ -58,6 +62,38 @@ export interface WedstrijdFormData {
   opmerkingen?: string;
   spelers: SpelerInput[];
 }
+
+// Player Profile (v2.5)
+export interface PlayerProfile {
+  speler_naam: string;
+  rugnummer?: number;
+  positie?: string;
+  bio?: string;
+  // Gekoppeld account (optioneel)
+  profile_id?: string;
+  full_name?: string;
+}
+
+// Review (v2.5)
+export interface Review {
+  id: string;
+  speler_naam: string;
+  score: number; // 1-5
+  commentaar?: string;
+  reviewer_naam?: string;
+  ip_adres?: string;
+  created_at: string;
+}
+
+// Posities
+export const POSITIES = [
+  'Keeper',
+  'Verdediger',
+  'Middenvelder',
+  'Aanvaller',
+] as const;
+
+export type Positie = typeof POSITIES[number];
 
 // Constants
 export const SPELERS = [

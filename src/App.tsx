@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { Analytics } from '@vercel/analytics/react';
 import { Header } from './components/Layout/Header';
 import { Navigation } from './components/Layout/Navigation';
 import { HomePage } from './components/Home/HomePage';
@@ -13,6 +14,8 @@ import { useAuth } from './hooks/useAuth';
 import { AdminPage } from './components/Admin/AdminPage';
 import { UitslagenPage } from './components/Uitslagen/UitslagenPage';
 import { WedstrijdDetailPage } from './pages/WedstrijdDetailPage';
+import { SpelersPage } from './pages/SpelersPage';
+import { SpelerProfielPage } from './pages/SpelerProfielPage';
 import './styles/globals.css';
 
 function App() {
@@ -47,6 +50,8 @@ function App() {
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/uitslagen" element={<UitslagenPage />} />
             <Route path="/uitslagen/:id" element={<WedstrijdDetailPage />} />
+            <Route path="/spelers" element={<SpelersPage />} />
+            <Route path="/spelers/:naam" element={<SpelerProfielPage />} />
             <Route path="/login" element={
               user ? <Navigate to="/" replace /> : <LoginForm />
             } />
@@ -75,6 +80,7 @@ function App() {
           closeButton 
           duration={5000}
         />
+        <Analytics />
       </div>
     </Router>
   );

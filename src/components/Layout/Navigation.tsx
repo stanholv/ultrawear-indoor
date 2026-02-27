@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, TrendingUp, Calendar, Trophy, Shield } from 'lucide-react';
+import { Home, TrendingUp, Calendar, Trophy, Shield, Users } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 export const Navigation = () => {
@@ -31,6 +31,14 @@ export const Navigation = () => {
         >
           <Trophy size={20} />
           <span>Uitslagen</span>
+        </NavLink>
+
+        <NavLink 
+          to="/spelers" 
+          className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}
+        >
+          <Users size={20} />
+          <span>Spelers</span>
         </NavLink>
         
         {/* Admin-only links */}

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 import { COPY } from '../../lib/copy';
 import { AggregatedStats } from '../../lib/types';
@@ -15,6 +16,7 @@ const getRankBadge = (rank: number) => {
 };
 
 export const StatsTable = ({ stats }: StatsTableProps) => {
+  const navigate = useNavigate();
   const sortedStats = [...stats].sort((a, b) => b.doelpunten - a.doelpunten);
 
   const maxAanwezig = Math.max(...stats.map(s => s.aanwezig), 0);
@@ -65,7 +67,12 @@ export const StatsTable = ({ stats }: StatsTableProps) => {
                   </td>
 
                   <td data-label="Speler">
-                    <div style={{ fontWeight: '600', color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                    <div
+                      onClick={() => navigate(`/spelers/${stat.speler_naam.toLowerCase()}`)}
+                      style={{ fontWeight: '600', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'transparent', transition: 'text-decoration-color 0.2s' }}
+                      onMouseEnter={e => (e.currentTarget.style.textDecorationColor = 'var(--color-primary)')}
+                      onMouseLeave={e => (e.currentTarget.style.textDecorationColor = 'transparent')}
+                    >
                       {stat.speler_naam}
                       {rank === 1 && <span>🔥</span>}
                     </div>
