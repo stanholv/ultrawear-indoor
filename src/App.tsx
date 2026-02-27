@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { Analytics } from '@vercel/analytics/react';
 import { Header } from './components/Layout/Header';
 import { Navigation } from './components/Layout/Navigation';
 import { HomePage } from './components/Home/HomePage';
@@ -75,6 +76,7 @@ function App() {
           closeButton 
           duration={5000}
         />
+        <Analytics />
       </div>
     </Router>
   );
