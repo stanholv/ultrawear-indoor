@@ -32,7 +32,7 @@ const StarRating = ({ value, onChange, readonly = false }: {
 };
 
 // Form indicator: laatste 5 wedstrijden als bolletjes
-const FormIndicator = ({ form }: { form: { doelpunten: number; datum: string }[] }) => {
+const FormIndicator = ({ form }: { form: { doelpunten: number; tegenstander: string }[] }) => {
   if (form.length === 0) return null;
   return (
     <div style={{ marginTop: 'var(--spacing-lg)' }}>
@@ -62,7 +62,7 @@ const FormIndicator = ({ form }: { form: { doelpunten: number; datum: string }[]
                   minHeight: '12px',
                 }} />
                 <div style={{ fontSize: '0.65rem', color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
-                  {new Date(w.datum).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' })}
+                  {w.tegenstander}
                 </div>
               </div>
             );
@@ -329,7 +329,7 @@ export const SpelerProfielPage = () => {
 
         {/* Statistieken */}
         {stat && (
-          <div className="stats-grid" style={{ marginBottom: 'var(--spacing-lg)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
             {[
               { label: 'Wedstrijden', value: stat.aanwezig, icon: <Calendar size={24} />, kleur: '#3b82f6' },
               { label: 'Doelpunten', value: stat.doelpunten, icon: <Target size={24} />, kleur: 'var(--color-primary)' },

@@ -5,13 +5,6 @@ import { useProfiles } from '../hooks/useProfiles';
 import { useStats } from '../hooks/useStats';
 import { SPELERS } from '../lib/types';
 
-const POSITIE_KLEUREN: Record<string, string> = {
-  'Keeper': '#f59e0b',
-  'Verdediger': '#3b82f6',
-  'Middenvelder': '#10b981',
-  'Aanvaller': '#C8102E',
-};
-
 export const SpelersPage = () => {
   const navigate = useNavigate();
   const { profiles, loading: profilesLoading } = useProfiles();
@@ -19,7 +12,6 @@ export const SpelersPage = () => {
 
   const loading = profilesLoading || statsLoading;
 
-  // Merge SPELERS array met profiles data, gesorteerd op alfabet
   const spelers = [...SPELERS].sort().map((naam: string) => {
     const profile = profiles.find((p: any) => p.speler_naam === naam);
     const stat = stats.find((s: any) => s.speler_naam === naam);
@@ -36,7 +28,6 @@ export const SpelersPage = () => {
 
   return (
     <div>
-      {/* Hero */}
       <div className="hero">
         <div className="hero-content">
           <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }}>
@@ -61,28 +52,22 @@ export const SpelersPage = () => {
               onClick={() => navigate(`/spelers/${naam.toLowerCase()}`)}
               style={{
                 cursor: 'pointer',
-                borderLeft: profile?.positie
-                  ? `4px solid ${POSITIE_KLEUREN[profile.positie] || 'var(--color-primary)'}`
-                  : '4px solid var(--color-border)',
+                borderLeft: '4px solid var(--color-primary)',
                 transition: 'all var(--transition-fast)',
                 padding: 'var(--spacing-md) var(--spacing-lg)',
                 marginBottom: 0,
               }}
-              whileHover={{ x: 4, borderLeftColor: 'var(--color-primary)' } as any}
+              whileHover={{ x: 4 } as any}
               whileTap={{ scale: 0.98 }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)', flex: 1, flexWrap: 'wrap' }}>
-                  {/* Naam + rugnummer */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', minWidth: '120px' }}>
                     {profile?.rugnummer && (
                       <span style={{
-                        background: 'var(--color-primary)',
-                        color: 'white',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '2px 8px',
-                        fontSize: '0.75rem',
-                        fontWeight: '800',
+                        background: 'var(--color-primary)', color: 'white',
+                        borderRadius: 'var(--radius-sm)', padding: '2px 8px',
+                        fontSize: '0.75rem', fontWeight: '800',
                       }}>
                         #{profile.rugnummer}
                       </span>
@@ -90,39 +75,19 @@ export const SpelersPage = () => {
                     <h3 style={{ fontSize: '1.125rem', fontWeight: '700', margin: 0 }}>{naam}</h3>
                   </div>
 
-                  {/* Positie */}
-                  {profile?.positie && (
-                    <div style={{
-                      display: 'inline-block',
-                      background: (POSITIE_KLEUREN[profile.positie] || 'var(--color-primary)') + '20',
-                      color: POSITIE_KLEUREN[profile.positie] || 'var(--color-primary)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '2px 8px',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      marginBottom: 'var(--spacing-sm)',
-                    }}>
-                      {profile.positie}
-                    </div>
-                  )}
-
-                  {/* Stats samenvatting */}
-                  {stat && (
+                  {stat ? (
                     <div style={{ display: 'flex', gap: 'var(--spacing-md)', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
                       <span>⚽ {stat.doelpunten} goals</span>
                       <span>📅 {stat.aanwezig} wed.</span>
                     </div>
-                  )}
-
-                  {/* Geen profiel */}
-                  {!profile && (
+                  ) : (
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
-                      Nog geen profiel
+                      Nog geen statistieken
                     </div>
                   )}
                 </div>
 
-                <ChevronRight size={20} color="var(--color-text-tertiary)" style={{ flexShrink: 0, marginTop: '4px' }} />
+                <ChevronRight size={20} color="var(--color-text-tertiary)" style={{ flexShrink: 0 }} />
               </div>
             </motion.div>
           ))}
