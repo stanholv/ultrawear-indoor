@@ -93,10 +93,9 @@ export const useSpelerForm = (spelerNaam: string) => {
         .from('speler_stats')
         .select('wedstrijd_id, doelpunten, aanwezig, wedstrijden(datum, thuisploeg, uitploeg)')
         .eq('speler_naam', spelerNaam)
-        .eq('aanwezig', true)
-        .order('wedstrijden(datum)', { ascending: false })
-        .limit(5);
+        .eq('aanwezig', true);
 
+      // Sorteer client-side op datum (UUID sorteren werkt niet), neem laatste 5
       const mapped = (data || []).map((s: any) => {
         const w = s.wedstrijden;
         const tegenstander = w?.thuisploeg === 'Ultrawear Indoor' ? w?.uitploeg : w?.thuisploeg;
@@ -109,8 +108,10 @@ export const useSpelerForm = (spelerNaam: string) => {
         };
       });
 
-      mapped.sort((a: any, b: any) => new Date(a.datum).getTime() - new Date(b.datum).getTime());
-      setForm(mapped);
+      // Sorteer op datum nieuwste eerst, neem laatste 5, dan omdraaien voor display (oud → nieuw)
+      mapped.sort((a: any, b: any) => new Date(b.datum).getTime() - new Date(a.datum).getTime());
+      const laatste5 = mapped.slice(0, 5).reverse();
+      setForm(laatste5);
       setLoading(false);
     };
     fetchForm();
