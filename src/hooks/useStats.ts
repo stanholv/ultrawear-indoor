@@ -94,7 +94,7 @@ export const useSpelerForm = (spelerNaam: string) => {
         .select('wedstrijd_id, doelpunten, aanwezig, wedstrijden(datum, thuisploeg, uitploeg)')
         .eq('speler_naam', spelerNaam)
         .eq('aanwezig', true)
-        .order('wedstrijd_id', { ascending: false })
+        .order('wedstrijden(datum)', { ascending: false })
         .limit(5);
 
       const mapped = (data || []).map((s: any) => {
