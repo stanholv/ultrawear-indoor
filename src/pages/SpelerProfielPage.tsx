@@ -1,19 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Star, Edit2, Check, X, Shield, Target, Flag, Calendar } from 'lucide-react';
+import { ArrowLeft, Star, Edit2, Check, X, Shield, Target, Flag, Calendar, TrendingUp, Award } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProfiles, useReviews, useUpdateProfile } from '../hooks/useProfiles';
-import { useStats } from '../hooks/useStats';
+import { useStats, useSpelerForm } from '../hooks/useStats';
 import { useAuth } from '../hooks/useAuth';
-import { POSITIES } from '../lib/types';
-
-const POSITIE_KLEUREN: Record<string, string> = {
-  'Keeper': '#f59e0b',
-  'Verdediger': '#3b82f6',
-  'Middenvelder': '#10b981',
-  'Aanvaller': '#C8102E',
-};
 
 const StarRating = ({ value, onChange, readonly = false }: {
   value: number;
@@ -39,6 +31,98 @@ const StarRating = ({ value, onChange, readonly = false }: {
   );
 };
 
+// Form indicator: laatste 5 wedstrijden als bolletjes
+const FormIndicator = ({ form }: { form: { doelpunten: number; datum: string }[] }) => {
+  if (form.length === 0) return null;
+  return (
+    <div style={{ marginTop: 'var(--spacing-lg)' }}>
+      <div className="card">
+        <div className="card-header" style={{ marginBottom: 'var(--spacing-sm)' }}>
+          <h3 className="card-title" style={{ fontSize: '1rem' }}>
+            <TrendingUp size={18} /> Vorm (laatste {form.length} wedstrijden)
+          </h3>
+        </div>
+        <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'flex-end', padding: 'var(--spacing-sm) 0' }}>
+          {[...form].reverse().map((w, i) => {
+            const hoogte = Math.max(24, (w.doelpunten + 1) * 20);
+            return (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flex: 1 }}>
+                <div style={{
+                  fontSize: '0.75rem', fontWeight: '700',
+                  color: w.doelpunten > 0 ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
+                }}>
+                  {w.doelpunten > 0 ? `${w.doelpunten}⚽` : '—'}
+                </div>
+                <div style={{
+                  width: '100%', maxWidth: '40px',
+                  height: `${hoogte}px`,
+                  background: w.doelpunten > 0 ? 'var(--color-primary)' : 'var(--color-border)',
+                  borderRadius: 'var(--radius-sm)',
+                  transition: 'height 0.3s ease',
+                  minHeight: '12px',
+                }} />
+                <div style={{ fontSize: '0.65rem', color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
+                  {new Date(w.datum).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Beste seizoen prestatie
+const BestePrestatie = ({ stats, spelerNaam }: { stats: any[]; spelerNaam: string }) => {
+  const spelerStat = stats.find(s => s.speler_naam === spelerNaam);
+  if (!spelerStat || spelerStat.aanwezig === 0) return null;
+
+  const aanwezigPct = Math.round((spelerStat.aanwezig / Math.max(...stats.map((s: any) => s.aanwezig))) * 100);
+  const isTopscorer = stats.every((s: any) => spelerStat.doelpunten >= s.doelpunten);
+  const isPresentieleider = stats.every((s: any) => spelerStat.aanwezig >= s.aanwezig);
+  const goalsPerWedstrijd = spelerStat.aanwezig > 0 ? (spelerStat.doelpunten / spelerStat.aanwezig).toFixed(2) : '0';
+
+  const prestaties = [];
+  if (isTopscorer && spelerStat.doelpunten > 0) prestaties.push({ icon: '🥇', label: 'Topscorer van het seizoen' });
+  if (isPresentieleider) prestaties.push({ icon: '🏆', label: 'Meeste wedstrijden gespeeld' });
+  if (spelerStat.doelpunten > 0) prestaties.push({ icon: '⚽', label: `${goalsPerWedstrijd} goals per wedstrijd` });
+
+  return (
+    <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
+      <div className="card-header" style={{ marginBottom: 'var(--spacing-sm)' }}>
+        <h3 className="card-title" style={{ fontSize: '1rem' }}>
+          <Award size={18} /> Seizoen Hoogtepunten
+        </h3>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-sm)', padding: 'var(--spacing-sm) 0' }}>
+        {prestaties.map((p, i) => (
+          <div key={i} style={{
+            display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)',
+            background: 'var(--color-surface)', borderRadius: 'var(--radius-md)',
+            padding: 'var(--spacing-sm) var(--spacing-md)',
+            fontSize: '0.875rem', fontWeight: '600',
+            border: '1px solid var(--color-border)',
+          }}>
+            <span style={{ fontSize: '1.1rem' }}>{p.icon}</span>
+            {p.label}
+          </div>
+        ))}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)',
+          background: 'var(--color-surface)', borderRadius: 'var(--radius-md)',
+          padding: 'var(--spacing-sm) var(--spacing-md)',
+          fontSize: '0.875rem', fontWeight: '600',
+          border: '1px solid var(--color-border)',
+        }}>
+          <span style={{ fontSize: '1.1rem' }}>📅</span>
+          {aanwezigPct}% aanwezigheid
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const SpelerProfielPage = () => {
   const { naam } = useParams<{ naam: string }>();
   const navigate = useNavigate();
@@ -47,40 +131,32 @@ export const SpelerProfielPage = () => {
   const { stats } = useStats();
   const { updateProfile } = useUpdateProfile();
 
-  // Naam uit URL (lowercase) terug naar origineel
-  const spelerNaam = naam
-    ? naam.charAt(0).toUpperCase() + naam.slice(1)
-    : '';
+  const spelerNaam = naam ? naam.charAt(0).toUpperCase() + naam.slice(1) : '';
 
   const profile = profiles.find((p: any) => p.speler_naam?.toLowerCase() === naam);
   const stat = stats.find((s: any) => s.speler_naam === spelerNaam);
 
-  // Is de ingelogde user gekoppeld aan deze speler?
   const isEigenProfiel = authProfile?.speler_naam?.toLowerCase() === naam;
   const isAdmin = authProfile?.role === 'admin';
   const kanBewerken = isEigenProfiel || isAdmin;
 
-  // Reviews
   const { reviews, gemiddelde, addReview } = useReviews(spelerNaam);
+  const { form } = useSpelerForm(spelerNaam);
 
-  // Bewerkingsmodus
   const [editing, setEditing] = useState(false);
   const [editBio, setEditBio] = useState(profile?.bio || '');
-  const [editPositie, setEditPositie] = useState(profile?.positie || '');
   const [editRugnummer, setEditRugnummer] = useState(profile?.rugnummer?.toString() || '');
   const [saving, setSaving] = useState(false);
 
-  // Review formulier
   const [reviewScore, setReviewScore] = useState(0);
   const [reviewCommentaar, setReviewCommentaar] = useState('');
+  const [reviewNaam, setReviewNaam] = useState('');
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
-  const [reviewNaam, setReviewNaam] = useState('');
 
   useEffect(() => {
     if (profile) {
       setEditBio(profile.bio || '');
-      setEditPositie(profile.positie || '');
       setEditRugnummer(profile.rugnummer?.toString() || '');
     }
   }, [profile]);
@@ -90,42 +166,31 @@ export const SpelerProfielPage = () => {
     setSaving(true);
     const { success, error } = await updateProfile(profile.profile_id, {
       bio: editBio,
-      positie: editPositie,
       rugnummer: editRugnummer ? parseInt(editRugnummer) : undefined,
     });
     setSaving(false);
     if (success) {
       toast.success('Profiel opgeslagen!');
       setEditing(false);
+      await refreshProfile();
     } else {
       toast.error(error || 'Fout bij opslaan');
     }
   };
 
   const handleReviewSubmit = async () => {
-    if (reviewScore === 0) {
-      toast.error('Geef een score van 1 tot 5 sterren');
-      return;
-    }
-    if (!reviewNaam.trim()) {
-      toast.error('Vul je naam in');
-      return;
-    }
+    if (reviewScore === 0) { toast.error('Geef een score van 1 tot 5 sterren'); return; }
+    if (!reviewNaam.trim()) { toast.error('Vul je naam in'); return; }
     setReviewLoading(true);
     const { success, error } = await addReview(reviewScore, reviewCommentaar, reviewNaam);
     setReviewLoading(false);
     if (success) {
       toast.success('Review toegevoegd! ⭐');
-      setReviewScore(0);
-      setReviewCommentaar('');
-      setReviewNaam('');
-      setReviewOpen(false);
+      setReviewScore(0); setReviewCommentaar(''); setReviewNaam(''); setReviewOpen(false);
     } else {
       toast.error(error || 'Fout bij toevoegen review');
     }
   };
-
-  const positieKleur = profile?.positie ? POSITIE_KLEUREN[profile.positie] || 'var(--color-primary)' : 'var(--color-primary)';
 
   return (
     <div className="container" style={{ padding: 'var(--spacing-xl)' }}>
@@ -147,10 +212,9 @@ export const SpelerProfielPage = () => {
         </button>
 
         {/* Profiel Hero */}
-        <div className="card card-hero" style={{ marginBottom: 'var(--spacing-xl)' }}>
+        <div className="card card-hero" style={{ marginBottom: 'var(--spacing-lg)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
             <div>
-              {/* Rugnummer + naam */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-sm)' }}>
                 {!editing && profile?.rugnummer && (
                   <span style={{
@@ -166,19 +230,6 @@ export const SpelerProfielPage = () => {
                 </h1>
               </div>
 
-              {/* Positie badge */}
-              {!editing && profile?.positie && (
-                <span style={{
-                  background: positieKleur + '30', color: 'white',
-                  borderRadius: 'var(--radius-sm)', padding: '4px 12px',
-                  fontSize: '0.875rem', fontWeight: '600',
-                  border: `1px solid ${positieKleur}`,
-                }}>
-                  {profile.positie}
-                </span>
-              )}
-
-              {/* Gemiddelde score */}
               {gemiddelde > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-sm)' }}>
                   <StarRating value={Math.round(gemiddelde)} readonly />
@@ -189,21 +240,16 @@ export const SpelerProfielPage = () => {
               )}
             </div>
 
-            {/* Bewerken knop */}
             {kanBewerken && !editing && (
               <button
                 onClick={() => setEditing(true)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)',
-                  background: 'rgba(255,255,255,0.2)',
-                  color: 'white',
+                  background: 'rgba(255,255,255,0.2)', color: 'white',
                   border: '2px solid rgba(255,255,255,0.6)',
                   borderRadius: 'var(--radius-md)',
                   padding: 'var(--spacing-sm) var(--spacing-lg)',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  fontSize: '0.9rem',
-                  backdropFilter: 'blur(4px)',
+                  cursor: 'pointer', fontWeight: '600', fontSize: '0.9rem',
                   transition: 'all var(--transition-fast)',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.35)')}
@@ -221,29 +267,17 @@ export const SpelerProfielPage = () => {
               animate={{ opacity: 1, height: 'auto' }}
               style={{ marginTop: 'var(--spacing-lg)', background: 'rgba(255,255,255,0.1)', borderRadius: 'var(--radius-md)', padding: 'var(--spacing-lg)' }}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-md)' }}>
-                <div className="form-group">
-                  <label className="form-label" style={{ color: 'rgba(255,255,255,0.8)' }}>Rugnummer</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={editRugnummer}
-                    onChange={e => setEditRugnummer(e.target.value)}
-                    placeholder="bijv. 9"
-                    min="1" max="99"
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label" style={{ color: 'rgba(255,255,255,0.8)' }}>Positie</label>
-                  <select
-                    className="form-input"
-                    value={editPositie}
-                    onChange={e => setEditPositie(e.target.value)}
-                  >
-                    <option value="">-- Kies positie --</option>
-                    {POSITIES.map((p: string) => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </div>
+              <div style={{ marginBottom: 'var(--spacing-md)' }}>
+                <label className="form-label" style={{ color: 'rgba(255,255,255,0.8)' }}>Rugnummer</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={editRugnummer}
+                  onChange={e => setEditRugnummer(e.target.value)}
+                  placeholder="bijv. 9"
+                  min="1" max="99"
+                  style={{ maxWidth: '120px' }}
+                />
               </div>
               <div className="form-group" style={{ marginBottom: 'var(--spacing-md)' }}>
                 <label className="form-label" style={{ color: 'rgba(255,255,255,0.8)' }}>Bio</label>
@@ -259,32 +293,33 @@ export const SpelerProfielPage = () => {
                 <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', textAlign: 'right' }}>{editBio.length}/300</div>
               </div>
               <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="btn btn-primary"
-                  style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}
-                >
+                <button onClick={handleSave} disabled={saving} style={{
+                  display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)',
+                  background: 'white', color: 'var(--color-primary)',
+                  border: 'none', borderRadius: 'var(--radius-md)',
+                  padding: 'var(--spacing-sm) var(--spacing-lg)',
+                  cursor: 'pointer', fontWeight: '700',
+                }}>
                   <Check size={16} /> {saving ? 'Opslaan...' : 'Opslaan'}
                 </button>
-                <button
-                  onClick={() => setEditing(false)}
-                  className="btn btn-secondary"
-                  style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}
-                >
+                <button onClick={() => setEditing(false)} style={{
+                  display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)',
+                  background: 'rgba(255,255,255,0.15)', color: 'white',
+                  border: '1px solid rgba(255,255,255,0.4)', borderRadius: 'var(--radius-md)',
+                  padding: 'var(--spacing-sm) var(--spacing-lg)',
+                  cursor: 'pointer', fontWeight: '600',
+                }}>
                   <X size={16} /> Annuleren
                 </button>
               </div>
             </motion.div>
           )}
 
-          {/* Bio */}
           {!editing && profile?.bio && (
             <p style={{ color: 'rgba(255,255,255,0.85)', marginTop: 'var(--spacing-lg)', fontSize: '1rem', lineHeight: 1.6 }}>
               {profile.bio}
             </p>
           )}
-
           {!editing && !profile && (
             <p style={{ color: 'rgba(255,255,255,0.5)', marginTop: 'var(--spacing-md)', fontStyle: 'italic' }}>
               Dit profiel is nog niet ingevuld.
@@ -294,7 +329,7 @@ export const SpelerProfielPage = () => {
 
         {/* Statistieken */}
         {stat && (
-          <div className="stats-grid" style={{ marginBottom: 'var(--spacing-xl)' }}>
+          <div className="stats-grid" style={{ marginBottom: 'var(--spacing-lg)' }}>
             {[
               { label: 'Wedstrijden', value: stat.aanwezig, icon: <Calendar size={24} />, kleur: '#3b82f6' },
               { label: 'Doelpunten', value: stat.doelpunten, icon: <Target size={24} />, kleur: 'var(--color-primary)' },
@@ -314,8 +349,14 @@ export const SpelerProfielPage = () => {
           </div>
         )}
 
+        {/* Form indicator */}
+        <FormIndicator form={form} />
+
+        {/* Beste seizoen prestatie */}
+        {stat && <BestePrestatie stats={stats} spelerNaam={spelerNaam} />}
+
         {/* Reviews sectie */}
-        <div className="card" style={{ marginBottom: 'var(--spacing-xl)' }}>
+        <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
           <div className="card-header">
             <h2 className="card-title">
               <Star size={24} /> Reviews
@@ -334,7 +375,6 @@ export const SpelerProfielPage = () => {
             </button>
           </div>
 
-          {/* Review formulier */}
           {reviewOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -369,17 +409,12 @@ export const SpelerProfielPage = () => {
                 />
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)', textAlign: 'right' }}>{reviewCommentaar.length}/200</div>
               </div>
-              <button
-                onClick={handleReviewSubmit}
-                disabled={reviewLoading || reviewScore === 0}
-                className="btn btn-primary"
-              >
+              <button onClick={handleReviewSubmit} disabled={reviewLoading || reviewScore === 0} className="btn btn-primary">
                 {reviewLoading ? 'Opslaan...' : 'Review Opslaan'}
               </button>
             </motion.div>
           )}
 
-          {/* Reviews lijst */}
           {reviews.length === 0 ? (
             <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
               Nog geen reviews. Wees de eerste!
@@ -398,16 +433,16 @@ export const SpelerProfielPage = () => {
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <StarRating value={review.score} readonly />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                      <StarRating value={review.score} readonly />
+                      <span style={{ fontWeight: '600', fontSize: '0.875rem' }}>{review.reviewer_naam || 'Anoniem'}</span>
+                    </div>
                     <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
                       {new Date(review.created_at).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                    {review.reviewer_naam || 'Anoniem'}
-                  </div>
                   {review.commentaar && (
-                    <p style={{ margin: '4px 0 0 0', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-secondary)', paddingLeft: '4px' }}>
                       {review.commentaar}
                     </p>
                   )}

@@ -57,3 +57,39 @@ export const useStats = () => {
 
   return { stats, loading, error, refetch: loadStats };
 };
+
+// Hook: stats per wedstrijd voor één speler (form indicator)
+export const useSpelerForm = (spelerNaam: string) => {
+  const [form, setForm] = useState<{ wedstrijd_id: string; datum: string; doelpunten: number; aanwezig: boolean }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!spelerNaam) return;
+    const fetch = async () => {
+      setLoading(true);
+      // Haal speler_stats op met wedstrijd datum via join
+      const { data } = await supabase
+        .from('speler_stats')
+        .select('wedstrijd_id, doelpunten, aanwezig, wedstrijden(datum, uitslag)')
+        .eq('speler_naam', spelerNaam)
+        .eq('aanwezig', true)
+        .order('wedstrijd_id', { ascending: false })
+        .limit(5);
+
+      const mapped = (data || []).map((s: any) => ({
+        wedstrijd_id: s.wedstrijd_id,
+        datum: s.wedstrijden?.datum || '',
+        doelpunten: s.doelpunten || 0,
+        aanwezig: s.aanwezig,
+      }));
+
+      // Sorteer op datum nieuwste eerst
+      mapped.sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime());
+      setForm(mapped);
+      setLoading(false);
+    };
+    fetch();
+  }, [spelerNaam]);
+
+  return { form, loading };
+};
