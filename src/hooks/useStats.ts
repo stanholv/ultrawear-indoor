@@ -112,7 +112,7 @@ export const useSpelerForm = (spelerNaam: string) => {
 
       // Sorteer op datum nieuwste eerst, neem laatste 5, dan omdraaien voor display (oud → nieuw links → rechts)
       mapped.sort((a: any, b: any) => new Date(b.datum).getTime() - new Date(a.datum).getTime());
-      const laatste5 = mapped.slice(0, 5).reverse();
+      const laatste5 = mapped.slice(0, 5);
       setForm(laatste5);
       setLoading(false);
     };
