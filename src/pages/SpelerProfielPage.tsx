@@ -42,11 +42,13 @@ const FormIndicator = ({ form }: { form: { doelpunten: number; tegenstander: str
             <TrendingUp size={18} /> Vorm (laatste {form.length} wedstrijden)
           </h3>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'flex-end', padding: 'var(--spacing-sm) 0' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', padding: 'var(--spacing-sm) 0', overflowX: 'auto' }}>
           {[...form].reverse().map((w, i) => {
             const hoogte = Math.max(24, (w.doelpunten + 1) * 20);
+            // Tegenstander naam afkappen op mobile
+            const kortNaam = w.tegenstander.length > 8 ? w.tegenstander.slice(0, 8) + '…' : w.tegenstander;
             return (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flex: 1 }}>
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flex: '1 0 52px', minWidth: '52px' }}>
                 <div style={{
                   fontSize: '0.75rem', fontWeight: '700',
                   color: w.doelpunten > 0 ? 'var(--color-primary)' : 'var(--color-text-tertiary)',
@@ -54,15 +56,15 @@ const FormIndicator = ({ form }: { form: { doelpunten: number; tegenstander: str
                   {w.doelpunten > 0 ? `${w.doelpunten}⚽` : '—'}
                 </div>
                 <div style={{
-                  width: '100%', maxWidth: '40px',
+                  width: '100%', maxWidth: '44px',
                   height: `${hoogte}px`,
                   background: w.doelpunten > 0 ? 'var(--color-primary)' : 'var(--color-border)',
                   borderRadius: 'var(--radius-sm)',
                   transition: 'height 0.3s ease',
                   minHeight: '12px',
                 }} />
-                <div style={{ fontSize: '0.65rem', color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
-                  {w.tegenstander}
+                <div style={{ fontSize: '0.6rem', color: 'var(--color-text-tertiary)', textAlign: 'center', wordBreak: 'break-word', lineHeight: 1.2 }}>
+                  {kortNaam}
                 </div>
               </div>
             );
@@ -194,6 +196,11 @@ export const SpelerProfielPage = () => {
 
   return (
     <div className="container" style={{ padding: 'var(--spacing-xl)' }}>
+      <style>{`
+        @media (min-width: 640px) {
+          .speler-stats-grid { grid-template-columns: repeat(4, 1fr) !important; }
+        }
+      `}</style>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
 
         {/* Terug knop */}
@@ -329,7 +336,14 @@ export const SpelerProfielPage = () => {
 
         {/* Statistieken */}
         {stat && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 'var(--spacing-md)',
+            marginBottom: 'var(--spacing-lg)',
+          }}
+          className="speler-stats-grid"
+          >
             {[
               { label: 'Wedstrijden', value: stat.aanwezig, icon: <Calendar size={24} />, kleur: '#3b82f6' },
               { label: 'Doelpunten', value: stat.doelpunten, icon: <Target size={24} />, kleur: 'var(--color-primary)' },
@@ -357,8 +371,8 @@ export const SpelerProfielPage = () => {
 
         {/* Reviews sectie */}
         <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
-          <div className="card-header">
-            <h2 className="card-title">
+          <div className="card-header" style={{ flexWrap: 'wrap', gap: 'var(--spacing-sm)' }}>
+            <h2 className="card-title" style={{ flex: '1 1 auto' }}>
               <Star size={24} /> Reviews
               {gemiddelde > 0 && (
                 <span style={{ fontSize: '1rem', fontWeight: '400', color: 'var(--color-text-secondary)', marginLeft: 'var(--spacing-sm)' }}>
@@ -369,7 +383,7 @@ export const SpelerProfielPage = () => {
             <button
               onClick={() => setReviewOpen(!reviewOpen)}
               className="btn btn-primary"
-              style={{ fontSize: '0.875rem' }}
+              style={{ fontSize: '0.875rem', flexShrink: 0 }}
             >
               {reviewOpen ? 'Annuleren' : '+ Review schrijven'}
             </button>
