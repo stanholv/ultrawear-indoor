@@ -1,17 +1,212 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Link2, Star, Trash2, AlertTriangle } from 'lucide-react';
+import { Shield, Link2, Star, Trash2, AlertTriangle, Users } from 'lucide-react';
 import { SpelerKoppelingPanel } from './SpelerKoppelingPanel';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 import { Review } from '../../lib/types';
 
-type AdminTab = 'spelers' | 'reviews';
+type AdminTab = 'spelers' | 'reviews' | 'users';
 
 const TABS: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
   { id: 'spelers', label: 'Speler Koppelingen', icon: <Link2 size={18} /> },
   { id: 'reviews', label: 'Reviews', icon: <Star size={18} /> },
+  { id: 'users', label: 'Gebruikers', icon: <Users size={18} /> },
 ];
+
+const StarDisplay = ({ score }: { score: number }) => (
+  <div style={{ display: 'flex', gap: '2px' }}>
+    {[1,2,3,4,5].map(i => (
+      <Star key={i} size={14} fill={score >= i ? '#f59e0b' : 'none'} color={score >= i ? '#f59e0b' : 'var(--color-border)'} />
+    ))}
+  </div>
+);
+
+// ─── USER BEHEER ────────────────────────────────────────────────────────────
+
+interface UserInfo {
+  id: string;
+  full_name: string;
+  email: string;
+  role: 'admin' | 'speler';
+  speler_naam?: string;
+  created_at: string;
+}
+
+const UserBeheer = () => {
+  const [users, setUsers] = useState<UserInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [savingRole, setSavingRole] = useState<string | null>(null);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, role, speler_naam, created_at')
+      .order('created_at', { ascending: false });
+    setUsers(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchUsers(); }, []);
+
+  const handleRoleChange = async (userId: string, newRole: 'admin' | 'speler') => {
+    setSavingRole(userId);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', userId);
+
+    if (error) {
+      toast.error('Fout bij wijzigen rol: ' + error.message);
+    } else {
+      toast.success(`Rol gewijzigd naar ${newRole} ✅`);
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    }
+    setSavingRole(null);
+  };
+
+  const handleDelete = async (userId: string) => {
+    // Verwijder het profiel uit de profiles tabel
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (profileError) {
+      toast.error('Fout bij verwijderen: ' + profileError.message);
+      return;
+    }
+
+    toast.success('Profiel verwijderd ✅ — Verwijder de auth user ook in Supabase Dashboard → Authentication → Users');
+    setUsers(prev => prev.filter(u => u.id !== userId));
+    setDeleteConfirm(null);
+  };
+
+  if (loading) return <div className="animate-pulse" style={{ padding: 'var(--spacing-lg)' }}>Laden...</div>;
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2 className="card-title"><Users size={22} /> Gebruikersbeheer</h2>
+        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+          {users.length} gebruikers
+        </div>
+      </div>
+
+      {users.length === 0 ? (
+        <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+          Geen gebruikers gevonden.
+        </div>
+      ) : (
+        <div>
+          {users.map((user, i) => (
+            <motion.div
+              key={user.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.04 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-md)',
+                padding: 'var(--spacing-md) var(--spacing-lg)',
+                borderBottom: i < users.length - 1 ? '1px solid var(--color-border)' : 'none',
+                flexWrap: 'wrap',
+              }}
+            >
+              {/* User info */}
+              <div style={{ flex: 1, minWidth: '180px' }}>
+                <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>{user.full_name || '(geen naam)'}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{user.email}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--color-text-tertiary)', marginTop: '2px' }}>
+                  Geregistreerd: {new Date(user.created_at).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </div>
+              </div>
+
+              {/* Gekoppelde speler badge */}
+              {user.speler_naam && (
+                <div style={{
+                  background: 'rgba(16,185,129,0.12)', color: '#10b981',
+                  borderRadius: 'var(--radius-sm)', padding: '2px 10px',
+                  fontSize: '0.75rem', fontWeight: '600', flexShrink: 0,
+                }}>
+                  ⚽ {user.speler_naam}
+                </div>
+              )}
+
+              {/* Rol dropdown */}
+              <select
+                className="form-input"
+                value={user.role}
+                onChange={e => handleRoleChange(user.id, e.target.value as 'admin' | 'speler')}
+                disabled={savingRole === user.id}
+                style={{
+                  width: 'auto',
+                  minWidth: '120px',
+                  fontSize: '0.875rem',
+                  color: user.role === 'admin' ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                  fontWeight: user.role === 'admin' ? '700' : '400',
+                }}
+              >
+                <option value="speler">Speler</option>
+                <option value="admin">Admin</option>
+              </select>
+
+              {savingRole === user.id && (
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', flexShrink: 0 }}>Opslaan...</div>
+              )}
+
+              {/* Verwijder knop */}
+              {deleteConfirm === user.id ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end', flexShrink: 0 }}>
+                  <div style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <AlertTriangle size={12} /> Zeker verwijderen?
+                  </div>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    color: 'var(--color-text-secondary)',
+                    background: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '6px 8px',
+                    maxWidth: '220px',
+                    lineHeight: 1.4,
+                    textAlign: 'left',
+                  }}>
+                    ⚠️ Na het verwijderen moet je de gebruiker ook handmatig verwijderen in <strong>Supabase Dashboard → Authentication → Users</strong>, anders kan die persoon nog steeds inloggen.
+                  </div>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button
+                      onClick={() => handleDelete(user.id)}
+                      style={{ padding: '4px 12px', fontSize: '0.75rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: '600' }}
+                    >Ja, verwijderen</button>
+                    <button
+                      onClick={() => setDeleteConfirm(null)}
+                      style={{ padding: '4px 12px', fontSize: '0.75rem', background: 'var(--color-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
+                    >Annuleren</button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setDeleteConfirm(user.id)}
+                  className="btn"
+                  style={{ padding: '6px 10px', color: '#ef4444', flexShrink: 0 }}
+                  title="Gebruiker verwijderen"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── REVIEW MODERATIE ────────────────────────────────────────────────────────
 
 const StarDisplay = ({ score }: { score: number }) => (
   <div style={{ display: 'flex', gap: '2px' }}>
@@ -207,6 +402,12 @@ export const AdminPage = () => {
         {activeTab === 'reviews' && (
           <motion.div key="reviews" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <ReviewModeratie />
+          </motion.div>
+        )}
+
+        {activeTab === 'users' && (
+          <motion.div key="users" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <UserBeheer />
           </motion.div>
         )}
 
