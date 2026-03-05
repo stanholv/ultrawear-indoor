@@ -208,14 +208,6 @@ const UserBeheer = () => {
 
 // ─── REVIEW MODERATIE ────────────────────────────────────────────────────────
 
-const StarDisplay = ({ score }: { score: number }) => (
-  <div style={{ display: 'flex', gap: '2px' }}>
-    {[1,2,3,4,5].map(i => (
-      <Star key={i} size={14} fill={score >= i ? '#f59e0b' : 'none'} color={score >= i ? '#f59e0b' : 'var(--color-border)'} />
-    ))}
-  </div>
-);
-
 const ReviewModeratie = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
