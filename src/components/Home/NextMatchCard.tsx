@@ -16,9 +16,25 @@ export const NextMatchCard = ({ wedstrijden }: NextMatchCardProps) => {
     .sort((a, b) => new Date(a.datum).getTime() - new Date(b.datum).getTime())[0];
 
   // Zoek laatste gespeelde match voor de uitslag
-  const lastMatch = wedstrijden
+  const gespeeldeWedstrijden = wedstrijden
     .filter(w => w.uitslag && w.uitslag !== '-' && new Date(w.datum) < NOW)
-    .sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime())[0];
+    .sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime());
+
+  const lastMatch = gespeeldeWedstrijden[0];
+
+  // Bereken verwachte goals: gemiddelde van Ultrawear's goals in laatste 5 wedstrijden
+  const laatste5 = gespeeldeWedstrijden.slice(0, 5);
+  const verwachteGoals = (() => {
+    if (laatste5.length === 0) return null;
+    const totalGoals = laatste5.reduce((sum, w) => {
+      const wasHome = w.thuisploeg === 'Ultrawear Indoor';
+      const scores = w.uitslag.split('-').map((s: string) => parseInt(s.trim()));
+      if (scores.length !== 2) return sum;
+      const ultrawearGoals = wasHome ? scores[0] : scores[1];
+      return sum + (isNaN(ultrawearGoals) ? 0 : ultrawearGoals);
+    }, 0);
+    return Math.round(totalGoals / laatste5.length);
+  })();
 
   if (!nextMatch && !lastMatch) return null;
 
@@ -96,7 +112,14 @@ export const NextMatchCard = ({ wedstrijden }: NextMatchCardProps) => {
 
           <div style={{ background: 'rgba(255,255,255,0.1)', padding: 'var(--spacing-md)', borderRadius: 'var(--radius-md)', marginTop: 'var(--spacing-sm)' }}>
              <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Verwacht</div>
-             <div style={{ fontWeight: 'bold' }}>4 goals</div>
+             <div style={{ fontWeight: 'bold' }}>
+               {verwachteGoals !== null ? `${verwachteGoals} goal${verwachteGoals !== 1 ? 's' : ''}` : 'Nog geen data'}
+             </div>
+             {verwachteGoals !== null && (
+               <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '2px' }}>
+                 gem. laatste {laatste5.length} wedstrijd{laatste5.length !== 1 ? 'en' : ''}
+               </div>
+             )}
              <div style={{ fontSize: '0.875rem', marginTop: '4px' }}>
                 💪 {isHome ? COPY.HOME_NEXT_MATCH_THUIS : COPY.HOME_NEXT_MATCH_UIT}
              </div>

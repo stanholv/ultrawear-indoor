@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 import { COPY } from '../../lib/copy';
 import { AggregatedStats } from '../../lib/types';
@@ -9,6 +10,7 @@ interface TopScorerTableProps {
 }
 
 export const TopScorerTable = ({ stats }: TopScorerTableProps) => {
+  const navigate = useNavigate();
 
   // We filteren spelers met goals en sorteren ze van hoog naar laag
   const topScorers = [...stats]
@@ -38,7 +40,20 @@ export const TopScorerTable = ({ stats }: TopScorerTableProps) => {
             <div className="topscorer-rank">
               {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
             </div>
-            <div className="topscorer-name">{scorer.speler_naam}</div>
+            <div
+              className="topscorer-name"
+              onClick={() => navigate(`/spelers/${scorer.speler_naam.toLowerCase()}`)}
+              style={{
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                textDecorationColor: 'transparent',
+                transition: 'text-decoration-color 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.textDecorationColor = 'currentColor')}
+              onMouseLeave={e => (e.currentTarget.style.textDecorationColor = 'transparent')}
+            >
+              {scorer.speler_naam}
+            </div>
             <div className="topscorer-goals">
               <span style={{ fontWeight: 'bold', color: 'var(--color-primary)' }}>{scorer.doelpunten}</span>
               <span style={{ fontSize: '0.8rem', opacity: 0.7, marginLeft: '4px' }}>goals</span>

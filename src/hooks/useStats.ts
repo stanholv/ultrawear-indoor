@@ -91,24 +91,26 @@ export const useSpelerForm = (spelerNaam: string) => {
       setLoading(true);
       const { data } = await supabase
         .from('speler_stats')
-        .select('wedstrijd_id, doelpunten, aanwezig, wedstrijden(datum, thuisploeg, uitploeg)')
+        .select('wedstrijd_id, doelpunten, aanwezig, wedstrijden(datum, thuisploeg, uitploeg, uitslag)')
         .eq('speler_naam', spelerNaam)
         .eq('aanwezig', true);
 
-      // Sorteer client-side op datum (UUID sorteren werkt niet), neem laatste 5
-      const mapped = (data || []).map((s: any) => {
-        const w = s.wedstrijden;
-        const tegenstander = w?.thuisploeg === 'Ultrawear Indoor' ? w?.uitploeg : w?.thuisploeg;
-        return {
-          wedstrijd_id: s.wedstrijd_id,
-          tegenstander: tegenstander || '?',
-          datum: w?.datum || '',
-          doelpunten: s.doelpunten || 0,
-          aanwezig: s.aanwezig,
-        };
-      });
+      // Sorteer client-side op datum, neem laatste 5
+      const mapped = (data || [])
+        .filter((s: any) => s.wedstrijden?.datum) // alleen wedstrijden met datum
+        .map((s: any) => {
+          const w = s.wedstrijden;
+          const tegenstander = w?.thuisploeg === 'Ultrawear Indoor' ? w?.uitploeg : w?.thuisploeg;
+          return {
+            wedstrijd_id: s.wedstrijd_id,
+            tegenstander: tegenstander || '?',
+            datum: w?.datum || '',
+            doelpunten: s.doelpunten || 0,
+            aanwezig: s.aanwezig,
+          };
+        });
 
-      // Sorteer op datum nieuwste eerst, neem laatste 5, dan omdraaien voor display (oud → nieuw)
+      // Sorteer op datum nieuwste eerst, neem laatste 5, dan omdraaien voor display (oud → nieuw links → rechts)
       mapped.sort((a: any, b: any) => new Date(b.datum).getTime() - new Date(a.datum).getTime());
       const laatste5 = mapped.slice(0, 5).reverse();
       setForm(laatste5);

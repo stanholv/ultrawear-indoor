@@ -95,6 +95,22 @@ export const POSITIES = [
 
 export type Positie = typeof POSITIES[number];
 
+/**
+ * Berekent het aantal punten op basis van de uitslag.
+ * Regels: Winst = 2 punten, Gelijkspel = 1 punt, Verlies = 0 punten
+ */
+export const berekenPunten = (uitslag: string | undefined): number | null => {
+  if (!uitslag || uitslag === '-') return null;
+  const parts = uitslag.split('-');
+  if (parts.length !== 2) return null;
+  const eigen = parseInt(parts[0].trim());
+  const tegen = parseInt(parts[1].trim());
+  if (isNaN(eigen) || isNaN(tegen)) return null;
+  if (eigen > tegen) return 2;   // Winst
+  if (eigen === tegen) return 1;  // Gelijkspel
+  return 0;                       // Verlies
+};
+
 // Constants
 export const SPELERS = [
   'Stan',

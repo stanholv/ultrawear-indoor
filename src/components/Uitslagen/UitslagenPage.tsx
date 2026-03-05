@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, TrendingDown, Minus, Calendar, Filter, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
+import { berekenPunten } from '../../lib/types';
 
 export const UitslagenPage = () => {
   const { wedstrijden, loading } = useWedstrijden();
@@ -69,7 +70,7 @@ export const UitslagenPage = () => {
 
     if (ultraGoals > tegenGoals) {
       gewonnen++;
-      punten += 3;
+      punten += 2;
     } else if (ultraGoals === tegenGoals) {
       gelijk++;
       punten += 1;

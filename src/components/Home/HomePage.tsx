@@ -7,7 +7,7 @@ import { useStats } from '../../hooks/useStats';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
 import { COPY } from '../../lib/copy';
 
-const StatCard = ({ icon, title, player, value, subtitle, delay = 0 }: any) => (
+const StatCard = ({ icon, title, player, value, subtitle, delay = 0, onPlayerClick }: any) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }} 
     animate={{ opacity: 1, y: 0 }} 
@@ -18,7 +18,25 @@ const StatCard = ({ icon, title, player, value, subtitle, delay = 0 }: any) => (
       <div>
         <div className="stat-label">{title}</div>
         <div className="stat-value">{value}</div>
-        {player && (
+        {player && player !== '-' && onPlayerClick ? (
+          <div
+            onClick={() => onPlayerClick(player)}
+            style={{ 
+              fontSize: '1.125rem', 
+              fontWeight: '600', 
+              color: 'var(--color-primary)', 
+              marginTop: 'var(--spacing-sm)',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              textDecorationColor: 'transparent',
+              transition: 'text-decoration-color 0.2s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.textDecorationColor = 'var(--color-primary)')}
+            onMouseLeave={e => (e.currentTarget.style.textDecorationColor = 'transparent')}
+          >
+            {player}
+          </div>
+        ) : player && (
           <div style={{ 
             fontSize: '1.125rem', 
             fontWeight: '600', 
@@ -47,6 +65,10 @@ export const HomePage = () => {
       </div>
     );
   }
+
+  const handlePlayerClick = (naam: string) => {
+    navigate(`/spelers/${naam.toLowerCase()}`);
+  };
 
   // Top Scorer (alleen op goals)
   const topScorer = [...stats].sort((a, b) => b.doelpunten - a.doelpunten)[0] || { 
@@ -123,7 +145,8 @@ export const HomePage = () => {
             player={topScorer.speler_naam} 
             value={topScorer.doelpunten} 
             subtitle={`${topScorer.aanwezig} wedstrijden`} 
-            delay={0.1} 
+            delay={0.1}
+            onPlayerClick={handlePlayerClick}
           />
           
           <StatCard 
@@ -132,7 +155,8 @@ export const HomePage = () => {
             player={goalsPerGameLeader?.speler_naam || '-'} 
             value={goalsPerGameLeader?.ratio || '0.00'} 
             subtitle={`${goalsPerGameLeader?.doelpunten || 0} goals in ${goalsPerGameLeader?.aanwezig || 0} wed.`} 
-            delay={0.2} 
+            delay={0.2}
+            onPlayerClick={handlePlayerClick}
           />
           
           <StatCard 
@@ -141,7 +165,8 @@ export const HomePage = () => {
             player={mostGamesPlayers.length <= 2 ? mostGamesPlayers.join(' & ') : `${mostGamesPlayers.length} spelers`} 
             value={maxGames} 
             subtitle={mostGamesPlayers.length === 1 ? COPY.HOME_STAT_LOYAL_PLAYER : COPY.HOME_STAT_LOYAL_PLAYERS} 
-            delay={0.3} 
+            delay={0.3}
+            onPlayerClick={mostGamesPlayers.length === 1 ? handlePlayerClick : undefined}
           />
         </div>
 
