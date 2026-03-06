@@ -263,6 +263,9 @@ export const HomePage = () => {
         
         {/* Next Match Card */}
         <NextMatchCard wedstrijden={wedstrijden} />
+
+        {/* Laatste Reviews Carousel */}
+        <ReviewsCarousel />
         
         {/* Stats Grid */}
         <div className="stats-grid" style={{ marginTop: 'var(--spacing-2xl)' }}>
@@ -340,9 +343,6 @@ export const HomePage = () => {
 
         {/* Top 5 Scorers */}
         <TopScorerTable stats={stats} />
-
-        {/* Laatste Reviews Carousel */}
-        <ReviewsCarousel />
         
         {/* Call to Actions */}
         <div style={{ 
