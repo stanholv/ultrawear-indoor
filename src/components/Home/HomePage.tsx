@@ -1,11 +1,138 @@
-import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Target, Award, Users, Facebook, BarChart2 } from 'lucide-react';
+import { Trophy, Target, Award, Users, Facebook, BarChart2, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NextMatchCard } from './NextMatchCard';
 import { TopScorerTable } from './TopScorerTable';
 import { useStats } from '../../hooks/useStats';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
 import { COPY } from '../../lib/copy';
+import { supabase } from '../../lib/supabase';
+
+// ─── REVIEWS CAROUSEL ────────────────────────────────────────────────────────
+
+interface RecentReview {
+  id: string;
+  speler_naam: string;
+  score: number;
+  commentaar?: string;
+  reviewer_naam?: string;
+  created_at: string;
+}
+
+const ReviewsCarousel = () => {
+  const navigate = useNavigate();
+  const [reviews, setReviews] = useState<RecentReview[]>([]);
+  const [index, setIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
+
+  useEffect(() => {
+    supabase
+      .from('reviews')
+      .select('id, speler_naam, score, commentaar, reviewer_naam, created_at')
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data }) => setReviews(data || []));
+  }, []);
+
+  const goTo = useCallback((newIndex: number, dir: number) => {
+    setDirection(dir);
+    setIndex(newIndex);
+  }, []);
+
+  useEffect(() => {
+    if (reviews.length <= 1) return;
+    const timer = setInterval(() => goTo((index + 1) % reviews.length, 1), 5000);
+    return () => clearInterval(timer);
+  }, [index, reviews.length, goTo]);
+
+  if (reviews.length === 0) return null;
+
+  const review = reviews[index];
+
+  return (
+    <motion.div
+      className="card"
+      style={{ marginTop: 'var(--spacing-2xl)', overflow: 'hidden' }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.45 }}
+    >
+      <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
+        <h2 className="card-title" style={{ fontSize: '1rem' }}>
+          <Star size={18} color="#f59e0b" fill="#f59e0b" /> Laatste reviews
+        </h2>
+        {reviews.length > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              onClick={() => goTo((index - 1 + reviews.length) % reviews.length, -1)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '4px', display: 'flex' }}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
+              {index + 1}/{reviews.length}
+            </span>
+            <button
+              onClick={() => goTo((index + 1) % reviews.length, 1)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '4px', display: 'flex' }}
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div style={{ position: 'relative', minHeight: '64px', padding: '0 var(--spacing-lg) var(--spacing-md)' }}>
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={review.id}
+            custom={direction}
+            initial={{ opacity: 0, x: direction * 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: direction * -40 }}
+            transition={{ duration: 0.25 }}
+          >
+            {/* Sterren + naam reviewer */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: '4px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '2px' }}>
+                {[1,2,3,4,5].map(i => (
+                  <Star key={i} size={13} fill={review.score >= i ? '#f59e0b' : 'none'} color={review.score >= i ? '#f59e0b' : 'var(--color-border)'} />
+                ))}
+              </div>
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
+                <strong>{review.reviewer_naam || 'Anoniem'}</strong> over{' '}
+                <span
+                  onClick={() => navigate(`/spelers/${review.speler_naam.toLowerCase()}`)}
+                  style={{ color: 'var(--color-primary)', fontWeight: '700', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'transparent', transition: 'text-decoration-color 0.2s' }}
+                  onMouseEnter={e => (e.currentTarget.style.textDecorationColor = 'var(--color-primary)')}
+                  onMouseLeave={e => (e.currentTarget.style.textDecorationColor = 'transparent')}
+                >
+                  {review.speler_naam}
+                </span>
+              </span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-tertiary)', marginLeft: 'auto' }}>
+                {new Date(review.created_at).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+
+            {/* Commentaar */}
+            {review.commentaar ? (
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-primary)', fontStyle: 'italic', lineHeight: 1.4,
+                overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}>
+                "{review.commentaar}"
+              </p>
+            ) : (
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
+                Geen commentaar.
+              </p>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+};
 
 const StatCard = ({ icon, title, player, value, subtitle, delay = 0, onPlayerClick }: any) => (
   <motion.div 
@@ -213,6 +340,9 @@ export const HomePage = () => {
 
         {/* Top 5 Scorers */}
         <TopScorerTable stats={stats} />
+
+        {/* Laatste Reviews Carousel */}
+        <ReviewsCarousel />
         
         {/* Call to Actions */}
         <div style={{ 

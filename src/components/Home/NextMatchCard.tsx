@@ -81,48 +81,47 @@ export const NextMatchCard = ({ wedstrijden }: NextMatchCardProps) => {
   })() : null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
       {nextMatch && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
           className="card card-hero"
+          style={{ padding: 'var(--spacing-md) var(--spacing-lg)' }}
         >
-          <div className="card-header" style={{ borderBottom: '2px solid rgba(255,255,255,0.2)' }}>
-            <h2 className="card-title">⚽ {COPY.HOME_NEXT_MATCH_TITLE} {isHome ? COPY.MATCH_THUIS : COPY.MATCH_UIT}</h2>
-            <span className="badge" style={{ background: isHome ? '#10b981' : '#f59e0b' }}>
+          {/* Header: titel + thuis/uit badge op één lijn */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--spacing-sm)' }}>
+            <span style={{ fontSize: '0.75rem', opacity: 0.75, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              ⚽ {COPY.HOME_NEXT_MATCH_TITLE}
+            </span>
+            <span className="badge" style={{ background: isHome ? '#10b981' : '#f59e0b', fontSize: '0.7rem' }}>
               {isHome ? COPY.MATCH_THUIS : COPY.MATCH_UIT}
             </span>
           </div>
-          
-          <div style={{ padding: 'var(--spacing-lg) 0' }}>
-            <h3 style={{ fontSize: '2rem', fontWeight: '800', color: 'white', margin: 0 }}>
-              {isHome ? COPY.MATCH_VS : COPY.MATCH_AT} {isHome ? nextMatch.uitploeg : nextMatch.thuisploeg}
-            </h3>
-            
-            <div style={{ display: 'flex', gap: 'var(--spacing-xl)', marginTop: 'var(--spacing-md)', color: 'rgba(255,255,255,0.9)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Calendar size={18} /> {matchDate}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Clock size={18} /> {nextMatch.tijd}
-              </div>
-            </div>
+
+          {/* Tegenstander naam */}
+          <div style={{ fontSize: 'clamp(1.1rem, 4vw, 1.5rem)', fontWeight: '800', color: 'white', lineHeight: 1.2, marginBottom: 'var(--spacing-sm)' }}>
+            {isHome ? COPY.MATCH_VS : COPY.MATCH_AT} {isHome ? nextMatch.uitploeg : nextMatch.thuisploeg}
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.1)', padding: 'var(--spacing-md)', borderRadius: 'var(--radius-md)', marginTop: 'var(--spacing-sm)' }}>
-             <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Verwacht</div>
-             <div style={{ fontWeight: 'bold' }}>
-               {verwachteGoals !== null ? `${verwachteGoals} goal${verwachteGoals !== 1 ? 's' : ''}` : 'Nog geen data'}
-             </div>
-             {verwachteGoals !== null && (
-               <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '2px' }}>
-                 gem. laatste {laatste5.length} wedstrijd{laatste5.length !== 1 ? 'en' : ''}
-               </div>
-             )}
-             <div style={{ fontSize: '0.875rem', marginTop: '4px' }}>
-                💪 {isHome ? COPY.HOME_NEXT_MATCH_THUIS : COPY.HOME_NEXT_MATCH_UIT}
-             </div>
+          {/* Datum + tijd + verwacht inline */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-md)', alignItems: 'center', color: 'rgba(255,255,255,0.85)', fontSize: '0.8rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Calendar size={14} /> {matchDate}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Clock size={14} /> {nextMatch.tijd}
+            </div>
+            {verwachteGoals !== null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', opacity: 0.75 }}>
+                🎯 ~{verwachteGoals} goals verwacht
+              </div>
+            )}
+          </div>
+
+          {/* Motivatie tekst */}
+          <div style={{ fontSize: '0.775rem', color: 'rgba(255,255,255,0.6)', marginTop: 'var(--spacing-sm)' }}>
+            💪 {isHome ? COPY.HOME_NEXT_MATCH_THUIS : COPY.HOME_NEXT_MATCH_UIT}
           </div>
         </motion.div>
       )}
@@ -132,7 +131,7 @@ export const NextMatchCard = ({ wedstrijden }: NextMatchCardProps) => {
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }}
           style={{ 
-            padding: 'var(--spacing-md)', 
+            padding: 'var(--spacing-sm) var(--spacing-md)', 
             background: 'var(--color-surface)', 
             borderRadius: 'var(--radius-lg)', 
             border: '1px solid var(--color-border)', 
@@ -140,33 +139,29 @@ export const NextMatchCard = ({ wedstrijden }: NextMatchCardProps) => {
             justifyContent: 'space-between', 
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: 'var(--spacing-sm)'
+            gap: 'var(--spacing-sm)',
+            fontSize: '0.85rem',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Trophy size={20} color="var(--color-primary)" />
-            <span style={{ fontWeight: '600' }}>Laatste wedstrijd:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Trophy size={16} color="var(--color-primary)" />
+            <span style={{ fontWeight: '600', color: 'var(--color-text-secondary)' }}>Laatste:</span>
+            <span>
+              {lastMatchDisplay.wasHome ? 'vs' : '@'} <strong>{lastMatchDisplay.opponent}</strong>
+            </span>
           </div>
-          <span style={{ color: 'var(--color-text-secondary)' }}>
-            <span style={{ fontWeight: '600' }}>Ultrawear Indoor</span>
-            {' '}
-            {lastMatchDisplay.wasHome ? 'vs' : '@'}
-            {' '}
-            {lastMatchDisplay.opponent}
-            {' - '}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ 
               color: lastMatchDisplay.result === 'W' ? '#10b981' : 
                      lastMatchDisplay.result === 'L' ? '#ef4444' : '#f59e0b',
-              fontWeight: 'bold', 
-              marginLeft: '5px' 
+              fontWeight: '700',
             }}>
               {lastMatchDisplay.score}
             </span>
-            {' '}
-            <span style={{ fontSize: '0.9rem' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>
               ({lastMatchDisplay.location === 'thuis' ? '🏠' : '✈️'} {lastMatchDisplay.result})
             </span>
-          </span>
+          </div>
         </motion.div>
       )}
     </div>
