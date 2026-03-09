@@ -9,15 +9,16 @@ interface NextMatchCardProps {
 
 export const NextMatchCard = ({ wedstrijden }: NextMatchCardProps) => {
   const NOW = new Date();
-  
-  // Zoek volgende match
+  const vandaag = NOW.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+
+  // Zoek volgende match — wedstrijden van vandaag tellen mee
   const nextMatch = wedstrijden
-    .filter(w => new Date(w.datum) >= NOW)
+    .filter(w => w.datum >= vandaag)
     .sort((a, b) => new Date(a.datum).getTime() - new Date(b.datum).getTime())[0];
 
-  // Zoek laatste gespeelde match voor de uitslag
+  // Zoek laatste gespeelde match — alleen wedstrijden van voor vandaag
   const gespeeldeWedstrijden = wedstrijden
-    .filter(w => w.uitslag && w.uitslag !== '-' && new Date(w.datum) < NOW)
+    .filter(w => w.uitslag && w.uitslag !== '-' && w.datum < vandaag)
     .sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime());
 
   const lastMatch = gespeeldeWedstrijden[0];
