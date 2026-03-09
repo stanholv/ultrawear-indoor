@@ -16,6 +16,7 @@ import { UitslagenPage } from './components/Uitslagen/UitslagenPage';
 import { WedstrijdDetailPage } from './pages/WedstrijdDetailPage';
 import { SpelersPage } from './pages/SpelersPage';
 import { SpelerProfielPage } from './pages/SpelerProfielPage';
+import { ReviewsPage } from './pages/ReviewsPage';
 import './styles/globals.css';
 
 function App() {
@@ -52,6 +53,7 @@ function App() {
             <Route path="/uitslagen/:id" element={<WedstrijdDetailPage />} />
             <Route path="/spelers" element={<SpelersPage />} />
             <Route path="/spelers/:naam" element={<SpelerProfielPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/login" element={
               user ? <Navigate to="/" replace /> : <LoginForm />
             } />

@@ -59,28 +59,42 @@ const ReviewsCarousel = () => {
       transition={{ delay: 0.45 }}
     >
       <div className="card-header" style={{ paddingBottom: 'var(--spacing-sm)' }}>
-        <h2 className="card-title" style={{ fontSize: '1rem' }}>
+        <h2
+          className="card-title"
+          style={{ fontSize: '1rem', cursor: 'pointer' }}
+          onClick={() => navigate('/reviews')}
+          onMouseEnter={e => (e.currentTarget.style.textDecorationLine = 'underline')}
+          onMouseLeave={e => (e.currentTarget.style.textDecorationLine = 'none')}
+        >
           <Star size={18} color="#f59e0b" fill="#f59e0b" /> Laatste reviews
         </h2>
-        {reviews.length > 1 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <button
-              onClick={() => goTo((index - 1 + reviews.length) % reviews.length, -1)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '4px', display: 'flex' }}
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
-              {index + 1}/{reviews.length}
-            </span>
-            <button
-              onClick={() => goTo((index + 1) % reviews.length, 1)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '4px', display: 'flex' }}
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button
+            onClick={() => navigate('/reviews')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: '600', padding: '4px 6px' }}
+          >
+            Alle reviews →
+          </button>
+          {reviews.length > 1 && (
+            <>
+              <button
+                onClick={() => goTo((index - 1 + reviews.length) % reviews.length, -1)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '4px', display: 'flex' }}
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
+                {index + 1}/{reviews.length}
+              </span>
+              <button
+                onClick={() => goTo((index + 1) % reviews.length, 1)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: '4px', display: 'flex' }}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       <div style={{ position: 'relative', minHeight: '64px', padding: '0 var(--spacing-lg) var(--spacing-md)' }}>
@@ -118,10 +132,18 @@ const ReviewsCarousel = () => {
 
             {/* Commentaar */}
             {review.commentaar ? (
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-primary)', fontStyle: 'italic', lineHeight: 1.4,
-                overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}>
-                "{review.commentaar}"
-              </p>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-primary)', fontStyle: 'italic', lineHeight: 1.4,
+                  overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}>
+                  "{review.commentaar}"
+                </p>
+                <button
+                  onClick={() => navigate(`/spelers/${review.speler_naam.toLowerCase()}`)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: '600', padding: '4px 0 0', display: 'block' }}
+                >
+                  Lees meer →
+                </button>
+              </div>
             ) : (
               <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
                 Geen commentaar.
