@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { AggregatedStats } from '../lib/types';
+import { AggregatedStats, SpelerStat } from '../lib/types';
 
 // Aggregeer stats, optioneel gefilterd op wedstrijdtype
-const aggregeerStats = (data: any[]): AggregatedStats[] => {
+const aggregeerStats = (data: SpelerStat[]): AggregatedStats[] => {
   const aggregated: { [key: string]: AggregatedStats } = {};
   data?.forEach((stat) => {
     if (!aggregated[stat.speler_naam]) {
@@ -23,54 +23,60 @@ const aggregeerStats = (data: any[]): AggregatedStats[] => {
 };
 
 export const useStats = () => {
-  const [stats, setStats] = useState<AggregatedStats[]>([]);
+  const [rawStats, setRawStats] = useState<SpelerStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { loadStats(); }, []);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error: fetchError } = await supabase
         .from('speler_stats').select('*');
       if (fetchError) throw fetchError;
-      setStats(aggregeerStats(data || []));
+      setRawStats(data || []);
       setError(null);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { loadStats(); }, [loadStats]);
+
+  const stats = useMemo(() => aggregeerStats(rawStats), [rawStats]);
 
   return { stats, loading, error, refetch: loadStats };
 };
 
 // Hook: gefilterde stats op wedstrijdtype (voor DetailedStats)
 export const useFilteredStats = (filter: 'all' | 'competitie' | 'beker') => {
-  const [stats, setStats] = useState<AggregatedStats[]>([]);
+  const [rawStats, setRawStats] = useState<SpelerStat[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadStats = useCallback(async () => {
+    setLoading(true);
+    let query = supabase
+      .from('speler_stats')
+      .select('*, wedstrijden(type)');
+
+    const { data } = await query;
+    setRawStats(data || []);
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      let query = supabase
-        .from('speler_stats')
-        .select('*, wedstrijden(type)');
+    loadStats();
+  }, [loadStats]);
 
-      const { data } = await query;
+  const stats = useMemo(() => {
+    // Filter op type indien nodig
+    const gefilterd = filter === 'all'
+      ? rawStats
+      : rawStats.filter((s) => s.wedstrijden?.type === filter);
 
-      // Filter op type indien nodig
-      const gefilterd = filter === 'all'
-        ? (data || [])
-        : (data || []).filter((s: any) => s.wedstrijden?.type === filter);
-
-      setStats(aggregeerStats(gefilterd));
-      setLoading(false);
-    };
-    load();
-  }, [filter]);
+    return aggregeerStats(gefilterd);
+  }, [rawStats, filter]);
 
   return { stats, loading };
 };

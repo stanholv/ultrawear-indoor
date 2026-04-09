@@ -156,7 +156,15 @@ const ReviewsCarousel = () => {
   );
 };
 
-const StatCard = ({ icon, title, player, value, subtitle, delay = 0, onPlayerClick }: any) => (
+const StatCard = ({ icon, title, player, value, subtitle, delay = 0, onPlayerClick }: {
+  icon: React.ReactNode;
+  title: string;
+  player?: string;
+  value: string | number;
+  subtitle?: string;
+  delay?: number;
+  onPlayerClick?: (player: string) => void;
+}) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }} 
     animate={{ opacity: 1, y: 0 }} 

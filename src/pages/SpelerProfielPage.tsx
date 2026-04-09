@@ -164,9 +164,9 @@ export const SpelerProfielPage = () => {
   }, [profile]);
 
   const handleSave = async () => {
-    if (!profile?.profile_id) return;
+    if (!profile?.id) return;
     setSaving(true);
-    const { success, error } = await updateProfile(profile.profile_id, {
+    const { success, error } = await updateProfile(profile.id, {
       bio: editBio,
       rugnummer: editRugnummer ? parseInt(editRugnummer) : undefined,
     });

@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
@@ -15,7 +16,7 @@ const getRankBadge = (rank: number) => {
   return { icon: `${rank}.`, className: '' };
 };
 
-export const StatsTable = ({ stats }: StatsTableProps) => {
+export const StatsTable = React.memo(({ stats }: StatsTableProps) => {
   const navigate = useNavigate();
   const sortedStats = [...stats].sort((a, b) => b.doelpunten - a.doelpunten);
 
@@ -145,4 +146,4 @@ export const StatsTable = ({ stats }: StatsTableProps) => {
       </div>
     </div>
   );
-};
+});

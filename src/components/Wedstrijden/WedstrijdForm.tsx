@@ -145,10 +145,10 @@ export const WedstrijdForm = () => {
     }
   };
 
-  const handleSpelerChange = (index: number, field: keyof SpelerInput, value: any) => {
+  const handleSpelerChange = (index: number, field: keyof SpelerInput, value: boolean | number) => {
     const newSpelers = [...spelers];
     newSpelers[index] = { ...newSpelers[index], [field]: value };
-    if ((field === 'doelpunten' || field === 'penalty' || field === 'corner') && value > 0) {
+    if ((field === 'doelpunten' || field === 'penalty' || field === 'corner') && typeof value === 'number' && value > 0) {
       newSpelers[index].aanwezig = true;
     }
     setSpelers(newSpelers);
@@ -178,9 +178,43 @@ export const WedstrijdForm = () => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    // Validation
     if (!datum || !tijd || (!thuisploeg && !uitploeg)) {
       toast.error('Vul alle verplichte velden in');
       return;
+    }
+
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datum)) {
+      toast.error('Datum moet in YYYY-MM-DD formaat zijn');
+      return;
+    }
+
+    // Validate time format
+    if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(tijd)) {
+      toast.error('Tijd moet in HH:MM formaat zijn');
+      return;
+    }
+
+    // Validate goals
+    const thuisGoalsNum = parseInt(thuisGoals);
+    const uitGoalsNum = parseInt(uitGoals);
+    if ((thuisGoals && isNaN(thuisGoalsNum)) || (uitGoals && isNaN(uitGoalsNum))) {
+      toast.error('Doelpunten moeten geldige getallen zijn');
+      return;
+    }
+    if (thuisGoalsNum < 0 || uitGoalsNum < 0) {
+      toast.error('Doelpunten kunnen niet negatief zijn');
+      return;
+    }
+
+    // Validate player stats
+    for (const speler of spelers) {
+      if (speler.doelpunten < 0 || speler.penalty < 0 || speler.corner < 0) {
+        toast.error(`Statistieken voor ${speler.naam} kunnen niet negatief zijn`);
+        return;
+      }
     }
 
     setLoading(true);

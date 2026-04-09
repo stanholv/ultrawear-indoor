@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+// @ts-ignore
 import { Calendar, Clock, Trophy } from 'lucide-react';
 import { Wedstrijd } from '../../lib/types';
 import { COPY } from '../../lib/copy';

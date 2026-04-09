@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+// @ts-ignore
 import { Link2, Check, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';

@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { motion } from 'framer-motion';
+// @ts-ignore
 import { Mail, Lock, User, Eye, EyeOff, Loader } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'sonner';

@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loadProfile = async (userId: string) => {
     const { data, error } = await auth.getProfile(userId);
     if (error) {
-      console.error('Error loading profile:', error);
+      console.error('Error loading profile:', error.message);
     } else {
       setProfile(data);
     }

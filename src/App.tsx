@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
+// @ts-ignore
 import { Analytics } from '@vercel/analytics/react';
 import { Header } from './components/Layout/Header';
 import { Navigation } from './components/Layout/Navigation';

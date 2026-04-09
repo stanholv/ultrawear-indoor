@@ -17,8 +17,8 @@ export const useWedstrijden = () => {
 
       if (error) throw error;
       setWedstrijden(data || []);
-    } catch (error) {
-      console.error('Error fetching wedstrijden:', error);
+    } catch (error: any) {
+      console.error('Error fetching wedstrijden:', error.message);
     } finally {
       setLoading(false);
     }

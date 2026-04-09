@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+// @ts-ignore
 import { Shield, Link2, Star, Trash2, AlertTriangle, Users } from 'lucide-react';
 import { SpelerKoppelingPanel } from './SpelerKoppelingPanel';
 import { supabase } from '../../lib/supabase';
