@@ -36,6 +36,7 @@ Thumbs.db
 build
 .next
 out
+dev-dist
 
 # Misc
 .cache

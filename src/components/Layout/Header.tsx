@@ -68,7 +68,7 @@ export const Header = () => {
             boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
           }}>
             <img
-              src="https://usercontent.one/wp/webshop.ultrawear.be/wp-content/uploads/2020/03/cropped-Logo-ULTRAWEAR-1-1-600x466.png?media=1710336765"
+              src="/logo.png"
               alt="Ultrawear Logo"
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />

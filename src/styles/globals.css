@@ -121,6 +121,7 @@ body {
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh; /* avoids mobile URL-bar jump; dvh wins where supported */
   display: flex;
   flex-direction: column;
 }
@@ -172,7 +173,8 @@ body {
 .header-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: var(--spacing-lg) var(--spacing-xl);
+  /* Extend into the status-bar / notch area when installed (standalone). */
+  padding: calc(var(--spacing-lg) + env(safe-area-inset-top)) calc(var(--spacing-xl) + env(safe-area-inset-right)) var(--spacing-lg) calc(var(--spacing-xl) + env(safe-area-inset-left));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1271,6 +1273,11 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: var(--spacing-xl);
+  /* Keep content clear of the home indicator / notch when installed. */
+  padding-bottom: calc(var(--spacing-xl) + env(safe-area-inset-bottom));
+  padding-left: calc(var(--spacing-xl) + env(safe-area-inset-left));
+  padding-right: calc(var(--spacing-xl) + env(safe-area-inset-right));
+  flex: 1;
 }
 
 @media (max-width: 768px) {

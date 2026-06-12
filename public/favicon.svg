@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#C8102E"/>
+  <g transform="translate(256,256)">
+    <circle r="150" fill="#fff"/>
+    <!-- centre pentagon -->
+    <polygon points="0,-60 57.06,-18.54 35.27,48.54 -35.27,48.54 -57.06,-18.54" fill="#111"/>
+    <!-- seams from pentagon vertices to ball edge -->
+    <g stroke="#111" stroke-width="9" stroke-linecap="round">
+      <line x1="0" y1="-60" x2="0" y2="-150"/>
+      <line x1="57.06" y1="-18.54" x2="142.66" y2="-46.35"/>
+      <line x1="35.27" y1="48.54" x2="88.17" y2="121.35"/>
+      <line x1="-35.27" y1="48.54" x2="-88.17" y2="121.35"/>
+      <line x1="-57.06" y1="-18.54" x2="-142.66" y2="-46.35"/>
+    </g>
+    <!-- partial edge pentagons (hints) -->
+    <g fill="#111">
+      <circle cx="0" cy="-150" r="13"/>
+      <circle cx="142.66" cy="-46.35" r="13"/>
+      <circle cx="88.17" cy="121.35" r="13"/>
+      <circle cx="-88.17" cy="121.35" r="13"/>
+      <circle cx="-142.66" cy="-46.35" r="13"/>
+    </g>
+  </g>
+</svg>
