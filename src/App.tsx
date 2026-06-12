@@ -10,7 +10,6 @@ import { DetailedStatsPage } from './pages/DetailedStats';
 import { WedstrijdForm } from './components/Wedstrijden/WedstrijdForm';
 import { LoginForm } from './components/Auth/LoginForm';
 import { ProtectedRoute } from './components/Auth/ProtectedRoute';
-import { AdminDashboard } from './components/Dashboard/AdminDashboard';
 import { useAuth } from './hooks/useAuth';
 import { AdminPage } from './components/Admin/AdminPage';
 import { UitslagenPage } from './components/Uitslagen/UitslagenPage';
@@ -49,7 +48,6 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/statistieken" element={<StatsPage />} />
             <Route path="/statistieken/details" element={<DetailedStatsPage />} />
-            <Route path="/admin" element={<AdminPage />} />
             <Route path="/uitslagen" element={<UitslagenPage />} />
             <Route path="/uitslagen/:id" element={<WedstrijdDetailPage />} />
             <Route path="/spelers" element={<SpelersPage />} />
@@ -68,7 +66,7 @@ function App() {
             
             <Route path="/admin" element={
               <ProtectedRoute adminOnly>
-                <AdminDashboard />
+                <AdminPage />
               </ProtectedRoute>
             } />
             
