@@ -64,34 +64,19 @@ export const useReviews = (spelerNaam?: string) => {
     if (!spelerNaam) return { success: false, error: 'Geen speler opgegeven' };
 
     try {
-      // IP ophalen
-      const ipResponse = await fetch('https://api.ipify.org?format=json');
-      const { ip } = await ipResponse.json();
+      // Inserts go through a SECURITY DEFINER RPC that derives the IP
+      // server-side and enforces the per-IP/hour rate limit, so the spam
+      // check can't be bypassed from the client.
+      const { error } = await supabase.rpc('submit_review', {
+        p_speler_naam: spelerNaam,
+        p_score: score,
+        p_commentaar: commentaar,
+        p_reviewer_naam: reviewerNaam,
+      });
 
-      // Spam check: max 1 review per IP per speler per uur
-      const eenUurGeleden = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      const { data: bestaande } = await supabase
-        .from('reviews')
-        .select('id')
-        .eq('speler_naam', spelerNaam)
-        .eq('ip_adres', ip)
-        .gte('created_at', eenUurGeleden);
+      // Rate-limit and validation failures arrive as Postgres exceptions.
+      if (error) return { success: false, error: error.message };
 
-      if (bestaande && bestaande.length > 0) {
-        return { success: false, error: 'Je hebt al een review achtergelaten voor deze speler.' };
-      }
-
-      const { error } = await supabase
-        .from('reviews')
-        .insert({
-          speler_naam: spelerNaam,
-          score,
-          commentaar,
-          reviewer_naam: reviewerNaam,
-          ip_adres: ip,
-        });
-
-      if (error) throw error;
       await loadReviews();
       return { success: true };
     } catch (error: any) {
