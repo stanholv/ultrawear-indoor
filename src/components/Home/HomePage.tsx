@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trophy, Target, Award, Users, Facebook, BarChart2, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NextMatchCard } from './NextMatchCard';
 import { TopScorerTable } from './TopScorerTable';
+import { InstallBanner } from './InstallBanner';
 import { useStats } from '../../hooks/useStats';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
 import { COPY } from '../../lib/copy';
@@ -290,7 +291,10 @@ export const HomePage = () => {
       
       {/* Main Content */}
       <div className="container" style={{ padding: 'var(--spacing-2xl) var(--spacing-xl)' }}>
-        
+
+        {/* PWA install banner (mobile only, dismissible) */}
+        <InstallBanner />
+
         {/* Next Match Card */}
         <NextMatchCard wedstrijden={wedstrijden} />
 

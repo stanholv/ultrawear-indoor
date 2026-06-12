@@ -1,96 +1,72 @@
-// Generates PWA icons + favicon + header logo from a local vector source.
-// Run with: node scripts/generate-icons.mjs
+// Generates PWA icons + favicon + header logo from the real Ultrawear logo.
 //
-// To use real brand artwork instead: replace ICON_SVG / LOGO_SVG below with
-// your own (or point sharp at a high-res PNG) and re-run.
+// 1. Save the logo into the repo as  scripts/logo-source.png
+//    (PNG with a transparent background works best; SVG/JPG/WEBP also fine).
+// 2. Run:  node scripts/generate-icons.mjs
+// 3. Rebuild:  npm run build
+//
+// No artwork is invented here — every output is derived from your source file.
 
 import sharp from 'sharp';
-import { writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const publicDir = join(__dirname, '..', 'public');
 
-const RED = '#C8102E';
+// First matching source file wins. Pass an explicit path as the first arg too.
+const candidates = [
+  process.argv[2],
+  'logo-clean.png', // cleaned wordmark (preferred) — see clean-logo.mjs
+  'logo-source.png', 'logo-source.svg', 'logo-source.jpg',
+  'logo-source.jpeg', 'logo-source.webp',
+].filter(Boolean).map(f => (f.includes('/') || f.includes('\\') ? f : join(__dirname, f)));
 
-// App icon: full-bleed red background + white football (maskable-safe).
-const ICON_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="${RED}"/>
-  <g transform="translate(256,256)">
-    <circle r="150" fill="#fff"/>
-    <!-- centre pentagon -->
-    <polygon points="0,-60 57.06,-18.54 35.27,48.54 -35.27,48.54 -57.06,-18.54" fill="#111"/>
-    <!-- seams from pentagon vertices to ball edge -->
-    <g stroke="#111" stroke-width="9" stroke-linecap="round">
-      <line x1="0" y1="-60" x2="0" y2="-150"/>
-      <line x1="57.06" y1="-18.54" x2="142.66" y2="-46.35"/>
-      <line x1="35.27" y1="48.54" x2="88.17" y2="121.35"/>
-      <line x1="-35.27" y1="48.54" x2="-88.17" y2="121.35"/>
-      <line x1="-57.06" y1="-18.54" x2="-142.66" y2="-46.35"/>
-    </g>
-    <!-- partial edge pentagons (hints) -->
-    <g fill="#111">
-      <circle cx="0" cy="-150" r="13"/>
-      <circle cx="142.66" cy="-46.35" r="13"/>
-      <circle cx="88.17" cy="121.35" r="13"/>
-      <circle cx="-88.17" cy="121.35" r="13"/>
-      <circle cx="-142.66" cy="-46.35" r="13"/>
-    </g>
-  </g>
-</svg>`;
+const source = candidates.find(p => existsSync(p));
+if (!source) {
+  console.error('No logo source found. Save your logo as scripts/logo-source.png and re-run.');
+  process.exit(1);
+}
+console.log(`Source: ${source}`);
 
-// Header mark: square red football on transparent bg (sits in the white logo
-// box next to the "ULTRAWEAR INDOOR" wordmark, which the header renders as text).
-const LOGO_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <g transform="translate(256,256)">
-    <circle r="240" fill="${RED}"/>
-    <polygon points="0,-96 91.3,-29.66 56.43,77.66 -56.43,77.66 -91.3,-29.66" fill="#fff"/>
-    <g stroke="#fff" stroke-width="15" stroke-linecap="round">
-      <line x1="0" y1="-96" x2="0" y2="-240"/>
-      <line x1="91.3" y1="-29.66" x2="228.25" y2="-74.16"/>
-      <line x1="56.43" y1="77.66" x2="141.08" y2="194.16"/>
-      <line x1="-56.43" y1="77.66" x2="-141.08" y2="194.16"/>
-      <line x1="-91.3" y1="-29.66" x2="-228.25" y2="-74.16"/>
-    </g>
-    <g fill="#fff">
-      <circle cx="0" cy="-240" r="21"/>
-      <circle cx="228.25" cy="-74.16" r="21"/>
-      <circle cx="141.08" cy="194.16" r="21"/>
-      <circle cx="-141.08" cy="194.16" r="21"/>
-      <circle cx="-228.25" cy="-74.16" r="21"/>
-    </g>
-  </g>
-</svg>`;
+const WHITE = { r: 255, g: 255, b: 255, alpha: 1 };
 
-const icon = Buffer.from(ICON_SVG);
-
-async function pngFromSvg(svgBuf, size, file) {
-  await sharp(svgBuf, { density: 384 }).resize(size, size).png().toFile(join(publicDir, file));
+// Square icon: trim the logo, then center it on a white canvas with a margin.
+async function squareIcon(size, contentRatio, file) {
+  const inner = Math.round(size * contentRatio);
+  const logo = await sharp(source)
+    .trim()
+    .resize(inner, inner, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .toBuffer();
+  await sharp({ create: { width: size, height: size, channels: 4, background: WHITE } })
+    .composite([{ input: logo, gravity: 'centre' }])
+    .png()
+    .toFile(join(publicDir, file));
   console.log(`  ✓ ${file}`);
 }
 
 async function main() {
-  await pngFromSvg(icon, 192, 'pwa-192x192.png');
-  await pngFromSvg(icon, 512, 'pwa-512x512.png');
-  await pngFromSvg(icon, 512, 'maskable-512x512.png');
-  await pngFromSvg(icon, 180, 'apple-touch-icon.png');
-  await pngFromSvg(icon, 32, 'favicon-32x32.png');
+  await squareIcon(192, 0.84, 'pwa-192x192.png');
+  await squareIcon(512, 0.84, 'pwa-512x512.png');
+  // Maskable needs extra margin so nothing is clipped by the OS mask.
+  await squareIcon(512, 0.66, 'maskable-512x512.png');
+  await squareIcon(180, 0.84, 'apple-touch-icon.png');
+  await squareIcon(32, 0.92, 'favicon-32x32.png');
 
-  // favicon.ico (32px)
-  const ico = await sharp(icon, { density: 384 }).resize(32, 32).png().toBuffer();
-  await sharp(ico).toFile(join(publicDir, 'favicon.ico'));
+  const ico = await sharp(source)
+    .trim()
+    .resize(28, 28, { fit: 'inside' })
+    .extend({ top: 2, bottom: 2, left: 2, right: 2, background: WHITE })
+    .png()
+    .toBuffer();
+  await sharp(ico).resize(32, 32, { fit: 'contain', background: WHITE }).toFile(join(publicDir, 'favicon.ico'));
   console.log('  ✓ favicon.ico');
 
-  // SVG favicon (crisp at any size)
-  await writeFile(join(publicDir, 'favicon.svg'), ICON_SVG.trim());
-  console.log('  ✓ favicon.svg');
-
-  // Header mark (transparent square PNG for the logo box)
-  await sharp(Buffer.from(LOGO_SVG), { density: 384 })
-    .resize(132, 132)
+  // Header logo: trimmed, transparent, fits the logo box.
+  await sharp(source)
+    .trim()
+    .resize(264, 264, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toFile(join(publicDir, 'logo.png'));
   console.log('  ✓ logo.png');
@@ -98,7 +74,4 @@ async function main() {
   console.log('Done.');
 }
 
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+main().catch(err => { console.error(err); process.exit(1); });

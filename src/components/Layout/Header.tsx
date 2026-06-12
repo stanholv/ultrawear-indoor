@@ -56,21 +56,20 @@ export const Header = () => {
           }}
         >
           <div style={{
-            width: '44px',
-            height: '44px',
+            height: '46px',
             minWidth: '44px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             background: 'white',
             borderRadius: '10px',
-            padding: '4px',
+            padding: '7px 12px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
           }}>
             <img
               src="/logo.png"
-              alt="Ultrawear Logo"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              alt="Ultrawear"
+              style={{ height: '100%', width: 'auto', objectFit: 'contain' }}
             />
           </div>
 
@@ -82,10 +81,10 @@ export const Header = () => {
               fontWeight: '800',
               color: 'white',
               textTransform: 'uppercase',
-              letterSpacing: '0.5px',
+              letterSpacing: '2px',
               lineHeight: 1.2,
             }}>
-              ULTRAWEAR INDOOR
+              INDOOR
             </span>
             <span style={{
               fontSize: '0.7rem',
@@ -93,7 +92,7 @@ export const Header = () => {
               fontWeight: '500',
               display: 'block',
             }}>
-              Powered by Ultrawear
+              Minivoetbal statistieken
             </span>
           </div>
         </motion.button>
