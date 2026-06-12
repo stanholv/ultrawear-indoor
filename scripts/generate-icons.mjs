@@ -18,7 +18,8 @@ const publicDir = join(__dirname, '..', 'public');
 // First matching source file wins. Pass an explicit path as the first arg too.
 const candidates = [
   process.argv[2],
-  'logo-clean.png', // cleaned wordmark (preferred) — see clean-logo.mjs
+  'logo-clean.svg', // vectorized wordmark (preferred) — see vectorize-logo.mjs
+  'logo-clean.png', // cleaned raster fallback — see clean-logo.mjs
   'logo-source.png', 'logo-source.svg', 'logo-source.jpg',
   'logo-source.jpeg', 'logo-source.webp',
 ].filter(Boolean).map(f => (f.includes('/') || f.includes('\\') ? f : join(__dirname, f)));
@@ -31,11 +32,12 @@ if (!source) {
 console.log(`Source: ${source}`);
 
 const WHITE = { r: 255, g: 255, b: 255, alpha: 1 };
+const LOAD = { density: 384 }; // crisp rasterization when source is SVG
 
 // Square icon: trim the logo, then center it on a white canvas with a margin.
 async function squareIcon(size, contentRatio, file) {
   const inner = Math.round(size * contentRatio);
-  const logo = await sharp(source)
+  const logo = await sharp(source, LOAD)
     .trim()
     .resize(inner, inner, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .toBuffer();
@@ -54,7 +56,7 @@ async function main() {
   await squareIcon(180, 0.84, 'apple-touch-icon.png');
   await squareIcon(32, 0.92, 'favicon-32x32.png');
 
-  const ico = await sharp(source)
+  const ico = await sharp(source, LOAD)
     .trim()
     .resize(28, 28, { fit: 'inside' })
     .extend({ top: 2, bottom: 2, left: 2, right: 2, background: WHITE })
@@ -64,7 +66,7 @@ async function main() {
   console.log('  ✓ favicon.ico');
 
   // Header logo: trimmed, transparent, fits the logo box.
-  await sharp(source)
+  await sharp(source, LOAD)
     .trim()
     .resize(264, 264, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
