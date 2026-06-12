@@ -1,7 +1,14 @@
 -- ================================================
 -- ULTRAWEAR INDOOR - SUPABASE DATABASE SCHEMA
 -- ================================================
--- Run this in the Supabase SQL Editor
+-- Reconstructed from application code (the live database is the source of
+-- truth; verify with `supabase db dump` if exact constraints matter).
+--
+-- Run order for a fresh project:
+--   1. This file
+--   2. supabase-rls-fix.sql          (profiles privileged-column trigger)
+--   3. supabase-reviews-ratelimit.sql (review submission RPC + rate limit)
+-- ================================================
 
 -- ================================================
 -- 1. PROFILES TABLE
@@ -11,6 +18,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   email TEXT,
   full_name TEXT,
   role TEXT DEFAULT 'speler' CHECK (role IN ('speler', 'admin', 'coach')),
+  speler_naam TEXT,                       -- account ↔ player coupling (admin-managed)
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -24,6 +32,7 @@ CREATE TABLE IF NOT EXISTS wedstrijden (
   thuisploeg TEXT DEFAULT 'Ultrawear Indoor',
   uitploeg TEXT NOT NULL,
   uitslag TEXT,
+  type TEXT DEFAULT 'competitie' CHECK (type IN ('competitie', 'beker', 'oefenwedstrijd')),
   opmerkingen TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -33,6 +42,9 @@ CREATE TABLE IF NOT EXISTS wedstrijden (
 -- ================================================
 -- 3. SPELER STATS TABLE
 -- ================================================
+-- NOTE: the application reads/writes this table as `speler_stats`. The
+-- `useWedstrijden` hook still references a `speler_prestaties` table in its
+-- create/delete paths — that is a latent bug, not a second table.
 CREATE TABLE IF NOT EXISTS speler_stats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   wedstrijd_id UUID REFERENCES wedstrijden ON DELETE CASCADE,
@@ -45,72 +57,104 @@ CREATE TABLE IF NOT EXISTS speler_stats (
 );
 
 -- ================================================
--- 4. INDEXES FOR PERFORMANCE
+-- 4. REVIEWS TABLE
+-- ================================================
+-- Anonymous player reviews. Writes go through the submit_review() function
+-- (see supabase-reviews-ratelimit.sql); reads are public.
+CREATE TABLE IF NOT EXISTS reviews (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  speler_naam TEXT NOT NULL,
+  score INTEGER NOT NULL CHECK (score BETWEEN 1 AND 5),
+  commentaar TEXT,
+  reviewer_naam TEXT,
+  ip_adres TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ================================================
+-- 5. INDEXES FOR PERFORMANCE
 -- ================================================
 CREATE INDEX IF NOT EXISTS idx_wedstrijden_datum ON wedstrijden(datum DESC);
 CREATE INDEX IF NOT EXISTS idx_wedstrijden_created_by ON wedstrijden(created_by);
 CREATE INDEX IF NOT EXISTS idx_speler_stats_wedstrijd ON speler_stats(wedstrijd_id);
 CREATE INDEX IF NOT EXISTS idx_speler_stats_naam ON speler_stats(speler_naam);
+CREATE INDEX IF NOT EXISTS idx_reviews_speler ON reviews(speler_naam);
+CREATE INDEX IF NOT EXISTS idx_reviews_ip_created ON reviews(ip_adres, created_at);
 
 -- ================================================
--- 5. ROW LEVEL SECURITY (RLS) POLICIES
+-- 6. ROW LEVEL SECURITY (RLS) POLICIES
 -- ================================================
-
--- Enable RLS on all tables
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wedstrijden ENABLE ROW LEVEL SECURITY;
 ALTER TABLE speler_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 
--- Profiles: Users can read their own profile
+-- Helper: is the current user an admin? SECURITY DEFINER avoids RLS recursion
+-- when policies on `profiles` need to check the caller's role.
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
+
+-- Profiles: a user can read their own profile; admins can read all.
 DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
 CREATE POLICY "Users can read own profile"
   ON profiles FOR SELECT
-  USING (auth.uid() = id);
+  USING (auth.uid() = id OR is_admin());
 
--- Profiles: Users can update their own profile
+-- Profiles: a user can update their own row; admins can update any.
+-- Privileged columns (role, speler_naam) are guarded by the trigger in
+-- supabase-rls-fix.sql so a non-admin cannot escalate via their own row.
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
-  USING (auth.uid() = id);
+  USING (auth.uid() = id OR is_admin());
 
--- Wedstrijden: Everyone can read
+-- Profiles: admins can delete profiles.
+DROP POLICY IF EXISTS "Admins can delete profiles" ON profiles;
+CREATE POLICY "Admins can delete profiles"
+  ON profiles FOR DELETE
+  USING (is_admin());
+
+-- Profiles: a user can insert their own row on sign-up.
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
+CREATE POLICY "Users can insert own profile"
+  ON profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- Wedstrijden: public read, admin-only writes.
 DROP POLICY IF EXISTS "Wedstrijden zijn zichtbaar voor iedereen" ON wedstrijden;
 CREATE POLICY "Wedstrijden zijn zichtbaar voor iedereen"
-  ON wedstrijden FOR SELECT
-  USING (true);
+  ON wedstrijden FOR SELECT USING (true);
 
--- Wedstrijden: Only admins can insert/update/delete
 DROP POLICY IF EXISTS "Alleen admins kunnen wedstrijden beheren" ON wedstrijden;
 CREATE POLICY "Alleen admins kunnen wedstrijden beheren"
-  ON wedstrijden FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role = 'admin'
-    )
-  );
+  ON wedstrijden FOR ALL USING (is_admin());
 
--- Speler Stats: Everyone can read
+-- Speler stats: public read, admin-only writes.
 DROP POLICY IF EXISTS "Stats zijn zichtbaar voor iedereen" ON speler_stats;
 CREATE POLICY "Stats zijn zichtbaar voor iedereen"
-  ON speler_stats FOR SELECT
-  USING (true);
+  ON speler_stats FOR SELECT USING (true);
 
--- Speler Stats: Only admins can insert/update/delete
 DROP POLICY IF EXISTS "Alleen admins kunnen stats beheren" ON speler_stats;
 CREATE POLICY "Alleen admins kunnen stats beheren"
-  ON speler_stats FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role = 'admin'
-    )
-  );
+  ON speler_stats FOR ALL USING (is_admin());
+
+-- Reviews: public read. Inserts only via submit_review() (no INSERT policy);
+-- admins can delete for moderation.
+DROP POLICY IF EXISTS "Reviews zijn zichtbaar voor iedereen" ON reviews;
+CREATE POLICY "Reviews zijn zichtbaar voor iedereen"
+  ON reviews FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Admins kunnen reviews verwijderen" ON reviews;
+CREATE POLICY "Admins kunnen reviews verwijderen"
+  ON reviews FOR DELETE USING (is_admin());
 
 -- ================================================
--- 6. TRIGGER TO AUTO-UPDATE updated_at
+-- 7. TRIGGER TO AUTO-UPDATE updated_at
 -- ================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -127,26 +171,10 @@ CREATE TRIGGER update_wedstrijden_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 
 -- ================================================
--- 7. FUNCTION TO AUTO-CREATE PROFILE ON SIGNUP
--- ================================================
--- This will be handled in the auth.signUp function in the frontend
--- But you can also create a database trigger if preferred
-
--- ================================================
--- 8. SAMPLE DATA (OPTIONAL - for testing)
--- ================================================
--- Uncomment to insert sample data
-
--- INSERT INTO wedstrijden (datum, tijd, thuisploeg, uitploeg, uitslag, opmerkingen) VALUES
---   ('2026-01-15', '20:00', 'Ultrawear Indoor', 'Team Rockets', '5-3', 'Geweldige wedstrijd!'),
---   ('2026-01-22', '20:00', 'Ultrawear Indoor', 'De Leeuwen', '4-4', 'Spannend gelijkspel'),
---   ('2026-01-29', '20:00', 'Ultrawear Indoor', 'FC Winners', '6-2', 'Dominant gespeeld');
-
--- ================================================
--- 9. VIEW FOR AGGREGATED STATS (OPTIONAL)
+-- 8. VIEW FOR AGGREGATED STATS
 -- ================================================
 CREATE OR REPLACE VIEW speler_totalen AS
-SELECT 
+SELECT
   speler_naam,
   COUNT(CASE WHEN aanwezig = true THEN 1 END) as totaal_aanwezig,
   SUM(doelpunten) as totaal_doelpunten,
@@ -156,15 +184,9 @@ FROM speler_stats
 GROUP BY speler_naam
 ORDER BY totaal_doelpunten DESC, totaal_aanwezig DESC;
 
--- Grant access to the view
 GRANT SELECT ON speler_totalen TO authenticated;
 GRANT SELECT ON speler_totalen TO anon;
 
 -- ================================================
--- SETUP COMPLETE!
--- ================================================
--- Next steps:
--- 1. Create your first admin user in the Supabase Auth UI
--- 2. Manually update the profiles table to set role='admin' for that user
--- 3. Configure your frontend .env.local with Supabase credentials
+-- SETUP COMPLETE — now run the two migration files (see header).
 -- ================================================
