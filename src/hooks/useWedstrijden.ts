@@ -63,7 +63,7 @@ export const useWedstrijden = () => {
 
       if (spelersData.length > 0) {
         const { error: spelersError } = await supabase
-          .from('speler_prestaties')
+          .from('speler_stats')
           .insert(spelersData);
 
         if (spelersError) throw spelersError;
@@ -110,9 +110,9 @@ export const useWedstrijden = () => {
   // Delete wedstrijd
   const deleteWedstrijd = async (id: string) => {
     try {
-      // Eerst verwijderen we de gerelateerde speler_prestaties
+      // Eerst verwijderen we de gerelateerde speler_stats
       const { error: prestationsError } = await supabase
-        .from('speler_prestaties')
+        .from('speler_stats')
         .delete()
         .eq('wedstrijd_id', id);
 
