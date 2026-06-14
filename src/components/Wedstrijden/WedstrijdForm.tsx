@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Calendar, Clock, Users, Save, AlertCircle, Trophy, Info } from 'lucide-react';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
 import { useAuth } from '../../hooks/useAuth';
-import { SPELERS, WedstrijdFormData } from '../../lib/types';
+import { SPELERS, WedstrijdFormData, vandaagISO } from '../../lib/types';
 import { toast } from 'sonner';
 import { NumberInput } from '../UI/NumberInput';
 import { COPY } from '../../lib/copy';
@@ -206,6 +206,12 @@ export const WedstrijdForm = () => {
     }
     if (thuisGoalsNum < 0 || uitGoalsNum < 0) {
       toast.error('Doelpunten kunnen niet negatief zijn');
+      return;
+    }
+
+    // Geen uitslag toelaten voor een wedstrijd die nog gespeeld moet worden
+    if (thuisGoals && uitGoals && datum > vandaagISO()) {
+      toast.error('Je kunt nog geen uitslag invullen voor een wedstrijd in de toekomst.');
       return;
     }
 

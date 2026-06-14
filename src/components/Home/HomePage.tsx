@@ -7,6 +7,7 @@ import { TopScorerTable } from './TopScorerTable';
 import { InstallBanner } from './InstallBanner';
 import { useStats } from '../../hooks/useStats';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
+import { isGespeeld } from '../../lib/types';
 import { COPY } from '../../lib/copy';
 import { supabase } from '../../lib/supabase';
 
@@ -252,8 +253,8 @@ export const HomePage = () => {
   
   // Filter op unieke wedstrijden die gespeeld zijn (hebben een uitslag en niet '-')
   const uniquePlayedMatches = wedstrijden.reduce((acc, current) => {
-    // Alleen wedstrijden met een uitslag die niet '-' is
-    if (!current.uitslag || current.uitslag === '-') {
+    // Alleen écht gespeelde wedstrijden (uitslag + datum niet in de toekomst)
+    if (!isGespeeld(current.datum, current.uitslag)) {
       return acc;
     }
     

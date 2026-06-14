@@ -1,6 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { AggregatedStats, SpelerStat } from '../lib/types';
+import { AggregatedStats, SpelerStat, vandaagISO } from '../lib/types';
+
+// Sluit stats van wedstrijden in de toekomst uit (nog niet gespeeld).
+const isGespeeldeStat = (s: SpelerStat): boolean => {
+  const datum = s.wedstrijden?.datum;
+  return !!datum && datum <= vandaagISO();
+};
 
 // Aggregeer stats, optioneel gefilterd op wedstrijdtype
 const aggregeerStats = (data: SpelerStat[]): AggregatedStats[] => {
@@ -31,7 +37,7 @@ export const useStats = () => {
     try {
       setLoading(true);
       const { data, error: fetchError } = await supabase
-        .from('speler_stats').select('*');
+        .from('speler_stats').select('*, wedstrijden(datum)');
       if (fetchError) throw fetchError;
       setRawStats(data || []);
       setError(null);
@@ -44,7 +50,7 @@ export const useStats = () => {
 
   useEffect(() => { loadStats(); }, [loadStats]);
 
-  const stats = useMemo(() => aggregeerStats(rawStats), [rawStats]);
+  const stats = useMemo(() => aggregeerStats(rawStats.filter(isGespeeldeStat)), [rawStats]);
 
   return { stats, loading, error, refetch: loadStats };
 };
@@ -58,7 +64,7 @@ export const useFilteredStats = (filter: 'all' | 'competitie' | 'beker') => {
     setLoading(true);
     let query = supabase
       .from('speler_stats')
-      .select('*, wedstrijden(type)');
+      .select('*, wedstrijden(type, datum)');
 
     const { data } = await query;
     setRawStats(data || []);
@@ -70,10 +76,11 @@ export const useFilteredStats = (filter: 'all' | 'competitie' | 'beker') => {
   }, [loadStats]);
 
   const stats = useMemo(() => {
-    // Filter op type indien nodig
+    // Alleen gespeelde wedstrijden, daarna optioneel op type filteren.
+    const gespeeld = rawStats.filter(isGespeeldeStat);
     const gefilterd = filter === 'all'
-      ? rawStats
-      : rawStats.filter((s) => s.wedstrijden?.type === filter);
+      ? gespeeld
+      : gespeeld.filter((s) => s.wedstrijden?.type === filter);
 
     return aggregeerStats(gefilterd);
   }, [rawStats, filter]);
@@ -101,9 +108,9 @@ export const useSpelerForm = (spelerNaam: string) => {
         .eq('speler_naam', spelerNaam)
         .eq('aanwezig', true);
 
-      // Sorteer client-side op datum, neem laatste 5
+      // Sorteer client-side op datum, neem laatste 5 (geen toekomstige)
       const mapped = (data || [])
-        .filter((s: any) => s.wedstrijden?.datum) // alleen wedstrijden met datum
+        .filter((s: any) => s.wedstrijden?.datum && s.wedstrijden.datum <= vandaagISO())
         .map((s: any) => {
           const w = s.wedstrijden;
           const tegenstander = w?.thuisploeg === 'Ultrawear Indoor' ? w?.uitploeg : w?.thuisploeg;

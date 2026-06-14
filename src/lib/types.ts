@@ -34,6 +34,8 @@ export interface SpelerStat {
   created_at: string;
   wedstrijden?: {
     type?: 'competitie' | 'beker' | 'oefenwedstrijd';
+    datum?: string;
+    uitslag?: string;
   };
 }
 
@@ -117,6 +119,19 @@ export const SPELERS = [
 ] as const;
 
 export type SpelerNaam = typeof SPELERS[number];
+
+/**
+ * Datum van vandaag als 'YYYY-MM-DD' (zelfde formaat als wedstrijd.datum).
+ */
+export const vandaagISO = (): string => new Date().toISOString().split('T')[0];
+
+/**
+ * Een wedstrijd is pas "gespeeld" als hij een uitslag heeft EN de datum niet in
+ * de toekomst ligt. Voorkomt dat een (per ongeluk) vooraf ingevulde toekomstige
+ * wedstrijd meetelt in uitslagen of statistieken.
+ */
+export const isGespeeld = (datum?: string | null, uitslag?: string | null): boolean =>
+  !!datum && datum <= vandaagISO() && !!uitslag && uitslag !== '-';
 
 /**
  * Berekent het aantal punten op basis van de uitslag.
