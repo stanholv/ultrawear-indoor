@@ -19,6 +19,15 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Capture the install prompt as early as possible — it can fire before
+      // React mounts. Stored for the InstallBanner to pick up.
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__deferredPrompt = e;
+        window.dispatchEvent(new Event('pwa-prompt-ready'));
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

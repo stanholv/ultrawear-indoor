@@ -12,7 +12,6 @@ interface BeforeInstallPromptEvent extends Event {
 
 const isStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches ||
-  // iOS Safari
   (window.navigator as any).standalone === true;
 
 const isIOS = () =>
@@ -22,31 +21,35 @@ const isIOS = () =>
 export const InstallBanner = () => {
   const [visible, setVisible] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showIosHelp, setShowIosHelp] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
-    // Only on mobile, not already installed, not previously dismissed.
+    // Mobile only, not already installed, not previously dismissed.
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
     if (!isMobile || isStandalone() || localStorage.getItem(DISMISS_KEY)) return;
 
-    // Android / Chromium: capture the install prompt.
-    const handler = (e: Event) => {
+    // Show on any mobile device — don't wait for beforeinstallprompt (which is
+    // unreliable / Android-only). The install button adapts to what's available.
+    setVisible(true);
+
+    // Pick up an install prompt captured early in index.html, or future ones.
+    const existing = (window as any).__deferredPrompt as BeforeInstallPromptEvent | undefined;
+    if (existing) setDeferredPrompt(existing);
+
+    const onReady = () => setDeferredPrompt((window as any).__deferredPrompt ?? null);
+    const onPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setVisible(true);
     };
-    window.addEventListener('beforeinstallprompt', handler);
+    const onInstalled = () => setVisible(false);
 
-    // iOS has no beforeinstallprompt — show manual instructions instead.
-    if (isIOS()) setVisible(true);
-
-    // Hide once the app gets installed.
-    const installed = () => setVisible(false);
-    window.addEventListener('appinstalled', installed);
-
+    window.addEventListener('pwa-prompt-ready', onReady);
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    window.addEventListener('appinstalled', onInstalled);
     return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-      window.removeEventListener('appinstalled', installed);
+      window.removeEventListener('pwa-prompt-ready', onReady);
+      window.removeEventListener('beforeinstallprompt', onPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
     };
   }, []);
 
@@ -61,10 +64,15 @@ export const InstallBanner = () => {
       const { outcome } = await deferredPrompt.userChoice;
       setDeferredPrompt(null);
       if (outcome === 'accepted') setVisible(false);
-    } else if (isIOS()) {
-      setShowIosHelp(v => !v);
+    } else {
+      // No native prompt (iOS, or Android before the event) — show how-to.
+      setShowHelp(v => !v);
     }
   };
+
+  const helpText = isIOS()
+    ? 'Tik op het deel-icoon en kies “Zet op beginscherm”.'
+    : 'Open het browsermenu (⋮) en kies “App installeren”.';
 
   return (
     <AnimatePresence>
@@ -98,9 +106,7 @@ export const InstallBanner = () => {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>App nu beschikbaar 🎉</div>
             <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
-              {showIosHelp
-                ? 'Tik op het deel-icoon en kies “Zet op beginscherm”.'
-                : 'Installeer Ultrawear Indoor op je startscherm.'}
+              {showHelp ? helpText : 'Installeer Ultrawear Indoor op je startscherm.'}
             </div>
           </div>
 
@@ -113,8 +119,8 @@ export const InstallBanner = () => {
               fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer',
             }}
           >
-            {isIOS() ? <Share size={16} /> : <Download size={16} />}
-            {isIOS() ? 'Hoe?' : 'Installeren'}
+            {deferredPrompt ? <Download size={16} /> : <Share size={16} />}
+            {deferredPrompt ? 'Installeren' : 'Hoe?'}
           </button>
 
           <button
