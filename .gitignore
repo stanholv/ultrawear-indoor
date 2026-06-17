@@ -42,5 +42,9 @@ dev-dist
 .cache
 coverage
 
+# Internal analysis docs (kept local, not published)
+CODEBASE_ANALYSIS.md
+PROJECT_KNOWLEDGE_V25.md
+
 .vercel
 .env*.local
