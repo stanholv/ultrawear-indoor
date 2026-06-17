@@ -91,7 +91,7 @@ export const WedstrijdForm = () => {
       if (suggestedMatch) {
         setSelectedWedstrijdId(suggestedMatch.id);
         setDatum(suggestedMatch.datum);
-        setTijd(suggestedMatch.tijd);
+        setTijd((suggestedMatch.tijd || '').slice(0, 5)); // DB geeft 'HH:MM:SS' → toon 'HH:MM'
         setThuisploeg(suggestedMatch.thuisploeg);
         setUitploeg(suggestedMatch.uitploeg);
         setMatchType(suggestedMatch.type || 'competitie');
@@ -105,7 +105,7 @@ export const WedstrijdForm = () => {
     if (!wedstrijd) return;
 
     setDatum(wedstrijd.datum);
-    setTijd(wedstrijd.tijd);
+    setTijd((wedstrijd.tijd || '').slice(0, 5)); // DB geeft 'HH:MM:SS' → toon 'HH:MM'
     setThuisploeg(wedstrijd.thuisploeg);
     setUitploeg(wedstrijd.uitploeg);
     setMatchType(wedstrijd.type || 'competitie');
@@ -196,7 +196,7 @@ export const WedstrijdForm = () => {
     }
 
     // Validate time format
-    if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(tijd)) {
+    if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(tijd)) {
       toast.error('Tijd moet in HH:MM formaat zijn');
       return;
     }
