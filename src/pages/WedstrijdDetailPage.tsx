@@ -20,6 +20,8 @@ interface Wedstrijd {
   uitploeg: string;
   uitslag: string;
   type: 'competitie' | 'beker' | 'oefenwedstrijd';
+  forfait?: boolean;
+  owngoals?: number;
   opmerkingen?: string;
 }
 
@@ -197,8 +199,12 @@ export const WedstrijdDetailPage = () => {
             <div className="stat-card-header">
               <div>
                 <div className="stat-label">Doelpunten</div>
-                <div className="stat-value">{totalDoelpunten}</div>
-                <div className="stat-detail">door spelers geregistreerd</div>
+                <div className="stat-value">{totalDoelpunten}{(wedstrijd.owngoals ?? 0) > 0 ? ` + ${wedstrijd.owngoals}` : ''}</div>
+                <div className="stat-detail">
+                  {(wedstrijd.owngoals ?? 0) > 0
+                    ? `${totalDoelpunten} door spelers + ${wedstrijd.owngoals} owngoal${wedstrijd.owngoals === 1 ? '' : 's'} = ${totalDoelpunten + (wedstrijd.owngoals ?? 0)}`
+                    : 'door spelers geregistreerd'}
+                </div>
               </div>
               <div className="stat-icon"><Target size={24} /></div>
             </div>

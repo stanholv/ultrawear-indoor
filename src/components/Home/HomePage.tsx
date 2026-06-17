@@ -249,7 +249,11 @@ export const HomePage = () => {
     .map(s => s.speler_naam);
   
   // Totale stats - FIXED: gebruik alleen wedstrijden met een uitslag
-  const totalGoals = stats.reduce((sum, s) => sum + s.doelpunten, 0);
+  // Teamtotaal = spelersgoals + owngoals (alleen gespeelde, niet-forfait matchen)
+  const owngoalsTotaal = wedstrijden
+    .filter(w => isGespeeld(w.datum, w.uitslag) && !w.forfait)
+    .reduce((sum, w) => sum + (w.owngoals ?? 0), 0);
+  const totalGoals = stats.reduce((sum, s) => sum + s.doelpunten, 0) + owngoalsTotaal;
   
   // Filter op unieke wedstrijden die gespeeld zijn (hebben een uitslag en niet '-')
   const uniquePlayedMatches = wedstrijden.reduce((acc, current) => {

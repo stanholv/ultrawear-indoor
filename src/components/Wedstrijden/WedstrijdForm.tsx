@@ -33,6 +33,7 @@ export const WedstrijdForm = () => {
   const [thuisGoals, setThuisGoals] = useState('');
   const [uitGoals, setUitGoals] = useState('');
   const [forfait, setForfait] = useState(false);
+  const [owngoals, setOwngoals] = useState(0);
   const [opmerkingen, setOpmerkingen] = useState('');
   const [spelers, setSpelers] = useState<SpelerInput[]>(
     SPELERS.map(naam => ({
@@ -109,6 +110,7 @@ export const WedstrijdForm = () => {
     setUitploeg(wedstrijd.uitploeg);
     setMatchType(wedstrijd.type || 'competitie');
     setForfait(!!wedstrijd.forfait);
+    setOwngoals(wedstrijd.owngoals ?? 0);
     setOpmerkingen(wedstrijd.opmerkingen || '');
 
     const heeftUitslag = wedstrijd.uitslag && wedstrijd.uitslag !== '-';
@@ -240,6 +242,7 @@ export const WedstrijdForm = () => {
           uitslag,
           type: matchType,
           forfait,
+          owngoals: forfait ? 0 : owngoals,
           opmerkingen,
         });
 
@@ -274,6 +277,7 @@ export const WedstrijdForm = () => {
           uitslag,
           type: matchType,
           forfait,
+          owngoals: forfait ? 0 : owngoals,
           opmerkingen,
           spelers: spelers.map(s => ({
             naam: s.naam,
@@ -297,6 +301,7 @@ export const WedstrijdForm = () => {
       setThuisGoals('');
       setUitGoals('');
       setForfait(false);
+      setOwngoals(0);
       setOpmerkingen('');
       setSelectedWedstrijdId('');
       setIsBestaandeWedstrijd(false);
@@ -698,6 +703,28 @@ export const WedstrijdForm = () => {
                         </div>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {/* Owngoals (door tegenstander, in ons voordeel) */}
+              {!forfait && (mode === 'fill' || mode === 'create') && thuisploeg && uitploeg && (
+                <div style={{ marginBottom: 'var(--spacing-xl)' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    gap: 'var(--spacing-md)', flexWrap: 'wrap',
+                    padding: 'var(--spacing-md) var(--spacing-lg)',
+                    background: 'var(--color-surface)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-border)',
+                  }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>🥅 Owngoals tegenstander</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                        Goals in ons voordeel die geen enkele speler maakte.
+                      </div>
+                    </div>
+                    <NumberInput value={owngoals} onChange={setOwngoals} max={20} />
                   </div>
                 </div>
               )}

@@ -5,11 +5,13 @@ import { AggregatedStats } from '../../lib/types';
 // Deze interface MOET exact overeenkomen met wat StatsPage verstuurt
 interface StatsOverviewProps {
   stats: AggregatedStats[];
+  owngoals?: number;
 }
 
-export const StatsOverview = ({ stats }: StatsOverviewProps) => {
+export const StatsOverview = ({ stats, owngoals = 0 }: StatsOverviewProps) => {
   // Berekeningen op basis van de props
-  const totalGoals = stats.reduce((sum, s) => sum + s.doelpunten, 0);
+  const spelerGoals = stats.reduce((sum, s) => sum + s.doelpunten, 0);
+  const totalGoals = spelerGoals + owngoals; // teamtotaal = spelersgoals + owngoals
   const totalMatches = Math.max(...stats.map(s => s.aanwezig), 0);
   const topScorer = [...stats].sort((a, b) => b.doelpunten - a.doelpunten)[0];
 
@@ -24,6 +26,9 @@ export const StatsOverview = ({ stats }: StatsOverviewProps) => {
           <div>
             <div className="stat-label">Totaal Goals</div>
             <div className="stat-value">{totalGoals}</div>
+            {owngoals > 0 && (
+              <div className="stat-detail">{spelerGoals} door spelers + {owngoals} owngoals</div>
+            )}
           </div>
           <div className="stat-icon"><Target size={24} /></div>
         </div>

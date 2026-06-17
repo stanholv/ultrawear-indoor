@@ -3,10 +3,18 @@ import { StatsTable } from './StatsTable';
 import { StatsOverview } from './StatsOverview';
 import { COPY } from '../../lib/copy';
 import { useStats } from '../../hooks/useStats';
+import { useWedstrijden } from '../../hooks/useWedstrijden';
+import { isGespeeld } from '../../lib/types';
 
 export const StatsPage = () => {
   const { stats, loading } = useStats();
+  const { wedstrijden } = useWedstrijden();
   const navigate = useNavigate();
+
+  // Owngoals tellen mee in het teamtotaal (alleen gespeelde, niet-forfait matchen).
+  const owngoals = wedstrijden
+    .filter(w => isGespeeld(w.datum, w.uitslag) && !w.forfait)
+    .reduce((sum, w) => sum + (w.owngoals ?? 0), 0);
 
   if (loading) {
     return (
@@ -30,7 +38,7 @@ export const StatsPage = () => {
         </button>
       </div>
       
-      <StatsOverview stats={stats} />
+      <StatsOverview stats={stats} owngoals={owngoals} />
       <StatsTable stats={stats} />
     </div>
   );

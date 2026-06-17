@@ -43,6 +43,7 @@ export const useWedstrijden = () => {
           uitslag: formData.uitslag,
           type: formData.type,
           forfait: formData.forfait ?? false,
+          owngoals: formData.owngoals ?? 0,
           opmerkingen: formData.opmerkingen,
         })
         .select()
@@ -93,6 +94,7 @@ export const useWedstrijden = () => {
           uitslag: data.uitslag,
           type: data.type,
           forfait: data.forfait ?? false,
+          owngoals: data.owngoals ?? 0,
           opmerkingen: data.opmerkingen,
           updated_at: new Date().toISOString(),
         })
