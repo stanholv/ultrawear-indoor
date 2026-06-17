@@ -414,7 +414,7 @@ export const WedstrijdForm = () => {
           </motion.div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ padding: 'var(--spacing-lg)' }}>
+        <form onSubmit={handleSubmit} className="wedstrijd-form-body" style={{ padding: 'var(--spacing-lg)' }}>
 
           {/* Wedstrijd selector (fill mode) */}
           {mode === 'fill' && (
@@ -587,18 +587,18 @@ export const WedstrijdForm = () => {
                         </div>
                         <input
                           type="number"
+                          inputMode="numeric"
                           min="0"
                           max="30"
-                          className="form-input"
+                          className="form-input score-input"
                           value={thuisGoals}
                           onChange={e => setThuisGoals(e.target.value)}
                           placeholder="0"
-                          style={{ textAlign: 'center', fontSize: '1.25rem', fontWeight: '700', padding: 'var(--spacing-sm)' }}
                         />
                       </div>
 
                       {/* Streepje */}
-                      <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-text-secondary)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--color-text-tertiary)', textAlign: 'center', paddingTop: '1.4rem' }}>
                         –
                       </div>
 
@@ -619,13 +619,13 @@ export const WedstrijdForm = () => {
                         </div>
                         <input
                           type="number"
+                          inputMode="numeric"
                           min="0"
                           max="30"
-                          className="form-input"
+                          className="form-input score-input"
                           value={uitGoals}
                           onChange={e => setUitGoals(e.target.value)}
                           placeholder="0"
-                          style={{ textAlign: 'center', fontSize: '1.25rem', fontWeight: '700', padding: 'var(--spacing-sm)' }}
                         />
                       </div>
                     </div>
@@ -692,9 +692,15 @@ export const WedstrijdForm = () => {
                         transition: 'border-color var(--transition-fast)',
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)', paddingBottom: 'var(--spacing-sm)', borderBottom: '1px solid var(--color-border)' }}>
+                      <label style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        cursor: 'pointer',
+                        marginBottom: speler.aanwezig ? 'var(--spacing-md)' : 0,
+                        paddingBottom: speler.aanwezig ? 'var(--spacing-sm)' : 0,
+                        borderBottom: speler.aanwezig ? '1px solid var(--color-border)' : 'none',
+                      }}>
                         <span style={{ fontWeight: '700', fontSize: '1.125rem' }}>{speler.naam}</span>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{COPY.LABEL_AANWEZIG}</span>
                           <input
                             type="checkbox"
@@ -702,23 +708,25 @@ export const WedstrijdForm = () => {
                             onChange={e => handleSpelerChange(index, 'aanwezig', e.target.checked)}
                             style={{ width: '24px', height: '24px', cursor: 'pointer' }}
                           />
-                        </label>
-                      </div>
+                        </span>
+                      </label>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>⚽ {COPY.LABEL_GOALS}</label>
-                          <NumberInput value={speler.doelpunten} onChange={val => handleSpelerChange(index, 'doelpunten', val)} max={20} disabled={!speler.aanwezig} />
+                      {speler.aanwezig && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>⚽ {COPY.LABEL_GOALS}</label>
+                            <NumberInput value={speler.doelpunten} onChange={val => handleSpelerChange(index, 'doelpunten', val)} max={20} />
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>🎯 {COPY.LABEL_PENALTIES}</label>
+                            <NumberInput value={speler.penalty} onChange={val => handleSpelerChange(index, 'penalty', val)} max={10} />
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>🚩 {COPY.LABEL_CORNERS}</label>
+                            <NumberInput value={speler.corner} onChange={val => handleSpelerChange(index, 'corner', val)} max={20} />
+                          </div>
                         </div>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>🎯 {COPY.LABEL_PENALTIES}</label>
-                          <NumberInput value={speler.penalty} onChange={val => handleSpelerChange(index, 'penalty', val)} max={10} disabled={!speler.aanwezig} />
-                        </div>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>🚩 {COPY.LABEL_CORNERS}</label>
-                          <NumberInput value={speler.corner} onChange={val => handleSpelerChange(index, 'corner', val)} max={20} disabled={!speler.aanwezig} />
-                        </div>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -736,15 +744,17 @@ export const WedstrijdForm = () => {
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn btn-primary"
-                style={{ width: '100%', marginTop: 'var(--spacing-xl)' }}
-              >
-                <Save size={20} />
-                {loading ? COPY.FORM_SAVING : (isBestaandeWedstrijd && isAdmin ? 'Wedstrijd Bijwerken' : COPY.BTN_SAVE_MATCH)}
-              </button>
+              <div className="form-submit-bar">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn btn-primary"
+                  style={{ width: '100%', marginTop: 'var(--spacing-xl)' }}
+                >
+                  <Save size={20} />
+                  {loading ? COPY.FORM_SAVING : (isBestaandeWedstrijd && isAdmin ? 'Wedstrijd Bijwerken' : COPY.BTN_SAVE_MATCH)}
+                </button>
+              </div>
             </>
           )}
         </form>
@@ -752,9 +762,35 @@ export const WedstrijdForm = () => {
 
       {/* Responsive CSS */}
       <style>{`
+        .score-input {
+          text-align: center;
+          font-size: 2rem;
+          font-weight: 800;
+          padding: var(--spacing-sm) var(--spacing-xs);
+        }
         @media (max-width: 768px) {
           .desktop-only { display: none !important; }
           .mobile-only { display: block !important; }
+
+          .score-input { font-size: 2.25rem; }
+
+          /* Sticky opslaan-balk onderaan (de .card-ouder heeft overflow:hidden,
+             dus fixed i.p.v. sticky). */
+          .form-submit-bar {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--color-bg-elevated);
+            padding: var(--spacing-md) var(--spacing-lg);
+            padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--color-border);
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.25);
+            z-index: 60;
+          }
+          .form-submit-bar .btn { margin-top: 0 !important; }
+          /* ruimte zodat de laatste velden niet achter de balk verdwijnen */
+          .wedstrijd-form-body { padding-bottom: 96px !important; }
         }
         @media (min-width: 769px) {
           .desktop-only { display: block !important; }
