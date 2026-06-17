@@ -42,6 +42,7 @@ export const useWedstrijden = () => {
           uitploeg: formData.uitploeg,
           uitslag: formData.uitslag,
           type: formData.type,
+          forfait: formData.forfait ?? false,
           opmerkingen: formData.opmerkingen,
         })
         .select()
@@ -49,8 +50,8 @@ export const useWedstrijden = () => {
 
       if (wedstrijdError) throw wedstrijdError;
 
-      // Insert speler prestaties
-      const spelersData = formData.spelers
+      // Insert speler prestaties (geen spelersstats bij een forfait)
+      const spelersData = formData.forfait ? [] : formData.spelers
         .filter(s => s.aanwezig)
         .map(speler => ({
           wedstrijd_id: wedstrijdData.id,
@@ -90,6 +91,8 @@ export const useWedstrijden = () => {
           thuisploeg: data.thuisploeg,
           uitploeg: data.uitploeg,
           uitslag: data.uitslag,
+          type: data.type,
+          forfait: data.forfait ?? false,
           opmerkingen: data.opmerkingen,
           updated_at: new Date().toISOString(),
         })

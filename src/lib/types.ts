@@ -19,6 +19,7 @@ export interface Wedstrijd {
   uitploeg: string;
   uitslag: string;
   type?: 'competitie' | 'beker' | 'oefenwedstrijd';
+  forfait?: boolean;
   opmerkingen?: string;
   created_at: string;
 }
@@ -36,6 +37,7 @@ export interface SpelerStat {
     type?: 'competitie' | 'beker' | 'oefenwedstrijd';
     datum?: string;
     uitslag?: string;
+    forfait?: boolean;
   };
 }
 
@@ -64,6 +66,7 @@ export interface WedstrijdFormData {
   uitploeg: string;
   uitslag: string;
   type?: 'competitie' | 'beker' | 'oefenwedstrijd';
+  forfait?: boolean;
   opmerkingen?: string;
   spelers: SpelerInput[];
 }

@@ -1,37 +1,43 @@
-# ⚽ Ultrawear Indoor - Modern Edition
+# ⚽ Ultrawear Indoor v2.5
 
-Volledig vernieuwde minivoetbal app met moderne UI, animaties en verbeterde UX.
+Indoor voetbal team management app met statistieken, speler profielen, en reviews systeem.
 
-## ✨ Wat is Nieuw in v2.0
+## ✨ Huidige Features (v2.5)
 
-### 🎨 Design Upgrades
-- **Glassmorphism** - Modern frosted glass effect
-- **Dark Mode** - Volledige dark mode ondersteuning met toggle
-- **Gradient Accents** - Mooie kleurovergangen
-- **Smooth Animaties** - Framer Motion powered transitions
-- **Responsive Grid Layout** - Verbeterde mobile experience
+### 👥 Speler Management
+- **Spelers Pagina** (`/spelers`) - Overzicht van alle team leden met rugnummers en posities
+- **Speler Profielen** (`/spelers/:naam`) - Individuele profielpagina's met statistieken en reviews
+- **Profiel Koppelingen** - Admin kan accounts koppelen aan spelers
+- **Bewerking Mogelijkheden** - Gekoppelde spelers kunnen hun profiel bewerken (rugnummer, positie, bio)
 
-### 📊 Nieuwe Features  
-- **Stats Overview Cards** - Quick metrics dashboard
-- **Interactive Rankings** - Animated leaderboard met medailles
-- **Progress Bars** - Visuele weergave van statistieken
-- **Player Avatars** - Auto-generated avatars met initialen
-- **Trend Indicators** - Up/down trends voor stats
-- **Toast Notifications** - Moderne feedback messages
-- **Skeleton Loaders** - Smooth loading states
+### ⭐ Reviews Systeem
+- **Community Reviews** - Iedereen kan spelers beoordelen (1-5 sterren)
+- **Spam Bescherming** - Max 1 review per IP per uur per speler
+- **Gemiddelde Score** - Automatisch berekend en weergegeven op profielpagina
+- **Transparantie** - Alle reviews publiek zichtbaar met reviewer naam en datum
 
-### 🎯 UX Verbeteringen
-- **Live Stats Preview** - Real-time overzicht tijdens invoeren
-- **Form Validation** - Betere error handling
-- **Icon Integration** - Lucide icons overal
-- **Keyboard Shortcuts** - Sneller werken
-- **Auto-save Indicators** - Duidelijke feedback
+### 📊 Statistieken
+- **Live Stats Dashboard** - Real-time statistieken met filters
+- **Ranking Systeem** - Vergeleken op doelpunten, aanwezigheid en wedstrijden gespeeld
+- **Match Details** - Volledige wedstrijdgeschiedenis met uitslag and bijzonderheden
+- **Individuele Stats** - Per speler doelpunten, corners, penalties getrackt
+
+### 🎨 Design & UX
+- **Jersey Theme** - Ultrawear rood/zwart diagonale strepen design
+- **Dark Mode Default** - Optimaal voor stadion omgevingen
+- **Responsive Layout** - Perfect op desktop, tablet en mobiel
+- **Moderne Animaties** - Smooth transitions met Framer Motion
+- **Lucide Icons** - Professionele iconen overal
 
 ## 🚀 Quick Start
 
 ```bash
 # Installeer dependencies
 npm install
+
+# Stel environment variables in (.env.local)
+# VITE_SUPABASE_URL=...
+# VITE_SUPABASE_ANON_KEY=...
 
 # Start development server
 npm run dev
@@ -40,167 +46,190 @@ npm run dev
 npm run build
 ```
 
-## 📦 Nieuwe Dependencies
+**Live Production:** https://ultrawear-indoor.vercel.app
+**Repository:** https://github.com/stanholv/ultrawear-indoor
 
-- `framer-motion` - Smooth animaties
+## 📦 Key Dependencies
+
+- `@supabase/supabase-js` - Database & authentication
+- `@vercel/analytics` - Production monitoring
+- `framer-motion` - Smooth animaties en transitions
 - `lucide-react` - Moderne icon library
-- `recharts` - Charts en grafieken (voor toekomstige features)
-- `sonner` - Toast notifications
-
-## 🎨 Theme Systeem
-
-De app ondersteunt nu dark mode! De theme wordt automatisch opgeslagen in localStorage.
-
-```typescript
-// Toggle theme programmatisch
-const toggleTheme = () => {
-  const newTheme = theme === 'light' ? 'dark' : 'light';
-  setTheme(newTheme);
-  localStorage.setItem('theme', newTheme);
-  document.documentElement.setAttribute('data-theme', newTheme);
-};
-```
-
-## 🎯 Component Overzicht
-
-### Nieuwe Componenten
-- `StatsOverview` - Dashboard met quick stats
-- `ModernStatsTable` - Verbeterde tabel met rankings
-- `ThemeToggle` - Dark/Light mode switch
-- `PlayerAvatar` - Auto-generated avatars
-- `ProgressBar` - Animated progress indicators
-
-### Verbeterde Componenten
-- `Header` - Moderne header met theme toggle
-- `Navigation` - Icons en betere states
-- `LoginForm` - Glassmorphism design
-- `WedstrijdForm` - Live stats preview
-
-## 🔧 Customization
-
-### Kleuren Aanpassen
-
-Edit `/src/styles/globals.css`:
-
-```css
-:root {
-  --color-primary: #dc2626;     /* Rood */
-  --color-accent: #f59e0b;      /* Oranje */
-  /* Pas aan naar jouw kleuren */
-}
-```
-
-### Spelers Toevoegen
-
-Edit `/src/lib/types.ts`:
-
-```typescript
-export const SPELERS = [
-  "Stan", "Rette", "Wanny", // ... je spelers
-  "NieuweSpeler" // voeg toe
-];
-```
-
-## 📊 Toekomstige Features (Roadmap)
-
-- [ ] **Charts & Grafieken** - Visuele statistieken met Recharts
-- [ ] **Player Profiles** - Individuele speler pagina's
-- [ ] **Match History** - Complete wedstrijd geschiedenis
-- [ ] **Comparison Tool** - Vergelijk spelers
-- [ ] **Export Data** - Download als CSV/PDF
-- [ ] **Notifications** - Push notifications voor nieuwe wedstrijden
-- [ ] **Team Management** - Meerdere teams ondersteunen
-- [ ] **Seasonal Stats** - Statistieken per seizoen
+- `sonner` - Toast notifications (feedback messages)
+- `react` & `typescript` - Core framework
 
 ## 🎨 Design System
 
-### Spacing Scale
-```
---spacing-xs:  4px
---spacing-sm:  8px
---spacing-md:  16px
---spacing-lg:  24px
---spacing-xl:  32px
---spacing-2xl: 48px
+### Kleuren Schema (Jersey-Inspired)
+- **Primary:** #C8102E (Ultrawear Red)
+- **Secondary:** #1A1A1A (Black)
+- **Accent:** #f59e0b (Orange/Gold)
+- **Keeper:** #f59e0b
+- **Verdediger:** #3b82f6
+- **Middenvelder:** #10b981
+- **Aanvaller:** #C8102E
+
+### Theme Systeem
+De app ondersteunt dark mode als standaard met diagonale rode/zwarte stripes pattern.
+
+```typescript
+// Kleuren aanpassen in:
+// /src/styles/globals.css (CSS variables)
 ```
 
-### Border Radius
-```
---radius-sm:   6px
---radius-md:   12px
---radius-lg:   16px
---radius-xl:   24px
---radius-full: 9999px
+### Responsive Design
+- Mobile: Max width 480px (44px touch targets)
+- Tablet: 480px - 768px
+- Desktop: 768px+
+
+## 🎯 Component Overzicht
+
+### Pagina's (Pages)
+- `HomePage.tsx` - Homepagina met volgende wedstrijd en top scorers
+- `SpelersPage.tsx` - Alfabetisch gesorteerde speler overzicht
+- `SpelerProfielPage.tsx` - Individueel speler profiel met stats, bio en reviews
+- `StatsPage.tsx` - Statistieken dashboard met filters
+- `DetailedStats.tsx` - Uitgebreide statistieken analyse
+- `UitslagenPage.tsx` - Match resultaten geschiedenis
+- `WedstrijdDetailPage.tsx` - Details van specifieke wedstrijd
+
+### Layout Components
+- `Header.tsx` - Hoofd header met verzalking
+- `Navigation.tsx` - Tab-gebaseerde navigatie (Thuis, Statistieken, Uitslagen, Spelers)
+
+### Functionaliteit Components
+- `AdminPage.tsx` - Admin dashboard (speler koppelingen, reviews)
+- `SpelerKoppelingPanel.tsx` - Admin tool om accounts aan spelers te koppelen
+- `WedstrijdForm.tsx` - Wedstrijd invoer & beheer (admin)
+- `LoginForm.tsx` - Inlog formulier
+
+### Statistieken Components
+- `StatsTable.tsx` - Interactieve stats tabel met rankings
+- `StatsOverview.tsx` - Quick stats cards
+
+### UI Components
+- `MatchTypeBadge.tsx` - Badge voor wedstrijd type
+- `NumberInput.tsx` - +/- input voor stats
+- `ProtectedRoute.tsx` - Route bescherming voor authenticated users
+
+## �️ Routes Overzicht
+
+| Route | Beschrijving | Toegang |
+|-------|-------------|---------|
+| `/` | Homepage met volgende wedstrijd | Publiek |
+| `/statistieken` | Statistieken dashboard | Publiek |
+| `/statistieken/details` | Uitgebreide stats | Publiek |
+| `/uitslagen` | Match resultaten | Publiek |
+| `/uitslagen/:id` | Wedstrijd details | Publiek |
+| `/spelers` | Speler overzicht | Publiek |
+| `/spelers/:naam` | Speler profiel & reviews | Publiek |
+| `/login` | Inlog pagina | Publiek |
+| `/wedstrijd-invoeren` | Wedstrijd invoer | Ingelogd |
+| `/admin` | Admin dashboard | Admin only |
+
+## 🔧 Configuratie
+
+### Spelers Toevoegen
+
+Edit [src/lib/types.ts](src/lib/types.ts):
+
+```typescript
+export const SPELERS = [
+  "Stan", "Rette", "Wanny", "Arne", "Emile",
+  "Vik", "Nicolas", "Mats", "Brian", "Slekke",
+  "Didier", "Elias", "Toby", "Pieter"
+  // Voeg nieuwe spelers toe hier
+];
 ```
 
-### Shadows
+### Environment Variables
+
+Create `.env.local`:
+
 ```
---shadow-sm: Subtle
---shadow-md: Medium
---shadow-lg: Large
---shadow-xl: Extra Large
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_key
 ```
+
+### Teksten Aanpassen
+
+Edit [src/lib/copy.ts](src/lib/copy.ts) voor alle UI teksten.
+
+## 📊 Toekomstige Features (Roadmap)
+
+### v2.6 - Review Moderatie
+- [ ] Admin review moderation (bekijken & verwijderen)
+- [ ] Spam detection verbeteren
+- [ ] Rapporteer knop voor reviews
+
+### v2.7 - Seizoen Management
+- [ ] Meerdere seizoenen ondersteuning
+- [ ] Seizoen selector dropdown
+- [ ] Historische data per seizoen
+
+### v2.8 - Security & Performance
+- [ ] RLS policies audit
+- [ ] Input sanitization verbeteren
+- [ ] Rate limiting configuratie
+- [ ] Caching optimaties
+
+### v2.9+ - Toekomstige Expansie
+- [ ] Match predictions
+- [ ] Team formation builder
+- [ ] Fan engagement features
+- [ ] Mobile app (React Native)
 
 ## 🔐 Beveiliging
 
-Alle security features van v1.0 blijven behouden:
-- Row Level Security (RLS) in Supabase
-- Role-based access control
-- Environment variables voor credentials
-- HTTPS/SSL via Vercel/Netlify
+- **Row Level Security (RLS)** - Supabase RLS policies op database level
+- **Role-based Access** - Admin vs Speler rollen
+- **Environment Variables** - Credentials buiten code gehouden
+- **HTTPS/SSL** - Vercel hosting met automatische encryption
+- **Spam Protection** - IP-based review limiting
 
-## 📱 Progressive Web App (PWA)
+## 🚀 Deployment
 
-De app is PWA-ready! Gebruikers kunnen de app installeren op hun apparaat voor een native app ervaring.
+### Continuous Deployment
+- GitHub repo aan Vercel gekoppeld
+- Automatische deploy bij push naar `main` branch
+- Preview URLs voor feature branches
+
+**Production URL:** https://ultrawear-indoor.vercel.app
 
 ## 🐛 Troubleshooting
 
-### Dark Mode Werkt Niet
-Check of `localStorage` werkt in je browser. Open Console:
-```javascript
-localStorage.setItem('theme', 'dark');
-```
+### Profiel koppeling werkt niet
+- Zorg dat je admin bent in Supabase
+- Vernieuw pagina na koppeling
+- Check browser console voor errors
 
-### Animaties Zijn Traag
-Reduce motion in OS instellingen kan animaties uitschakelen. Check:
-```css
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; }
-}
-```
+### Reviews laden niet
+- Verifieer Supabase reviews tabel ingesteld
+- Check IP detection werkt (api.ipify.org)
+- Controleer RLS policies
 
-### Icons Laden Niet
-Check of `lucide-react` correct is geïnstalleerd:
-```bash
-npm install lucide-react
-```
+### Stats tonen 0 waarden
+- Zorg dat spelers aanwezig zijn gemarkeerd (True)
+- Controleer wedstrijd datum en type
+- Check useStats berekeningen
 
-## 📝 Migration Guide (v1.0 → v2.0)
+## 📚 Documentatie
 
-### Database Schema
-✅ Geen wijzigingen! Gebruik dezelfde Supabase setup.
+Meer details vinden in:
+- [PROJECT_KNOWLEDGE_V25.md](PROJECT_KNOWLEDGE_V25.md) - Complete technical reference
+- [supabase-schema.sql](supabase-schema.sql) - Database schema
+- [SETUP.md](SETUP.md) - Gedetailleerde setup instructies
 
-### Environment Variables
-✅ Geen wijzigingen! Gebruik dezelfde `.env.local`.
+## 👥 Team
 
-### Deployment
-✅ Werkt met bestaande Vercel/Netlify setup.
-
-### Breaking Changes
-Geen! De v2.0 is volledig backwards compatible.
-
-## 🎉 Credits
-
-- **Design Inspiration**: Moderne SaaS dashboards
-- **Icons**: Lucide Icons
-- **Animations**: Framer Motion
-- **UI Components**: Custom built
-- **Team**: Ultrawear Indoor
+**Ultrawear Indoor** - 14-player indoor soccer team
+Stan, Rette, Wanny, Arne, Emile, Vik, Nicolas, Mats, Brian, Slekke, Didier, Elias, Toby, Pieter
 
 ## 📄 Licentie
 
-MIT
+MIT - Open source project
 
 ---
 
 **Gemaakt met ⚽ en 💻 voor Ultrawear Indoor**
+**Version:** v2.5 | **Last Updated:** April 2026

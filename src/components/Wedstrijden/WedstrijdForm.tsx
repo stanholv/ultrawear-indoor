@@ -32,6 +32,7 @@ export const WedstrijdForm = () => {
   const [uitploeg, setUitploeg] = useState('');
   const [thuisGoals, setThuisGoals] = useState('');
   const [uitGoals, setUitGoals] = useState('');
+  const [forfait, setForfait] = useState(false);
   const [opmerkingen, setOpmerkingen] = useState('');
   const [spelers, setSpelers] = useState<SpelerInput[]>(
     SPELERS.map(naam => ({
@@ -107,6 +108,7 @@ export const WedstrijdForm = () => {
     setThuisploeg(wedstrijd.thuisploeg);
     setUitploeg(wedstrijd.uitploeg);
     setMatchType(wedstrijd.type || 'competitie');
+    setForfait(!!wedstrijd.forfait);
     setOpmerkingen(wedstrijd.opmerkingen || '');
 
     const heeftUitslag = wedstrijd.uitslag && wedstrijd.uitslag !== '-';
@@ -237,25 +239,29 @@ export const WedstrijdForm = () => {
           uitploeg,
           uitslag,
           type: matchType,
+          forfait,
           opmerkingen,
         });
 
         if (!updateResult.success) throw new Error(updateResult.error);
 
-        // Update spelersstatistieken: verwijder oude en voeg nieuwe in
+        // Update spelersstatistieken: verwijder oude. Bij een forfait voegen we
+        // geen nieuwe stats toe (geen echte spelersprestaties).
         await supabase.from('speler_stats').delete().eq('wedstrijd_id', selectedWedstrijdId);
 
-        const spelersData = spelers.map(s => ({
-          wedstrijd_id: selectedWedstrijdId,
-          speler_naam: s.naam,
-          aanwezig: s.aanwezig,
-          doelpunten: s.doelpunten,
-          penalty: s.penalty,
-          corner: s.corner,
-        }));
+        if (!forfait) {
+          const spelersData = spelers.map(s => ({
+            wedstrijd_id: selectedWedstrijdId,
+            speler_naam: s.naam,
+            aanwezig: s.aanwezig,
+            doelpunten: s.doelpunten,
+            penalty: s.penalty,
+            corner: s.corner,
+          }));
 
-        const { error: spelersError } = await supabase.from('speler_stats').insert(spelersData);
-        if (spelersError) throw spelersError;
+          const { error: spelersError } = await supabase.from('speler_stats').insert(spelersData);
+          if (spelersError) throw spelersError;
+        }
 
         toast.success('Wedstrijd succesvol bijgewerkt!');
       } else {
@@ -267,6 +273,7 @@ export const WedstrijdForm = () => {
           uitploeg,
           uitslag,
           type: matchType,
+          forfait,
           opmerkingen,
           spelers: spelers.map(s => ({
             naam: s.naam,
@@ -289,6 +296,7 @@ export const WedstrijdForm = () => {
       setUitploeg('');
       setThuisGoals('');
       setUitGoals('');
+      setForfait(false);
       setOpmerkingen('');
       setSelectedWedstrijdId('');
       setIsBestaandeWedstrijd(false);
@@ -563,77 +571,139 @@ export const WedstrijdForm = () => {
                     borderRadius: 'var(--radius-md)',
                     border: '1px solid var(--color-border)',
                   }}>
-                    {/* Score rij */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr auto 1fr',
-                      gap: 'var(--spacing-md)',
-                      alignItems: 'center',
+                    {/* Forfait toggle */}
+                    <label style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      gap: 'var(--spacing-sm)', cursor: 'pointer',
+                      paddingBottom: 'var(--spacing-md)', marginBottom: 'var(--spacing-md)',
+                      borderBottom: '1px solid var(--color-border)',
                     }}>
-                      {/* Thuis */}
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{
-                          fontSize: '0.75rem',
-                          fontWeight: '700',
-                          color: 'var(--color-text-secondary)',
-                          marginBottom: 'var(--spacing-sm)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}>
-                          {thuisploeg === 'Ultrawear Indoor' ? '🏠 Thuis' : thuisploeg}
-                        </div>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          min="0"
-                          max="30"
-                          className="form-input score-input"
-                          value={thuisGoals}
-                          onChange={e => setThuisGoals(e.target.value)}
-                          placeholder="0"
-                        />
-                      </div>
+                      <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>🏳️ Forfait</span>
+                      <input
+                        type="checkbox"
+                        checked={forfait}
+                        onChange={e => {
+                          const f = e.target.checked;
+                          setForfait(f);
+                          if (f) {
+                            // standaard: Ultrawear wint door forfait van de tegenstander
+                            setThuisGoals(String(isUltrawearthuis ? 10 : 0));
+                            setUitGoals(String(isUltrawearthuis ? 0 : 10));
+                          } else {
+                            setThuisGoals('');
+                            setUitGoals('');
+                          }
+                        }}
+                        style={{ width: '24px', height: '24px', cursor: 'pointer' }}
+                      />
+                    </label>
 
-                      {/* Streepje */}
-                      <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--color-text-tertiary)', textAlign: 'center', paddingTop: '1.4rem' }}>
-                        –
-                      </div>
-
-                      {/* Uit */}
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{
-                          fontSize: '0.75rem',
-                          fontWeight: '700',
-                          color: 'var(--color-text-secondary)',
-                          marginBottom: 'var(--spacing-sm)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}>
-                          {uitploeg === 'Ultrawear Indoor' ? '✈️ Uit' : uitploeg}
+                    {forfait ? (
+                      <div>
+                        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                          {[
+                            { label: 'Ultrawear wint', winst: true },
+                            { label: 'Ultrawear verliest', winst: false },
+                          ].map(opt => {
+                            const actief = ((isUltrawearthuis ? thuisGoals : uitGoals) === '10') === opt.winst;
+                            return (
+                              <button
+                                key={opt.label}
+                                type="button"
+                                onClick={() => {
+                                  setThuisGoals(String(isUltrawearthuis ? (opt.winst ? 10 : 0) : (opt.winst ? 0 : 10)));
+                                  setUitGoals(String(isUltrawearthuis ? (opt.winst ? 0 : 10) : (opt.winst ? 10 : 0)));
+                                }}
+                                style={{
+                                  flex: 1, padding: 'var(--spacing-md)', borderRadius: 'var(--radius-md)',
+                                  border: actief ? 'none' : '1px solid var(--color-border)',
+                                  background: actief ? 'var(--color-primary)' : 'var(--color-bg)',
+                                  color: actief ? 'white' : 'var(--color-text-primary)',
+                                  fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem',
+                                }}
+                              >
+                                {opt.label}
+                              </button>
+                            );
+                          })}
                         </div>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          min="0"
-                          max="30"
-                          className="form-input score-input"
-                          value={uitGoals}
-                          onChange={e => setUitGoals(e.target.value)}
-                          placeholder="0"
-                        />
+                        <p style={{ margin: 'var(--spacing-sm) 0 0', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                          Forfait telt voor de stand (winst/verlies + punten), maar niet mee voor doelpunten of spelersstatistieken.
+                        </p>
                       </div>
-                    </div>
+                    ) : (
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr auto 1fr',
+                        gap: 'var(--spacing-md)',
+                        alignItems: 'center',
+                      }}>
+                        {/* Thuis */}
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            color: 'var(--color-text-secondary)',
+                            marginBottom: 'var(--spacing-sm)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {thuisploeg === 'Ultrawear Indoor' ? '🏠 Thuis' : thuisploeg}
+                          </div>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min="0"
+                            max="30"
+                            className="form-input score-input"
+                            value={thuisGoals}
+                            onChange={e => setThuisGoals(e.target.value)}
+                            placeholder="0"
+                          />
+                        </div>
+
+                        {/* Streepje */}
+                        <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--color-text-tertiary)', textAlign: 'center', paddingTop: '1.4rem' }}>
+                          –
+                        </div>
+
+                        {/* Uit */}
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            color: 'var(--color-text-secondary)',
+                            marginBottom: 'var(--spacing-sm)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {uitploeg === 'Ultrawear Indoor' ? '✈️ Uit' : uitploeg}
+                          </div>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min="0"
+                            max="30"
+                            className="form-input score-input"
+                            value={uitGoals}
+                            onChange={e => setUitGoals(e.target.value)}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* Spelers Sectie */}
+              {/* Spelers Sectie — niet bij een forfait (geen spelersstats) */}
+              {!forfait && (
               <div style={{ marginBottom: 'var(--spacing-xl)' }}>
                 <h3 className="form-label" style={{ marginBottom: 'var(--spacing-md)' }}>
                   <Users size={16} /> {COPY.FORM_SECTION_PLAYERS}
@@ -731,6 +801,7 @@ export const WedstrijdForm = () => {
                   ))}
                 </div>
               </div>
+              )}
 
               {/* Opmerkingen */}
               <div className="form-group">

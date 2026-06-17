@@ -2,10 +2,11 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { AggregatedStats, SpelerStat, vandaagISO } from '../lib/types';
 
-// Sluit stats van wedstrijden in de toekomst uit (nog niet gespeeld).
+// Sluit stats uit van wedstrijden in de toekomst (nog niet gespeeld) en van
+// forfaits (geen echte spelersprestaties).
 const isGespeeldeStat = (s: SpelerStat): boolean => {
   const datum = s.wedstrijden?.datum;
-  return !!datum && datum <= vandaagISO();
+  return !!datum && datum <= vandaagISO() && !s.wedstrijden?.forfait;
 };
 
 // Aggregeer stats, optioneel gefilterd op wedstrijdtype
@@ -37,7 +38,7 @@ export const useStats = () => {
     try {
       setLoading(true);
       const { data, error: fetchError } = await supabase
-        .from('speler_stats').select('*, wedstrijden(datum)');
+        .from('speler_stats').select('*, wedstrijden(datum, forfait)');
       if (fetchError) throw fetchError;
       setRawStats(data || []);
       setError(null);
@@ -64,7 +65,7 @@ export const useFilteredStats = (filter: 'all' | 'competitie' | 'beker') => {
     setLoading(true);
     let query = supabase
       .from('speler_stats')
-      .select('*, wedstrijden(type, datum)');
+      .select('*, wedstrijden(type, datum, forfait)');
 
     const { data } = await query;
     setRawStats(data || []);

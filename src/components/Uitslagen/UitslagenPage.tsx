@@ -65,8 +65,11 @@ export const UitslagenPage = () => {
     const ultraGoals = isThuis ? thuis : uit;
     const tegenGoals = isThuis ? uit : thuis;
 
-    doelpuntenVoor += ultraGoals;
-    doelpuntenTegen += tegenGoals;
+    // Forfait telt voor de stand/punten, maar de score telt niet als doelpunten.
+    if (!w.forfait) {
+      doelpuntenVoor += ultraGoals;
+      doelpuntenTegen += tegenGoals;
+    }
 
     if (ultraGoals > tegenGoals) {
       gewonnen++;
@@ -284,6 +287,22 @@ export const UitslagenPage = () => {
                           {isThuis ? `${thuis} - ${uit}` : `${uit} - ${thuis}`}
                         </div>
                       </div>
+
+                      {/* Forfait Badge */}
+                      {wedstrijd.forfait && (
+                        <span
+                          className="badge"
+                          style={{
+                            background: '#f59e0b',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            flexShrink: 0,
+                          }}
+                          title="Forfait — telt niet mee voor doelpunten"
+                        >
+                          FF
+                        </span>
+                      )}
 
                       {/* Type Badge */}
                       <span
