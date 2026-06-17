@@ -1442,11 +1442,11 @@ html, body {
    ========================= */
 @media (max-width: 768px) {
   :root {
-    --spacing-md: 12px;
-    --spacing-lg: 16px;
-    --spacing-xl: 22px;
-    --spacing-2xl: 30px;
-    --spacing-3xl: 36px;
+    --spacing-md: 11px;
+    --spacing-lg: 14px;
+    --spacing-xl: 16px;  /* stuurt o.a. de zijmarges → kleiner = bredere cards */
+    --spacing-2xl: 24px;
+    --spacing-3xl: 30px;
   }
 
   /* Hero compacter en minder dominant */
