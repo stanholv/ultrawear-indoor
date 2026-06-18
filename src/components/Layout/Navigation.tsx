@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, TrendingUp, Calendar, Trophy, Shield, Users, Star } from 'lucide-react';
+import { Home, TrendingUp, Calendar, Trophy, Shield, Users, Star, Award } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useBadges } from '../../hooks/useBadges';
 
@@ -62,6 +62,11 @@ export const Navigation = () => {
           <Star size={20} />
           <span>Reviews</span>
           <NavBadge count={reviews} />
+        </NavLink>
+
+        <NavLink to="/records" className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}>
+          <Award size={20} />
+          <span>Records</span>
         </NavLink>
         
         {/* Admin-only links */}

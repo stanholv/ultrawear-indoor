@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, Users, Target, TrendingUp, TrendingDown, Minus, Flag, Crosshair } from 'lucide-react';
+// @ts-ignore - lucide-react 0.263 mist enkele type-exports
+import { ArrowLeft, Calendar, Users, Target, TrendingUp, TrendingDown, Minus, Flag, Crosshair, Share } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
+import { generateMatchCard, shareImage } from '../lib/shareCard';
 interface SpelerStat {
   id: string;
   speler_naam: string;
@@ -89,32 +92,63 @@ export const WedstrijdDetailPage = () => {
   const totalCorners = aanwezigen.reduce((s, p) => s + (p.corner || 0), 0);
   const totalPenalties = aanwezigen.reduce((s, p) => s + (p.penalty || 0), 0);
 
+  const handleShare = async () => {
+    if (!wedstrijd) return;
+    try {
+      const datumStr = new Date(wedstrijd.datum).toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
+      const scorers = aanwezigen.filter(s => s.doelpunten > 0).map(s => `${s.speler_naam} ${s.doelpunten}`);
+      const blob = await generateMatchCard({
+        isThuis, opponent: tegenstander, ultra: ultraGoals, tegen: tegenGoals,
+        res: resultaat as 'W' | 'D' | 'L', datum: datumStr, scorers,
+      });
+      const r = await shareImage(blob, `ultrawear-${wedstrijd.datum}.png`,
+        `Ultrawear Indoor ${ultraGoals}-${tegenGoals} ${isThuis ? 'vs' : '@'} ${tegenstander}`);
+      if (r === 'downloaded') toast.success('Afbeelding gedownload 📸');
+      else if (r === 'shared') toast.success('Gedeeld! 🎉');
+    } catch {
+      toast.error('Kon de afbeelding niet maken');
+    }
+  };
+
   return (
     <div className="container" style={{ padding: 'var(--spacing-xl)' }}>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
 
-        {/* Terug knop */}
-        <button
-          onClick={() => navigate('/uitslagen')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--spacing-sm)',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--color-text-secondary)',
-            fontWeight: '600',
-            fontSize: '0.875rem',
-            marginBottom: 'var(--spacing-lg)',
-            padding: 0,
-            transition: 'color var(--transition-fast)',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-primary)')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-secondary)')}
-        >
-          <ArrowLeft size={18} /> Terug naar uitslagen
-        </button>
+        {/* Terug + Deel */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+          <button
+            onClick={() => navigate('/uitslagen')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-sm)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-text-secondary)',
+              fontWeight: '600',
+              fontSize: '0.875rem',
+              padding: 0,
+              transition: 'color var(--transition-fast)',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-primary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-secondary)')}
+          >
+            <ArrowLeft size={18} /> Terug naar uitslagen
+          </button>
+
+          <button
+            onClick={handleShare}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'var(--color-primary)', color: 'white', border: 'none',
+              borderRadius: 'var(--radius-md)', padding: '8px 16px',
+              fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer', flexShrink: 0,
+            }}
+          >
+            <Share size={16} /> Deel
+          </button>
+        </div>
 
         {/* Match Header Card */}
         <div className="card card-hero" style={{ marginBottom: 'var(--spacing-xl)' }}>
