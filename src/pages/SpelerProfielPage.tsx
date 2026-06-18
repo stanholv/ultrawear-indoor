@@ -4,7 +4,9 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Star, Edit2, Check, X, Shield, Target, Flag, Calendar, TrendingUp, Award } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProfiles, useReviews, useUpdateProfile } from '../hooks/useProfiles';
-import { useStats, useSpelerForm } from '../hooks/useStats';
+import { useStats, useSpelerForm, useSpelerMatchGoals } from '../hooks/useStats';
+import { useWedstrijden } from '../hooks/useWedstrijden';
+import { isGespeeld } from '../lib/types';
 import { useAuth } from '../hooks/useAuth';
 
 const StarRating = ({ value, onChange, readonly = false }: {
@@ -75,52 +77,82 @@ const FormIndicator = ({ form }: { form: { doelpunten: number; tegenstander: str
   );
 };
 
-// Beste seizoen prestatie
-const BestePrestatie = ({ stats, spelerNaam }: { stats: any[]; spelerNaam: string }) => {
-  const spelerStat = stats.find(s => s.speler_naam === spelerNaam);
-  if (!spelerStat || spelerStat.aanwezig === 0) return null;
+// Speler-onderscheidingen (badges) — afgeleid uit de bestaande statistieken
+const SpelerBadges = ({ stats, spelerNaam, totalPlayed, matchGoals }: {
+  stats: any[]; spelerNaam: string; totalPlayed: number; matchGoals: number[];
+}) => {
+  const me = stats.find(s => s.speler_naam === spelerNaam);
+  if (!me || me.aanwezig === 0) return null;
 
-  const aanwezigPct = Math.round((spelerStat.aanwezig / Math.max(...stats.map((s: any) => s.aanwezig))) * 100);
-  const isTopscorer = stats.every((s: any) => spelerStat.doelpunten >= s.doelpunten);
-  const isPresentieleider = stats.every((s: any) => spelerStat.aanwezig >= s.aanwezig);
-  const goalsPerWedstrijd = spelerStat.aanwezig > 0 ? (spelerStat.doelpunten / spelerStat.aanwezig).toFixed(2) : '0';
+  const maxGoals = Math.max(...stats.map((s: any) => s.doelpunten), 0);
+  const maxCorner = Math.max(...stats.map((s: any) => s.corner), 0);
+  const ratios = stats.filter((s: any) => s.aanwezig >= 3).map((s: any) => s.doelpunten / s.aanwezig);
+  const maxRatio = ratios.length ? Math.max(...ratios) : 0;
+  const myRatio = me.aanwezig > 0 ? me.doelpunten / me.aanwezig : 0;
 
-  const prestaties = [];
-  if (isTopscorer && spelerStat.doelpunten > 0) prestaties.push({ icon: '🥇', label: 'Topscorer van het seizoen' });
-  if (isPresentieleider) prestaties.push({ icon: '🏆', label: 'Meeste wedstrijden gespeeld' });
-  if (spelerStat.doelpunten > 0) prestaties.push({ icon: '⚽', label: `${goalsPerWedstrijd} goals per wedstrijd` });
+  const hatTricks = matchGoals.filter(g => g >= 3).length;
+  const bestMatch = matchGoals.length ? Math.max(...matchGoals) : 0;
+
+  const badges: { icon: string; label: string; desc: string }[] = [];
+
+  if (me.doelpunten > 0 && me.doelpunten === maxGoals)
+    badges.push({ icon: '🥇', label: 'Topscorer', desc: 'Meeste goals van het team' });
+
+  if (me.doelpunten >= 50) badges.push({ icon: '🏆', label: '50+ goals', desc: 'Goudmijlpaal' });
+  else if (me.doelpunten >= 25) badges.push({ icon: '🥈', label: '25+ goals', desc: 'Zilvermijlpaal' });
+  else if (me.doelpunten >= 10) badges.push({ icon: '🥉', label: '10+ goals', desc: 'Bronsmijlpaal' });
+
+  if (bestMatch >= 5) badges.push({ icon: '✋', label: 'Manita', desc: '5+ goals in één match' });
+  if (hatTricks > 0) badges.push({ icon: '🎩', label: hatTricks > 1 ? `${hatTricks}× hat-trick` : 'Hat-trick', desc: '3+ goals in een match' });
+
+  if (maxRatio > 0 && me.aanwezig >= 3 && myRatio === maxRatio)
+    badges.push({ icon: '🎯', label: 'Scherpschutter', desc: `${myRatio.toFixed(2)} goals/match` });
+
+  if (totalPlayed >= 3 && me.aanwezig >= totalPlayed)
+    badges.push({ icon: '🛡️', label: 'IJzeren man', desc: 'Geen enkele match gemist' });
+  else if (me.aanwezig >= 10)
+    badges.push({ icon: '📋', label: 'Vaste waarde', desc: `${me.aanwezig} matchen gespeeld` });
+
+  if (me.corner > 0 && me.corner === maxCorner)
+    badges.push({ icon: '🚩', label: 'Cornerkoning', desc: 'Meeste corners van het team' });
+
+  if (me.penalty >= 3)
+    badges.push({ icon: '🅿️', label: 'Penaltyspecialist', desc: `${me.penalty} penaltygoals` });
+
+  const pct = totalPlayed > 0 ? Math.round((me.aanwezig / totalPlayed) * 100) : 0;
 
   return (
     <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
       <div className="card-header" style={{ marginBottom: 'var(--spacing-sm)' }}>
         <h3 className="card-title" style={{ fontSize: '1rem' }}>
-          <Award size={18} /> Seizoen Hoogtepunten
+          <Award size={18} /> Onderscheidingen
         </h3>
+        {totalPlayed > 0 && (
+          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{pct}% aanwezig</span>
+        )}
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-sm)', padding: 'var(--spacing-sm) 0' }}>
-        {prestaties.map((p, i) => (
-          <div key={i} style={{
-            display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)',
-            background: 'var(--color-surface)', borderRadius: 'var(--radius-md)',
-            padding: 'var(--spacing-sm) var(--spacing-md)',
-            fontSize: '0.875rem', fontWeight: '600',
-            border: '1px solid var(--color-border)',
-          }}>
-            <span style={{ fontSize: '1.1rem' }}>{p.icon}</span>
-            {p.label}
-          </div>
-        ))}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)',
-          background: 'var(--color-surface)', borderRadius: 'var(--radius-md)',
-          padding: 'var(--spacing-sm) var(--spacing-md)',
-          fontSize: '0.875rem', fontWeight: '600',
-          border: '1px solid var(--color-border)',
-        }}>
-          <span style={{ fontSize: '1.1rem' }}>📅</span>
-          {aanwezigPct}% aanwezigheid
+      {badges.length === 0 ? (
+        <div style={{ padding: 'var(--spacing-sm) 0', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+          Nog geen onderscheidingen — speel en scoor om ze te verdienen! 💪
         </div>
-      </div>
+      ) : (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-sm)', padding: 'var(--spacing-sm) 0' }}>
+          {badges.map((b, i) => (
+            <div key={i} title={b.desc} style={{
+              display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)',
+              background: 'var(--color-surface)', borderRadius: 'var(--radius-md)',
+              padding: 'var(--spacing-sm) var(--spacing-md)',
+              border: '1px solid var(--color-border)',
+            }}>
+              <span style={{ fontSize: '1.35rem' }}>{b.icon}</span>
+              <span style={{ lineHeight: 1.2 }}>
+                <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>{b.label}</span>
+                <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-tertiary)' }}>{b.desc}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -144,6 +176,9 @@ export const SpelerProfielPage = () => {
 
   const { reviews, gemiddelde, addReview } = useReviews(spelerNaam);
   const { form } = useSpelerForm(spelerNaam);
+  const { wedstrijden } = useWedstrijden();
+  const matchGoals = useSpelerMatchGoals(spelerNaam);
+  const totalPlayed = wedstrijden.filter(w => isGespeeld(w.datum, w.uitslag) && !w.forfait).length;
 
   const [editing, setEditing] = useState(false);
   const [editBio, setEditBio] = useState(profile?.bio || '');
@@ -367,7 +402,7 @@ export const SpelerProfielPage = () => {
         <FormIndicator form={form} />
 
         {/* Beste seizoen prestatie */}
-        {stat && <BestePrestatie stats={stats} spelerNaam={spelerNaam} />}
+        {stat && <SpelerBadges stats={stats} spelerNaam={spelerNaam} totalPlayed={totalPlayed} matchGoals={matchGoals} />}
 
         {/* Reviews sectie */}
         <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { AggregatedStats, SpelerStat, vandaagISO } from '../lib/types';
+import { AggregatedStats, SpelerStat, vandaagISO, isGespeeld } from '../lib/types';
 
 // Sluit stats uit van wedstrijden in de toekomst (nog niet gespeeld) en van
 // forfaits (geen echte spelersprestaties).
@@ -134,4 +134,26 @@ export const useSpelerForm = (spelerNaam: string) => {
   }, [spelerNaam]);
 
   return { form, loading };
+};
+
+// Hook: goals-per-wedstrijd van één speler (enkel gespeelde, niet-forfait matchen).
+// Gebruikt voor badges zoals hat-trick / manita.
+export const useSpelerMatchGoals = (spelerNaam: string) => {
+  const [goals, setGoals] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (!spelerNaam) return;
+    (async () => {
+      const { data } = await supabase
+        .from('speler_stats')
+        .select('doelpunten, wedstrijden(datum, uitslag, forfait)')
+        .eq('speler_naam', spelerNaam);
+      const played = (data || []).filter(
+        (r: any) => r.wedstrijden && isGespeeld(r.wedstrijden.datum, r.wedstrijden.uitslag) && !r.wedstrijden.forfait
+      );
+      setGoals(played.map((r: any) => r.doelpunten || 0));
+    })();
+  }, [spelerNaam]);
+
+  return goals;
 };
