@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Star, Filter, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useBadges } from '../hooks/useBadges';
 
 interface Review {
   id: string;
@@ -23,10 +24,13 @@ const StarDisplay = ({ score }: { score: number }) => (
 
 export const ReviewsPage = () => {
   const navigate = useNavigate();
+  const { markSeen } = useBadges();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterSpeler, setFilterSpeler] = useState('');
   const [sorteer, setSorteer] = useState<'datum' | 'score'>('datum');
+
+  useEffect(() => { markSeen('reviews'); }, [markSeen]);
 
   useEffect(() => {
     const fetchReviews = async () => {

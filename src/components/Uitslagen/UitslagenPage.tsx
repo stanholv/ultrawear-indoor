@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, TrendingDown, Minus, Calendar, Filter, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
 import { berekenPunten, isGespeeld } from '../../lib/types';
+import { useBadges } from '../../hooks/useBadges';
 
 export const UitslagenPage = () => {
   const { wedstrijden, loading } = useWedstrijden();
+  const { markSeen } = useBadges();
   const [filterType, setFilterType] = useState<'all' | 'competitie' | 'beker'>('all');
   const navigate = useNavigate();
+
+  useEffect(() => { markSeen('uitslagen'); }, [markSeen]);
 
   if (loading) {
     return (
