@@ -78,8 +78,8 @@ const FormIndicator = ({ form }: { form: { doelpunten: number; tegenstander: str
 };
 
 // Speler-onderscheidingen (badges) — afgeleid uit de bestaande statistieken
-const SpelerBadges = ({ stats, spelerNaam, totalPlayed, matchGoals }: {
-  stats: any[]; spelerNaam: string; totalPlayed: number; matchGoals: number[];
+const SpelerBadges = ({ stats, spelerNaam, totalPlayed, matchGoals, form }: {
+  stats: any[]; spelerNaam: string; totalPlayed: number; matchGoals: number[]; form: { doelpunten: number }[];
 }) => {
   const me = stats.find(s => s.speler_naam === spelerNaam);
   if (!me || me.aanwezig === 0) return null;
@@ -105,6 +105,10 @@ const SpelerBadges = ({ stats, spelerNaam, totalPlayed, matchGoals }: {
   if (bestMatch >= 5) badges.push({ icon: '✋', label: 'Manita', desc: '5+ goals in één match' });
   if (hatTricks > 0) badges.push({ icon: '🎩', label: hatTricks > 1 ? `${hatTricks}× hat-trick` : 'Hat-trick', desc: '3+ goals in een match' });
 
+  // In vorm: scoorde in de laatste 2 gespeelde matchen
+  if (form.length >= 2 && form[0].doelpunten > 0 && form[1].doelpunten > 0)
+    badges.push({ icon: '🔥', label: 'In vorm', desc: 'Scoorde in de laatste 2 matchen' });
+
   if (maxRatio > 0 && me.aanwezig >= 3 && myRatio === maxRatio)
     badges.push({ icon: '🎯', label: 'Scherpschutter', desc: `${myRatio.toFixed(2)} goals/match` });
 
@@ -118,6 +122,10 @@ const SpelerBadges = ({ stats, spelerNaam, totalPlayed, matchGoals }: {
 
   if (me.penalty >= 3)
     badges.push({ icon: '🅿️', label: 'Penaltyspecialist', desc: `${me.penalty} penaltygoals` });
+
+  // Debutant: nog maar net begonnen
+  if (me.aanwezig >= 1 && me.aanwezig <= 2)
+    badges.push({ icon: '🆕', label: 'Debutant', desc: 'Eerste matchen gespeeld' });
 
   const pct = totalPlayed > 0 ? Math.round((me.aanwezig / totalPlayed) * 100) : 0;
 
@@ -402,7 +410,7 @@ export const SpelerProfielPage = () => {
         <FormIndicator form={form} />
 
         {/* Beste seizoen prestatie */}
-        {stat && <SpelerBadges stats={stats} spelerNaam={spelerNaam} totalPlayed={totalPlayed} matchGoals={matchGoals} />}
+        {stat && <SpelerBadges stats={stats} spelerNaam={spelerNaam} totalPlayed={totalPlayed} matchGoals={matchGoals} form={form} />}
 
         {/* Reviews sectie */}
         <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
