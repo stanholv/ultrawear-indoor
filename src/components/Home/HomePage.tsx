@@ -300,6 +300,27 @@ export const HomePage = () => {
         {/* PWA install banner (mobile only, dismissible) */}
         <InstallBanner />
 
+        {/* Seizoensafsluiting 2025–2026 */}
+        <motion.div
+          className="card card-hero"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ marginBottom: 'var(--spacing-lg)', textAlign: 'center', padding: 'var(--spacing-xl)' }}
+        >
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', opacity: 0.85, textTransform: 'uppercase', color: 'white' }}>
+            Seizoen 2025–2026 afgesloten
+          </div>
+          <div style={{ fontSize: 'clamp(1.75rem, 6vw, 2.75rem)', fontWeight: 800, color: 'white', margin: 'var(--spacing-sm) 0' }}>
+            🥈 2de plaats!
+          </div>
+          <div style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)', marginBottom: 'var(--spacing-md)' }}>
+            27 matchen · 18 gewonnen · 1 gelijk · 8 verloren · <strong>+61</strong> doelsaldo
+          </div>
+          <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'white', lineHeight: 1.5 }}>
+            Bedankt aan álle spelers voor dit mooie seizoen — geknokt tot de laatste match! 🔴⚫
+          </div>
+        </motion.div>
+
         {/* Next Match Card */}
         <NextMatchCard wedstrijden={wedstrijden} />
 
