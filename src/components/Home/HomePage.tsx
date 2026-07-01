@@ -316,6 +316,16 @@ export const HomePage = () => {
           <div style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)', marginBottom: 'var(--spacing-md)' }}>
             27 matchen · 18 gewonnen · 1 gelijk · 8 verloren · <strong>+61</strong> doelsaldo
           </div>
+          <div style={{
+            display: 'inline-block',
+            background: 'rgba(0,0,0,0.25)',
+            borderRadius: 'var(--radius-md)',
+            padding: 'var(--spacing-sm) var(--spacing-md)',
+            marginBottom: 'var(--spacing-md)',
+            fontSize: '0.95rem', fontWeight: 700, color: 'white',
+          }}>
+            🐐 Topscorer: Wanny — 60 goals, 12 hat-tricks
+          </div>
           <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'white', lineHeight: 1.5 }}>
             Bedankt aan álle spelers voor dit mooie seizoen — geknokt tot de laatste match! 🔴⚫
           </div>
