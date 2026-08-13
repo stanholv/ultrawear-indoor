@@ -13,7 +13,7 @@ const NavBadge = ({ count }: { count: number }) => {
       minWidth: '18px',
       height: '18px',
       padding: '0 5px',
-      borderRadius: '9px',
+      borderRadius: '4px',
       background: 'var(--color-primary)',
       color: 'white',
       fontSize: '0.7rem',

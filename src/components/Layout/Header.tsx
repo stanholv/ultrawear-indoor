@@ -62,7 +62,7 @@ export const Header = () => {
             alignItems: 'center',
             justifyContent: 'center',
             background: 'white',
-            borderRadius: '10px',
+            borderRadius: '4px',
             padding: '7px 12px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
           }}>
