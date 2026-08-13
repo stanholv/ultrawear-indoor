@@ -4,7 +4,7 @@ import { StatsOverview } from './StatsOverview';
 import { COPY } from '../../lib/copy';
 import { useStats } from '../../hooks/useStats';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
-import { isGespeeld } from '../../lib/types';
+import { isGespeeld, teltVoorStats } from '../../lib/types';
 
 export const StatsPage = () => {
   const { stats, loading } = useStats();
@@ -13,7 +13,7 @@ export const StatsPage = () => {
 
   // Owngoals tellen mee in het teamtotaal (alleen gespeelde, niet-forfait matchen).
   const owngoals = wedstrijden
-    .filter(w => isGespeeld(w.datum, w.uitslag) && !w.forfait)
+    .filter(w => isGespeeld(w.datum, w.uitslag) && !w.forfait && teltVoorStats(w.type))
     .reduce((sum, w) => sum + (w.owngoals ?? 0), 0);
 
   if (loading) {

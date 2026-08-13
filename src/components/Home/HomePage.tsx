@@ -9,7 +9,7 @@ import { useStats } from '../../hooks/useStats';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
 import { useSeizoen } from '../../hooks/useSeizoen';
 import { seizoenSamenvatting } from '../../lib/seizoenArchief';
-import { isGespeeld } from '../../lib/types';
+import { isGespeeld, teltVoorStats } from '../../lib/types';
 import { COPY } from '../../lib/copy';
 import { supabase } from '../../lib/supabase';
 
@@ -255,14 +255,14 @@ export const HomePage = () => {
   // Totale stats - FIXED: gebruik alleen wedstrijden met een uitslag
   // Teamtotaal = spelersgoals + owngoals (alleen gespeelde, niet-forfait matchen)
   const owngoalsTotaal = wedstrijden
-    .filter(w => isGespeeld(w.datum, w.uitslag) && !w.forfait)
+    .filter(w => isGespeeld(w.datum, w.uitslag) && !w.forfait && teltVoorStats(w.type))
     .reduce((sum, w) => sum + (w.owngoals ?? 0), 0);
   const totalGoals = stats.reduce((sum, s) => sum + s.doelpunten, 0) + owngoalsTotaal;
   
   // Filter op unieke wedstrijden die gespeeld zijn (hebben een uitslag en niet '-')
   const uniquePlayedMatches = wedstrijden.reduce((acc, current) => {
-    // Alleen écht gespeelde wedstrijden (uitslag + datum niet in de toekomst)
-    if (!isGespeeld(current.datum, current.uitslag)) {
+    // Alleen écht gespeelde, meetellende wedstrijden (geen oefenwedstrijden)
+    if (!isGespeeld(current.datum, current.uitslag) || !teltVoorStats(current.type)) {
       return acc;
     }
     

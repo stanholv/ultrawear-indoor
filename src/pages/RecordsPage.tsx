@@ -2,7 +2,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Award } from 'lucide-react';
 import { useWedstrijden } from '../hooks/useWedstrijden';
-import { isGespeeld } from '../lib/types';
+import { useSeizoen } from '../hooks/useSeizoen';
+import { isGespeeld, scoreVan, teltVoorStats } from '../lib/types';
+import { seizoenVanWedstrijd } from '../lib/seizoen';
 import { supabase } from '../lib/supabase';
 
 const fmtDate = (d: string) =>
@@ -19,6 +21,7 @@ const MAANDEN = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 
 
 export const RecordsPage = () => {
   const { wedstrijden, loading } = useWedstrijden();
+  const { seizoen } = useSeizoen();
   const [statsRows, setStatsRows] = useState<any[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
 
@@ -26,7 +29,7 @@ export const RecordsPage = () => {
     (async () => {
       const { data } = await supabase
         .from('speler_stats')
-        .select('wedstrijd_id, speler_naam, doelpunten, aanwezig, wedstrijden(datum, thuisploeg, uitploeg, uitslag, forfait)');
+        .select('wedstrijd_id, speler_naam, doelpunten, aanwezig, wedstrijden(datum, thuisploeg, uitploeg, uitslag, forfait, seizoen, type)');
       setStatsRows(data || []);
       setStatsLoading(false);
     })();
@@ -34,12 +37,12 @@ export const RecordsPage = () => {
 
   const records = useMemo<RecordItem[]>(() => {
     const played = wedstrijden
-      .filter(w => isGespeeld(w.datum, w.uitslag) && !w.forfait)
+      .filter(w => isGespeeld(w.datum, w.uitslag) && !w.forfait && teltVoorStats(w.type))
       .map(w => {
         const isThuis = w.thuisploeg === 'Ultrawear Indoor';
-        const [a, b] = (w.uitslag || '').split('-').map(Number);
-        const ultra = isThuis ? a : b;
-        const tegen = isThuis ? b : a;
+        const score = scoreVan(w) ?? { thuis: 0, uit: 0 };
+        const ultra = isThuis ? score.thuis : score.uit;
+        const tegen = isThuis ? score.uit : score.thuis;
         return {
           ...w,
           ultra, tegen,
@@ -102,7 +105,13 @@ export const RecordsPage = () => {
 
   // Speler-records uit speler_stats (gespeelde, niet-forfait matchen)
   const spelerRecords = useMemo<RecordItem[]>(() => {
-    const sr = statsRows.filter(r => r.wedstrijden && isGespeeld(r.wedstrijden.datum, r.wedstrijden.uitslag) && !r.wedstrijden.forfait);
+    const sr = statsRows.filter(r =>
+      r.wedstrijden &&
+      isGespeeld(r.wedstrijden.datum, r.wedstrijden.uitslag) &&
+      !r.wedstrijden.forfait &&
+      teltVoorStats(r.wedstrijden.type) &&
+      seizoenVanWedstrijd({ seizoen: r.wedstrijden.seizoen, datum: r.wedstrijden.datum }) === seizoen,
+    );
     if (sr.length === 0) return [];
     const out: RecordItem[] = [];
 
@@ -128,7 +137,7 @@ export const RecordsPage = () => {
     }
 
     return out;
-  }, [statsRows]);
+  }, [statsRows, seizoen]);
 
   const alle = [...records, ...spelerRecords];
 

@@ -3,13 +3,13 @@ import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, TrendingDown, Minus, Calendar, Filter, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
-import { berekenPunten, isGespeeld } from '../../lib/types';
+import { isGespeeld, scoreVan, teltVoorStats } from '../../lib/types';
 import { useBadges } from '../../hooks/useBadges';
 
 export const UitslagenPage = () => {
   const { wedstrijden, loading } = useWedstrijden();
   const { markSeen } = useBadges();
-  const [filterType, setFilterType] = useState<'all' | 'competitie' | 'beker'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'competitie' | 'beker' | 'oefenwedstrijd'>('all');
   const navigate = useNavigate();
 
   useEffect(() => { markSeen('uitslagen'); }, [markSeen]);
@@ -62,12 +62,15 @@ export const UitslagenPage = () => {
   let doelpuntenTegen = 0;
 
   filteredWedstrijden.forEach(w => {
-    if (!w.uitslag || w.uitslag === '-') return;
+    // Oefenwedstrijden tellen niet mee voor klassement/punten.
+    if (!teltVoorStats(w.type)) return;
 
-    const [thuis, uit] = w.uitslag.split('-').map(Number);
+    const score = scoreVan(w);
+    if (!score) return;
+
     const isThuis = w.thuisploeg === 'Ultrawear Indoor';
-    const ultraGoals = isThuis ? thuis : uit;
-    const tegenGoals = isThuis ? uit : thuis;
+    const ultraGoals = isThuis ? score.thuis : score.uit;
+    const tegenGoals = isThuis ? score.uit : score.thuis;
 
     // Forfait telt voor de stand/punten, maar de score telt niet als doelpunten.
     if (!w.forfait) {
@@ -87,12 +90,12 @@ export const UitslagenPage = () => {
   });
 
   const getResultIcon = (wedstrijd: any) => {
-    if (!wedstrijd.uitslag || wedstrijd.uitslag === '-') return null;
+    const score = scoreVan(wedstrijd);
+    if (!score) return null;
 
-    const [thuis, uit] = wedstrijd.uitslag.split('-').map(Number);
     const isThuis = wedstrijd.thuisploeg === 'Ultrawear Indoor';
-    const ultraGoals = isThuis ? thuis : uit;
-    const tegenGoals = isThuis ? uit : thuis;
+    const ultraGoals = isThuis ? score.thuis : score.uit;
+    const tegenGoals = isThuis ? score.uit : score.thuis;
 
     if (ultraGoals > tegenGoals) {
       return { icon: <TrendingUp size={20} />, color: 'var(--color-success)', label: 'W' };
@@ -214,6 +217,15 @@ export const UitslagenPage = () => {
                 />
                 <span className="radio-text">🏅 Beker</span>
               </label>
+              <label className="radio-label" style={{ margin: 0 }}>
+                <input
+                  type="radio"
+                  name="filter"
+                  checked={filterType === 'oefenwedstrijd'}
+                  onChange={() => setFilterType('oefenwedstrijd')}
+                />
+                <span className="radio-text">⚽ Oefen</span>
+              </label>
             </div>
           </div>
         </div>
@@ -242,7 +254,9 @@ export const UitslagenPage = () => {
 
                   const isThuis = wedstrijd.thuisploeg === 'Ultrawear Indoor';
                   const tegenstander = isThuis ? wedstrijd.uitploeg : wedstrijd.thuisploeg;
-                  const [thuis, uit] = wedstrijd.uitslag!.split('-').map(Number);
+                  const score = scoreVan(wedstrijd)!;
+                  const thuis = score.thuis;
+                  const uit = score.uit;
 
                   return (
                     <motion.div
@@ -317,7 +331,7 @@ export const UitslagenPage = () => {
                           flexShrink: 0,
                         }}
                       >
-                        {wedstrijd.type === 'beker' ? '🏆' : '🥇'}
+                        {wedstrijd.type === 'beker' ? '🏆' : wedstrijd.type === 'oefenwedstrijd' ? '⚽' : '🥇'}
                       </span>
 
                       {/* Location Badge */}

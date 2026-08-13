@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 // @ts-ignore
 import { Calendar, Clock, Trophy } from 'lucide-react';
-import { Wedstrijd } from '../../lib/types';
+import { Wedstrijd, scoreVan } from '../../lib/types';
 import { COPY } from '../../lib/copy';
 
 interface NextMatchCardProps {
@@ -30,10 +30,10 @@ export const NextMatchCard = ({ wedstrijden }: NextMatchCardProps) => {
     if (laatste5.length === 0) return null;
     const totalGoals = laatste5.reduce((sum, w) => {
       const wasHome = w.thuisploeg === 'Ultrawear Indoor';
-      const scores = w.uitslag.split('-').map((s: string) => parseInt(s.trim()));
-      if (scores.length !== 2) return sum;
-      const ultrawearGoals = wasHome ? scores[0] : scores[1];
-      return sum + (isNaN(ultrawearGoals) ? 0 : ultrawearGoals);
+      const score = scoreVan(w);
+      if (!score) return sum;
+      const ultrawearGoals = wasHome ? score.thuis : score.uit;
+      return sum + ultrawearGoals;
     }, 0);
     return Math.round(totalGoals / laatste5.length);
   })();
@@ -55,18 +55,16 @@ export const NextMatchCard = ({ wedstrijden }: NextMatchCardProps) => {
     let ultrawearScore = 0;
     let opponentScore = 0;
     
-    if (lastMatch.uitslag && lastMatch.uitslag !== '-') {
-      const scores = lastMatch.uitslag.split('-').map(s => parseInt(s.trim()));
-      if (scores.length === 2) {
-        if (wasHome) {
-          // Thuis: eerste score is van Ultrawear
-          ultrawearScore = scores[0];
-          opponentScore = scores[1];
-        } else {
-          // Uit: tweede score is van Ultrawear (omdraaien!)
-          ultrawearScore = scores[1];
-          opponentScore = scores[0];
-        }
+    const score = scoreVan(lastMatch);
+    if (score) {
+      if (wasHome) {
+        // Thuis: eerste score is van Ultrawear
+        ultrawearScore = score.thuis;
+        opponentScore = score.uit;
+      } else {
+        // Uit: tweede score is van Ultrawear (omdraaien!)
+        ultrawearScore = score.uit;
+        opponentScore = score.thuis;
       }
     }
     

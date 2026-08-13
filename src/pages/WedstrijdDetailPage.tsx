@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Users, Target, TrendingUp, TrendingDown, Minus, Flag, Crosshair, Share } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
+import { scoreVan } from '../lib/types';
 import { generateMatchCard, shareImage } from '../lib/shareCard';
 interface SpelerStat {
   id: string;
@@ -80,7 +81,9 @@ export const WedstrijdDetailPage = () => {
 
   const isThuis = wedstrijd.thuisploeg === 'Ultrawear Indoor';
   const tegenstander = isThuis ? wedstrijd.uitploeg : wedstrijd.thuisploeg;
-  const [scoreThuis, scoreUit] = wedstrijd.uitslag.split('-').map(Number);
+  const detailScore = scoreVan(wedstrijd) ?? { thuis: 0, uit: 0 };
+  const scoreThuis = detailScore.thuis;
+  const scoreUit = detailScore.uit;
   const ultraGoals = isThuis ? scoreThuis : scoreUit;
   const tegenGoals = isThuis ? scoreUit : scoreThuis;
 

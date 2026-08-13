@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Link2, Check, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
-import { SPELERS } from '../../lib/types';
+import { useSpelers } from '../../hooks/useSpelers';
 
 interface AccountInfo {
   id: string;
@@ -14,6 +14,7 @@ interface AccountInfo {
 }
 
 export const SpelerKoppelingPanel = () => {
+  const { alleNamen } = useSpelers();
   const [accounts, setAccounts] = useState<AccountInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
@@ -126,7 +127,7 @@ export const SpelerKoppelingPanel = () => {
                 style={{ width: 'auto', minWidth: '160px', fontSize: '0.875rem' }}
               >
                 <option value="">-- Geen koppeling --</option>
-                {SPELERS.map(speler => (
+                {alleNamen.map(speler => (
                   <option key={speler} value={speler}>{speler}</option>
                 ))}
               </select>

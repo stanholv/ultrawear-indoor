@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { Calendar, Clock, Users, Save, AlertCircle, Trophy, Info } from 'lucide-react';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
 import { useAuth } from '../../hooks/useAuth';
-import { SPELERS, WedstrijdFormData, vandaagISO } from '../../lib/types';
+import { useSpelers } from '../../hooks/useSpelers';
+import { WedstrijdFormData, vandaagISO, scoreVan } from '../../lib/types';
 import { toast } from 'sonner';
 import { NumberInput } from '../UI/NumberInput';
 import { COPY } from '../../lib/copy';
@@ -20,6 +21,11 @@ interface SpelerInput {
 export const WedstrijdForm = () => {
   const { wedstrijden, createWedstrijd, updateWedstrijd, loading: wedstrijdenLoading } = useWedstrijden({ alleSeizoenen: true });
   const { isAdmin } = useAuth();
+  const { actieveNamen } = useSpelers();
+
+  // Bouwt lege spelersrijen voor een lijst namen.
+  const legeSpelers = (namen: string[]): SpelerInput[] =>
+    namen.map(naam => ({ naam, aanwezig: false, doelpunten: 0, penalty: 0, corner: 0 }));
 
   const [matchType, setMatchType] = useState<'competitie' | 'beker' | 'oefenwedstrijd'>('competitie');
   const [mode, setMode] = useState<'create' | 'fill'>('fill');
@@ -35,16 +41,17 @@ export const WedstrijdForm = () => {
   const [forfait, setForfait] = useState(false);
   const [owngoals, setOwngoals] = useState(0);
   const [opmerkingen, setOpmerkingen] = useState('');
-  const [spelers, setSpelers] = useState<SpelerInput[]>(
-    SPELERS.map(naam => ({
-      naam,
-      aanwezig: false,
-      doelpunten: 0,
-      penalty: 0,
-      corner: 0,
-    }))
-  );
+  const [spelers, setSpelers] = useState<SpelerInput[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Bij nieuwe wedstrijd (of nog geen selectie): toon de actieve selectie.
+  // Draait wanneer de selectie geladen is; raakt een reeds ingevulde wedstrijd niet.
+  useEffect(() => {
+    if (mode === 'create' || (mode === 'fill' && !selectedWedstrijdId)) {
+      setSpelers(prev => (prev.length === 0 ? legeSpelers(actieveNamen) : prev));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actieveNamen.join(','), mode, selectedWedstrijdId]);
 
   const uniqueWedstrijden = wedstrijden.reduce((acc, current) => {
     const key = `${current.datum}-${current.tijd}-${current.thuisploeg}-${current.uitploeg}`;
@@ -113,13 +120,13 @@ export const WedstrijdForm = () => {
     setOwngoals(wedstrijd.owngoals ?? 0);
     setOpmerkingen(wedstrijd.opmerkingen || '');
 
-    const heeftUitslag = wedstrijd.uitslag && wedstrijd.uitslag !== '-';
-    setIsBestaandeWedstrijd(!!heeftUitslag);
+    const geladenScore = scoreVan(wedstrijd);
+    const heeftUitslag = !!geladenScore;
+    setIsBestaandeWedstrijd(heeftUitslag);
 
-    if (heeftUitslag) {
-      const [thuis, uit] = wedstrijd.uitslag!.split('-');
-      setThuisGoals(thuis);
-      setUitGoals(uit);
+    if (geladenScore) {
+      setThuisGoals(String(geladenScore.thuis));
+      setUitGoals(String(geladenScore.uit));
       toast.info('Bestaande wedstrijd geladen. Je kunt de gegevens aanpassen.');
 
       // Laad bestaande spelersstatistieken
@@ -129,7 +136,10 @@ export const WedstrijdForm = () => {
         .eq('wedstrijd_id', wedstrijdId);
 
       if (statsData && statsData.length > 0) {
-        setSpelers(SPELERS.map(naam => {
+        // Toon de actieve selectie plus eventuele (intussen inactieve) spelers
+        // die in deze wedstrijd stats hadden, zodat oude matchen bewerkbaar blijven.
+        const namen = Array.from(new Set([...actieveNamen, ...statsData.map(s => s.speler_naam)]));
+        setSpelers(namen.map(naam => {
           const bestaandeStat = statsData.find(s => s.speler_naam === naam);
           return {
             naam,
@@ -140,12 +150,12 @@ export const WedstrijdForm = () => {
           };
         }));
       } else {
-        setSpelers(SPELERS.map(naam => ({ naam, aanwezig: false, doelpunten: 0, penalty: 0, corner: 0 })));
+        setSpelers(legeSpelers(actieveNamen));
       }
     } else {
       setThuisGoals('');
       setUitGoals('');
-      setSpelers(SPELERS.map(naam => ({ naam, aanwezig: false, doelpunten: 0, penalty: 0, corner: 0 })));
+      setSpelers(legeSpelers(actieveNamen));
     }
   };
 
@@ -175,7 +185,8 @@ export const WedstrijdForm = () => {
   let resultaat = '';
   let punten = 0;
   if (thuisGoals && uitGoals) {
-    if (ultraWearGoals > tegenstanderGoals) { resultaat = 'Gewonnen 🎉'; punten = 3; }
+    // Competitiepunten: winst = 2, gelijk = 1, verlies = 0 (zelfde als het klassement).
+    if (ultraWearGoals > tegenstanderGoals) { resultaat = 'Gewonnen 🎉'; punten = 2; }
     else if (ultraWearGoals === tegenstanderGoals) { resultaat = 'Gelijkspel'; punten = 1; }
     else { resultaat = 'Verloren'; punten = 0; }
   }
@@ -229,7 +240,10 @@ export const WedstrijdForm = () => {
 
     setLoading(true);
     try {
-      const uitslag = thuisGoals && uitGoals ? `${thuisGoals}-${uitGoals}` : '';
+      const heeftScore = thuisGoals !== '' && uitGoals !== '';
+      const uitslag = heeftScore ? `${thuisGoals}-${uitGoals}` : '';
+      const thuisscore = heeftScore ? thuisGoalsNum : undefined;
+      const uitscore = heeftScore ? uitGoalsNum : undefined;
 
       // Admin bewerkt bestaande wedstrijd
       if (isAdmin && mode === 'fill' && selectedWedstrijdId) {
@@ -240,6 +254,8 @@ export const WedstrijdForm = () => {
           thuisploeg,
           uitploeg,
           uitslag,
+          thuisscore,
+          uitscore,
           type: matchType,
           forfait,
           owngoals: forfait ? 0 : owngoals,
@@ -275,6 +291,8 @@ export const WedstrijdForm = () => {
           thuisploeg: mode === 'create' ? 'Ultrawear Indoor' : thuisploeg,
           uitploeg,
           uitslag,
+          thuisscore,
+          uitscore,
           type: matchType,
           forfait,
           owngoals: forfait ? 0 : owngoals,
@@ -305,7 +323,7 @@ export const WedstrijdForm = () => {
       setOpmerkingen('');
       setSelectedWedstrijdId('');
       setIsBestaandeWedstrijd(false);
-      setSpelers(SPELERS.map(naam => ({ naam, aanwezig: false, doelpunten: 0, penalty: 0, corner: 0 })));
+      setSpelers(legeSpelers(actieveNamen));
     } catch (err: any) {
       toast.error(`${COPY.FORM_ERROR}: ${err.message}`);
     } finally {
@@ -517,7 +535,16 @@ export const WedstrijdForm = () => {
                   <input type="radio" name="type" value="beker" checked={matchType === 'beker'} onChange={() => setMatchType('beker')} />
                   <span className="radio-text">{COPY.TYPE_BEKER_ICON} {COPY.TYPE_BEKER}</span>
                 </label>
+                <label className="radio-label">
+                  <input type="radio" name="type" value="oefenwedstrijd" checked={matchType === 'oefenwedstrijd'} onChange={() => setMatchType('oefenwedstrijd')} />
+                  <span className="radio-text">⚽ Oefenwedstrijd</span>
+                </label>
               </div>
+              {matchType === 'oefenwedstrijd' && (
+                <p style={{ margin: 'var(--spacing-sm) 0 0', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                  Oefenwedstrijden tellen niet mee voor het klassement of de seizoensstatistieken.
+                </p>
+              )}
             </div>
           )}
 

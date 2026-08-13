@@ -18,6 +18,8 @@ export interface Wedstrijd {
   thuisploeg: string;
   uitploeg: string;
   uitslag: string;
+  thuisscore?: number;     // integer score (bron van waarheid); uitslag blijft in sync voor weergave
+  uitscore?: number;
   type?: 'competitie' | 'beker' | 'oefenwedstrijd';
   forfait?: boolean;
   owngoals?: number;
@@ -68,6 +70,8 @@ export interface WedstrijdFormData {
   thuisploeg: string;
   uitploeg: string;
   uitslag: string;
+  thuisscore?: number;
+  uitscore?: number;
   type?: 'competitie' | 'beker' | 'oefenwedstrijd';
   forfait?: boolean;
   owngoals?: number;
@@ -142,6 +146,12 @@ export const isGespeeld = (datum?: string | null, uitslag?: string | null): bool
   !!datum && datum <= vandaagISO() && !!uitslag && uitslag !== '-';
 
 /**
+ * Telt deze wedstrijd mee voor klassement en seizoensstatistieken?
+ * Oefenwedstrijden zijn wel zichtbaar bij de uitslagen, maar tellen niet mee.
+ */
+export const teltVoorStats = (type?: string | null): boolean => type !== 'oefenwedstrijd';
+
+/**
  * Berekent het aantal punten op basis van de uitslag.
  * Regels: Winst = 2 punten, Gelijkspel = 1 punt, Verlies = 0 punten
  */
@@ -156,3 +166,31 @@ export const berekenPunten = (uitslag: string | undefined): number | null => {
   if (eigen === tegen) return 1;  // Gelijkspel
   return 0;                       // Verlies
 };
+
+export interface WedstrijdScore {
+  thuis: number;
+  uit: number;
+}
+
+/**
+ * De score van een wedstrijd als twee getallen. Gebruikt de integer-kolommen
+ * (bron van waarheid) en valt terug op het parsen van de tekst `uitslag` voor
+ * rijen die nog niet gemigreerd zijn. Geeft null bij geen/ongeldige uitslag.
+ */
+export const scoreVan = (
+  w: { thuisscore?: number | null; uitscore?: number | null; uitslag?: string | null },
+): WedstrijdScore | null => {
+  if (typeof w.thuisscore === 'number' && typeof w.uitscore === 'number') {
+    return { thuis: w.thuisscore, uit: w.uitscore };
+  }
+  if (!w.uitslag || w.uitslag === '-') return null;
+  const parts = w.uitslag.split('-');
+  if (parts.length !== 2) return null;
+  const thuis = parseInt(parts[0].trim());
+  const uit = parseInt(parts[1].trim());
+  if (isNaN(thuis) || isNaN(uit)) return null;
+  return { thuis, uit };
+};
+
+/** Bouwt de tekstuele uitslag ('5-3') uit twee scores, voor weergave/opslag. */
+export const uitslagVanScore = (thuis: number, uit: number): string => `${thuis}-${uit}`;

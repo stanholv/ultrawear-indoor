@@ -3,13 +3,15 @@ import { motion } from 'framer-motion';
 // @ts-ignore
 import { Shield, Link2, Star, Trash2, AlertTriangle, Users } from 'lucide-react';
 import { SpelerKoppelingPanel } from './SpelerKoppelingPanel';
+import { SpelersBeheerPanel } from './SpelersBeheerPanel';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 import { Review } from '../../lib/types';
 
-type AdminTab = 'spelers' | 'reviews' | 'users';
+type AdminTab = 'selectie' | 'spelers' | 'reviews' | 'users';
 
 const TABS: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
+  { id: 'selectie', label: 'Selectie', icon: <Users size={18} /> },
   { id: 'spelers', label: 'Speler Koppelingen', icon: <Link2 size={18} /> },
   { id: 'reviews', label: 'Reviews', icon: <Star size={18} /> },
   { id: 'users', label: 'Gebruikers', icon: <Users size={18} /> },
@@ -347,7 +349,7 @@ const ReviewModeratie = () => {
 };
 
 export const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState<AdminTab>('spelers');
+  const [activeTab, setActiveTab] = useState<AdminTab>('selectie');
 
   return (
     <div className="container" style={{ padding: 'var(--spacing-xl)' }}>
@@ -385,6 +387,12 @@ export const AdminPage = () => {
             </button>
           ))}
         </div>
+
+        {activeTab === 'selectie' && (
+          <motion.div key="selectie" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <SpelersBeheerPanel />
+          </motion.div>
+        )}
 
         {activeTab === 'spelers' && (
           <motion.div key="spelers" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

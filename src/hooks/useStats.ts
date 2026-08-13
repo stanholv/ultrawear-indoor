@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { AggregatedStats, SpelerStat, vandaagISO, isGespeeld } from '../lib/types';
+import { AggregatedStats, SpelerStat, vandaagISO, isGespeeld, teltVoorStats } from '../lib/types';
 import { seizoenVanWedstrijd } from '../lib/seizoen';
 import { useSeizoen } from './useSeizoen';
 
-// Sluit stats uit van wedstrijden in de toekomst (nog niet gespeeld) en van
-// forfaits (geen echte spelersprestaties).
+// Sluit stats uit van wedstrijden in de toekomst (nog niet gespeeld), van
+// forfaits (geen echte spelersprestaties) en van oefenwedstrijden (tellen niet
+// mee voor de seizoensstatistieken).
 const isGespeeldeStat = (s: SpelerStat): boolean => {
   const datum = s.wedstrijden?.datum;
-  return !!datum && datum <= vandaagISO() && !s.wedstrijden?.forfait;
+  return !!datum && datum <= vandaagISO() && !s.wedstrijden?.forfait && teltVoorStats(s.wedstrijden?.type);
 };
 
 // Hoort deze stat bij het opgegeven seizoen?
@@ -45,7 +46,7 @@ export const useStats = () => {
     try {
       setLoading(true);
       const { data, error: fetchError } = await supabase
-        .from('speler_stats').select('*, wedstrijden(datum, forfait, seizoen)');
+        .from('speler_stats').select('*, wedstrijden(datum, forfait, seizoen, type)');
       if (fetchError) throw fetchError;
       setRawStats(data || []);
       setError(null);

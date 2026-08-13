@@ -3,16 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { Users, ChevronRight } from 'lucide-react';
 import { useProfiles } from '../hooks/useProfiles';
 import { useStats } from '../hooks/useStats';
-import { SPELERS } from '../lib/types';
+import { useSpelers } from '../hooks/useSpelers';
 
 export const SpelersPage = () => {
   const navigate = useNavigate();
   const { profiles, loading: profilesLoading } = useProfiles();
   const { stats, loading: statsLoading } = useStats();
+  const { actieveNamen, loading: spelersLoading } = useSpelers();
 
-  const loading = profilesLoading || statsLoading;
+  const loading = profilesLoading || statsLoading || spelersLoading;
 
-  const spelers = [...SPELERS].sort().map((naam: string) => {
+  // Toon de actieve selectie plus iedereen die dit seizoen stats heeft.
+  const namen = Array.from(new Set([...actieveNamen, ...stats.map(s => s.speler_naam)])).sort();
+
+  const spelers = namen.map((naam: string) => {
     const profile = profiles.find((p: any) => p.speler_naam === naam);
     const stat = stats.find((s: any) => s.speler_naam === naam);
     return { naam, profile, stat };
