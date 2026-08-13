@@ -31,71 +31,72 @@ export const SpelersPage = () => {
   }
 
   return (
-    <div>
-      <div className="hero">
-        <div className="hero-content">
-          <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }}>
-            <h1 className="hero-title">
-              <Users size={32} style={{ display: 'inline', marginRight: '12px' }} />
-              Onze <span style={{ color: 'var(--color-primary)' }}>Spelers</span>
-            </h1>
-            <p className="hero-subtitle">Klik op een speler voor het volledige profiel</p>
-          </motion.div>
-        </div>
+    <div className="container" style={{ padding: 'var(--spacing-xl) var(--spacing-xl) var(--spacing-2xl)' }}>
+      <div className="page-header">
+        <h1 className="page-title">Selectie</h1>
+        <p className="page-subtitle">{spelers.length} spelers · klik voor het profiel</p>
       </div>
 
-      <div className="container" style={{ padding: 'var(--spacing-2xl) var(--spacing-xl)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-          {spelers.map(({ naam, profile, stat }: { naam: string; profile: any; stat: any }, index: number) => (
-            <motion.div
-              key={naam}
-              className="card"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.03 }}
-              onClick={() => navigate(`/spelers/${naam.toLowerCase()}`)}
-              style={{
-                cursor: 'pointer',
-                borderLeft: '4px solid var(--color-primary)',
-                transition: 'all var(--transition-fast)',
-                padding: 'var(--spacing-md) var(--spacing-lg)',
-                marginBottom: 0,
-              }}
-              whileHover={{ x: 4 } as any}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)', flex: 1, flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', minWidth: '120px' }}>
-                    {profile?.rugnummer && (
-                      <span style={{
-                        background: 'var(--color-primary)', color: 'white',
-                        borderRadius: 'var(--radius-sm)', padding: '2px 8px',
-                        fontSize: '0.75rem', fontWeight: '700',
-                      }}>
-                        #{profile.rugnummer}
-                      </span>
-                    )}
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: '700', margin: 0 }}>{naam}</h3>
-                  </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 'var(--spacing-md)' }}>
+        {spelers.map(({ naam, profile, stat }: { naam: string; profile: any; stat: any }, index: number) => (
+          <motion.div
+            key={naam}
+            className="card"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.02 }}
+            onClick={() => navigate(`/spelers/${naam.toLowerCase()}`)}
+            whileHover={{ y: -2 } as any}
+            whileTap={{ scale: 0.98 }}
+            style={{
+              cursor: 'pointer',
+              padding: 'var(--spacing-md)',
+              minHeight: 128,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: 'var(--spacing-md)',
+            }}
+          >
+            {/* Rugnummer + positie */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <span className="shirt-number" style={{
+                fontSize: '2.75rem',
+                color: profile?.rugnummer ? 'var(--color-primary)' : 'var(--color-border)',
+              }}>
+                {profile?.rugnummer ?? '–'}
+              </span>
+              {profile?.positie && (
+                <span className="kicker" style={{ fontSize: '0.65rem' }}>{profile.positie}</span>
+              )}
+            </div>
 
-                  {stat ? (
-                    <div style={{ display: 'flex', gap: 'var(--spacing-md)', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
-                      <span>⚽ {stat.doelpunten} goals</span>
-                      <span>📅 {stat.aanwezig} wed.</span>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
-                      Nog geen statistieken
-                    </div>
-                  )}
-                </div>
-
-                <ChevronRight size={20} color="var(--color-text-tertiary)" style={{ flexShrink: 0 }} />
+            {/* Naam + stats */}
+            <div>
+              <div style={{
+                fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase',
+                fontSize: '1.35rem', lineHeight: 1, letterSpacing: '0.01em',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {naam}
               </div>
-            </motion.div>
-          ))}
-        </div>
+              <div style={{
+                display: 'flex', gap: 'var(--spacing-md)', marginTop: '6px',
+                fontFamily: 'var(--font-cond)', textTransform: 'uppercase', letterSpacing: '0.05em',
+                fontSize: '0.72rem', color: 'var(--color-text-secondary)',
+              }}>
+                {stat ? (
+                  <>
+                    <span><strong style={{ color: 'var(--color-text-primary)' }}>{stat.doelpunten}</strong> goals</span>
+                    <span><strong style={{ color: 'var(--color-text-primary)' }}>{stat.aanwezig}</strong> matchen</span>
+                  </>
+                ) : (
+                  <span style={{ color: 'var(--color-text-tertiary)' }}>Nog geen stats</span>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        ))}
       </div>
     </div>
   );

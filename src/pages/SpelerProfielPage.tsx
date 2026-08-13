@@ -261,33 +261,38 @@ export const SpelerProfielPage = () => {
           <ArrowLeft size={18} /> Terug naar spelers
         </button>
 
-        {/* Profiel Hero */}
-        <div className="card card-hero" style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-sm)' }}>
-                {!editing && profile?.rugnummer && (
-                  <span style={{
-                    background: 'rgba(255,255,255,0.2)', color: 'white',
-                    borderRadius: 'var(--radius-md)', padding: '4px 12px',
-                    fontSize: '1.5rem', fontWeight: '700',
-                  }}>
-                    #{profile.rugnummer}
-                  </span>
+        {/* Profiel-header: squad card met groot rugnummer */}
+        <div style={{ position: 'relative', overflow: 'hidden', background: 'var(--color-secondary)', color: '#fff', padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--spacing-md)' }}>
+            <div style={{ display: 'flex', gap: 'var(--spacing-lg)', alignItems: 'center', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+              {!editing && (
+                <span className="shirt-number" style={{
+                  fontSize: 'clamp(3.5rem, 16vw, 6.5rem)',
+                  color: profile?.rugnummer ? 'var(--color-primary)' : 'rgba(255,255,255,0.15)',
+                  flexShrink: 0,
+                }}>
+                  {profile?.rugnummer ?? '–'}
+                </span>
+              )}
+              <div style={{ minWidth: 0 }}>
+                {profile?.positie && (
+                  <div className="kicker" style={{ color: 'rgba(255,255,255,0.55)' }}>{profile.positie}</div>
                 )}
-                <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', fontWeight: '700', color: 'white', margin: 0 }}>
+                <h1 style={{
+                  fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase',
+                  fontSize: 'clamp(1.9rem, 8vw, 3rem)', color: '#fff', margin: 0, lineHeight: 0.95, letterSpacing: '0.01em',
+                }}>
                   {spelerNaam}
                 </h1>
+                {gemiddelde > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-sm)' }}>
+                    <StarRating value={Math.round(gemiddelde)} readonly />
+                    <span style={{ color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--font-cond)', fontSize: '0.85rem' }}>
+                      {gemiddelde} / 5 ({reviews.length} reviews)
+                    </span>
+                  </div>
+                )}
               </div>
-
-              {gemiddelde > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-sm)' }}>
-                  <StarRating value={Math.round(gemiddelde)} readonly />
-                  <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.875rem' }}>
-                    {gemiddelde} / 5 ({reviews.length} reviews)
-                  </span>
-                </div>
-              )}
             </div>
 
             {kanBewerken && !editing && (
@@ -388,10 +393,10 @@ export const SpelerProfielPage = () => {
           className="speler-stats-grid"
           >
             {[
-              { label: 'Wedstrijden', value: stat.aanwezig, icon: <Calendar size={24} />, kleur: '#3b82f6' },
+              { label: 'Wedstrijden', value: stat.aanwezig, icon: <Calendar size={24} />, kleur: 'var(--color-text-primary)' },
               { label: 'Doelpunten', value: stat.doelpunten, icon: <Target size={24} />, kleur: 'var(--color-primary)' },
-              { label: 'Corners', value: stat.corner, icon: <Flag size={24} />, kleur: '#10b981' },
-              { label: 'Penalties', value: stat.penalty, icon: <Shield size={24} />, kleur: '#f59e0b' },
+              { label: 'Corners', value: stat.corner, icon: <Flag size={24} />, kleur: 'var(--color-text-primary)' },
+              { label: 'Penalties', value: stat.penalty, icon: <Shield size={24} />, kleur: 'var(--color-text-primary)' },
             ].map((item, i) => (
               <motion.div key={item.label} className="stat-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
                 <div className="stat-card-header">

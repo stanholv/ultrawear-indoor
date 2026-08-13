@@ -158,27 +158,25 @@ export const RecordsPage = () => {
         </div>
 
         {alle.length === 0 ? (
-          <div className="card" style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+          <div style={{ padding: 'var(--spacing-xl) 0', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-cond)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Nog te weinig gespeelde wedstrijden voor records.
           </div>
         ) : (
-          <div className="stats-grid">
+          <div style={{ borderTop: '2px solid var(--color-text-primary)' }}>
             {alle.map((r, i) => (
               <motion.div
                 key={r.label}
-                className="stat-card"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
+                transition={{ delay: i * 0.04 }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-md)', padding: 'var(--spacing-md) 0', borderBottom: '1px solid var(--color-line)' }}
               >
-                <div className="stat-card-header">
-                  <div style={{ minWidth: 0 }}>
-                    <div className="stat-label">{r.label}</div>
-                    <div className="stat-value" style={{ fontSize: '1.4rem' }}>{r.value}</div>
-                    {r.detail && <div className="stat-detail">{r.detail}</div>}
-                  </div>
-                  <div style={{ fontSize: '1.75rem', flexShrink: 0 }}>{r.icon}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div className="kicker">{r.label}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', fontSize: 'clamp(1.35rem, 5vw, 1.9rem)', lineHeight: 1.05, color: 'var(--color-text-primary)' }}>{r.value}</div>
+                  {r.detail && <div style={{ fontFamily: 'var(--font-cond)', fontSize: '0.76rem', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '2px' }}>{r.detail}</div>}
                 </div>
+                <div style={{ fontSize: '1.75rem', flexShrink: 0, opacity: 0.9 }}>{r.icon}</div>
               </motion.div>
             ))}
           </div>
