@@ -1,32 +1,48 @@
 // ================================================
 // SEIZOENSARCHIEF — afsluitende samenvatting per seizoen
 // ================================================
-// De cijfers die NIET uit de databank af te leiden zijn (eindklassering in de
-// competitie, aantal hat-tricks, redactionele bedanktekst) leven hier, per
-// seizoen. De afsluitkaart op de homepage toont de samenvatting van het
-// geselecteerde seizoen — en alleen als er een entry bestaat.
+// Gestructureerde eindbalans per seizoen: de cijfers die NIET uit de databank
+// af te leiden zijn (eindklassering, redactionele bedanktekst) leven hier. De
+// homepage bouwt hier een sport-editoriale seizoensgrafiek mee (grote positie,
+// cijfers eromheen) voor het geselecteerde seizoen — alleen als er een entry is.
 //
-// Nieuw seizoen afsluiten? Voeg een entry toe met de eindstand. Ouder seizoen
-// erbij? Zet de historische samenvatting hier neer met hetzelfde label als in
-// de wedstrijden (bv. '2024-2025').
+// Nieuw seizoen afsluiten? Voeg een entry toe. Ouder seizoen erbij? Zet de
+// historische balans hier met hetzelfde label als in de wedstrijden.
 
 export interface SeizoenSamenvatting {
-  /** Kop, bv. '🥈 2de plaats!' */
-  eindstand: string;
-  /** Regel met het seizoensrecord, bv. '27 matchen · 18 gewonnen · …'. */
-  record: string;
-  /** Optionele topscorer-badge, bv. '🐐 Topscorer: Wanny — 60 goals, 12 hat-tricks'. */
-  topscorer?: string;
+  /** Eindpositie als getal, bv. 2. */
+  positie: number;
+  /** Achtervoegsel voor de positie, bv. 'DE' of 'STE'. */
+  positieSuffix: string;
+  /** Medaille-emoji (optioneel), bv. '🥈'. */
+  medaille?: string;
+  /** Korte omschrijving van de prestatie, bv. 'vice-kampioen'. */
+  prestatie: string;
+  gespeeld: number;
+  gewonnen: number;
+  gelijk: number;
+  verloren: number;
+  doelsaldo: number;
+  topscorerNaam?: string;
+  topscorerGoals?: number;
   /** Afsluitende bedanktekst. */
   bedankt: string;
 }
 
 export const SEIZOEN_ARCHIEF: Record<string, SeizoenSamenvatting> = {
   '2025-2026': {
-    eindstand: '🥈 2de plaats!',
-    record: '27 matchen · 18 gewonnen · 1 gelijk · 8 verloren · +61 doelsaldo',
-    topscorer: '🐐 Topscorer: Wanny — 60 goals, 12 hat-tricks',
-    bedankt: 'Bedankt aan álle spelers voor dit mooie seizoen — geknokt tot de laatste match! 🔴⚫',
+    positie: 2,
+    positieSuffix: 'DE',
+    medaille: '🥈',
+    prestatie: 'vice-kampioen',
+    gespeeld: 27,
+    gewonnen: 18,
+    gelijk: 1,
+    verloren: 8,
+    doelsaldo: 61,
+    topscorerNaam: 'Wanny',
+    topscorerGoals: 60,
+    bedankt: 'Bedankt aan álle spelers voor dit mooie seizoen — geknokt tot de laatste match.',
   },
 };
 

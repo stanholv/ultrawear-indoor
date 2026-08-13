@@ -285,253 +285,169 @@ export const HomePage = () => {
   const activePlayers = stats.filter(s => s.aanwezig > 0).length;
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      {/* Hero Section */}
-      <div className="hero">
-        <div className="hero-content">
-          <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }}>
-            <h1 className="hero-title">
-              Welkom bij <span style={{ color: 'var(--color-primary)' }}>{COPY.HERO_TITLE}</span>
-            </h1>
-            <p className="hero-subtitle">{COPY.HERO_SUBTITLE}</p>
-          </motion.div>
+    <div>
+      {/* Compacte match-day masthead — vervangt de grote hero */}
+      <div style={{ background: 'var(--color-secondary)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
+        <div className="stripe-accent" />
+        <div className="container" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 'var(--spacing-sm)', padding: 'var(--spacing-md) var(--spacing-xl)' }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', fontSize: '1.15rem', letterSpacing: '0.03em' }}>
+            Match Centre
+          </span>
+          <span className="kicker" style={{ color: 'rgba(255,255,255,0.6)' }}>Seizoen {seizoen.replace('-', '–')}</span>
         </div>
       </div>
-      
+
       {/* Main Content */}
-      <div className="container" style={{ padding: 'var(--spacing-2xl) var(--spacing-xl)' }}>
+      <div className="container" style={{ padding: 'var(--spacing-lg) var(--spacing-xl) var(--spacing-2xl)' }}>
 
         {/* PWA install banner (mobile only, dismissible) */}
         <InstallBanner />
 
-        {/* Seizoensafsluiting — toont de samenvatting van het geselecteerde seizoen */}
+        {/* NEXT + LAST MATCH — football eerst */}
+        <NextMatchCard wedstrijden={wedstrijden} />
+
+        {/* Seizoensgrafiek (editorieel) — enkel als het seizoen is afgesloten */}
         {samenvatting && (
           <motion.div
-            className="card card-hero"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            style={{ marginBottom: 'var(--spacing-lg)', textAlign: 'center', padding: 'var(--spacing-xl)' }}
+            style={{ position: 'relative', overflow: 'hidden', background: 'var(--color-secondary)', color: '#fff', padding: 'var(--spacing-lg)', marginTop: 'var(--spacing-2xl)' }}
           >
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', opacity: 0.85, textTransform: 'uppercase', color: 'white' }}>
-              Seizoen {seizoen.replace('-', '–')} afgesloten
-            </div>
-            <div style={{ fontSize: 'clamp(1.75rem, 6vw, 2.75rem)', fontWeight: 800, color: 'white', margin: 'var(--spacing-sm) 0' }}>
-              {samenvatting.eindstand}
-            </div>
-            <div style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)', marginBottom: 'var(--spacing-md)' }}>
-              {samenvatting.record}
-            </div>
-            {samenvatting.topscorer && (
-              <div style={{
-                display: 'inline-block',
-                background: 'rgba(0,0,0,0.25)',
-                borderRadius: 'var(--radius-md)',
-                padding: 'var(--spacing-sm) var(--spacing-md)',
-                marginBottom: 'var(--spacing-md)',
-                fontSize: '0.95rem', fontWeight: 700, color: 'white',
-              }}>
-                {samenvatting.topscorer}
+            <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '34%', background: 'var(--stripe-pattern)', opacity: 0.1, pointerEvents: 'none' }} />
+            <div style={{ position: 'relative' }}>
+              <div className="kicker" style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 'var(--spacing-sm)' }}>
+                Seizoen {seizoen.replace('-', '–')} · Eindklassement
               </div>
-            )}
-            <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'white', lineHeight: 1.5 }}>
-              {samenvatting.bedankt}
+              <div style={{ display: 'flex', gap: 'var(--spacing-lg)', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', lineHeight: 0.8, flexShrink: 0 }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(4.5rem, 20vw, 8rem)' }}>{samenvatting.positie}</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(1.4rem, 6vw, 2.4rem)', color: 'var(--color-primary)', marginTop: '0.35em' }}>{samenvatting.positieSuffix}</span>
+                </div>
+                <div style={{ flex: 1, minWidth: 170 }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', fontSize: 'clamp(1.4rem, 5vw, 2rem)', lineHeight: 1 }}>
+                    {samenvatting.medaille} {samenvatting.prestatie}
+                  </div>
+                  <div style={{ display: 'flex', gap: 'var(--spacing-lg)', flexWrap: 'wrap', marginTop: 'var(--spacing-md)' }}>
+                    {[['Gewonnen', samenvatting.gewonnen], ['Gelijk', samenvatting.gelijk], ['Verloren', samenvatting.verloren], ['Doelsaldo', '+' + samenvatting.doelsaldo]].map(([l, v]) => (
+                      <div key={l as string}>
+                        <div className="scoreboard" style={{ fontSize: '1.9rem' }}>{v}</div>
+                        <div className="kicker" style={{ color: 'rgba(255,255,255,0.5)' }}>{l}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {samenvatting.topscorerNaam && (
+                <div style={{ marginTop: 'var(--spacing-md)', paddingTop: 'var(--spacing-sm)', borderTop: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'baseline', gap: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
+                  <span className="kicker" style={{ color: 'rgba(255,255,255,0.5)' }}>Topschutter</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', fontSize: '1.2rem', color: 'var(--color-primary)' }}>{samenvatting.topscorerNaam}</span>
+                  <span style={{ fontFamily: 'var(--font-cond)', color: 'rgba(255,255,255,0.7)' }}>{samenvatting.topscorerGoals} goals</span>
+                </div>
+              )}
+              <div style={{ marginTop: 'var(--spacing-sm)', fontFamily: 'var(--font-cond)', color: 'rgba(255,255,255,0.6)', fontSize: '0.92rem' }}>
+                {samenvatting.bedankt}
+              </div>
             </div>
           </motion.div>
         )}
-
-        {/* Next Match Card */}
-        <NextMatchCard wedstrijden={wedstrijden} />
-
-        {/* Laatste Reviews Carousel */}
-        <ReviewsCarousel />
         
-        {/* Stats Grid */}
-        <div className="stats-grid" style={{ marginTop: 'var(--spacing-2xl)' }}>
-          <StatCard 
-            icon={<Trophy size={24} />} 
-            title={COPY.HOME_STAT_TOPSCORER} 
-            player={topScorer.speler_naam} 
-            value={topScorer.doelpunten} 
-            subtitle={`${topScorer.aanwezig} wedstrijden`} 
-            delay={0.1}
-            onPlayerClick={handlePlayerClick}
-          />
-          
-          <StatCard 
-            icon={<Target size={24} />} 
-            title={COPY.HOME_STAT_GOALS_PER_GAME} 
-            player={goalsPerGameLeader?.speler_naam || '-'} 
-            value={goalsPerGameLeader?.ratio || '0.00'} 
-            subtitle={`${goalsPerGameLeader?.doelpunten || 0} goals in ${goalsPerGameLeader?.aanwezig || 0} wed.`} 
-            delay={0.2}
-            onPlayerClick={handlePlayerClick}
-          />
-          
-          <StatCard 
-            icon={<Award size={24} />} 
-            title={COPY.HOME_STAT_MOST_GAMES} 
-            player={mostGamesPlayers.length <= 2 ? mostGamesPlayers.join(' & ') : `${mostGamesPlayers.length} spelers`} 
-            value={maxGames} 
-            subtitle={mostGamesPlayers.length === 1 ? COPY.HOME_STAT_LOYAL_PLAYER : COPY.HOME_STAT_LOYAL_PLAYERS} 
-            delay={0.3}
-            onPlayerClick={mostGamesPlayers.length === 1 ? handlePlayerClick : undefined}
-          />
+        {/* 01 — SEIZOEN IN CIJFERS (editorieel, geen kaders) */}
+        <div className="section-head">
+          <span className="section-index">01</span>
+          <span className="section-title">Seizoen in cijfers</span>
+          <span className="section-rule" />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 'var(--spacing-lg)' }}>
+          {([
+            ['Gespeeld', totalMatches],
+            [COPY.HOME_TOTAL_GOALS, totalGoals],
+            [COPY.HOME_AVG_PER_MATCH, totalMatches > 0 ? (totalGoals / totalMatches).toFixed(1) : '0.0'],
+            [COPY.HOME_ACTIVE_PLAYERS, activePlayers],
+          ] as [string, string | number][]).map(([label, value]) => (
+            <div key={label}>
+              <div style={{ width: 24, height: 3, background: 'var(--color-primary)', marginBottom: 'var(--spacing-sm)' }} />
+              <div className="scoreboard" style={{ fontSize: 'clamp(2.2rem, 9vw, 3rem)' }}>{value}</div>
+              <div className="kicker" style={{ marginTop: '4px' }}>{label}</div>
+            </div>
+          ))}
         </div>
 
-        {/* Season Stats Overview */}
-        <motion.div 
-          className="card" 
-          style={{ marginTop: 'var(--spacing-2xl)' }} 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ delay: 0.4 }}
-        >
-          <div className="card-header">
-            <h2 className="card-title">
-              <Users size={24} /> {COPY.HOME_STATS_OVERVIEW_TITLE}
-            </h2>
-          </div>
-          
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-            gap: 'var(--spacing-xl)', 
-            padding: 'var(--spacing-lg) 0' 
-          }}>
-            <div>
-              <div className="stat-label">Gespeelde Wedstrijden</div>
-              <div className="stat-value">{totalMatches}</div>
-            </div>
-            <div>
-              <div className="stat-label">{COPY.HOME_TOTAL_GOALS}</div>
-              <div className="stat-value">{totalGoals}</div>
-            </div>
-            <div>
-              <div className="stat-label">{COPY.HOME_AVG_PER_MATCH}</div>
-              <div className="stat-value">
-                {totalMatches > 0 ? (totalGoals / totalMatches).toFixed(1) : '0.0'}
+        {/* 02 — UITBLINKERS (editoriale rijen) */}
+        <div className="section-head">
+          <span className="section-index">02</span>
+          <span className="section-title">Uitblinkers</span>
+          <span className="section-rule" />
+        </div>
+        <div style={{ borderTop: '2px solid var(--color-text-primary)' }}>
+          {[
+            { label: 'Goals per match', player: goalsPerGameLeader?.speler_naam || '-', value: (goalsPerGameLeader?.ratio || '0.00') as string | number, sub: `${goalsPerGameLeader?.doelpunten || 0} in ${goalsPerGameLeader?.aanwezig || 0} matchen`, click: !!goalsPerGameLeader },
+            { label: 'Meeste matchen', player: mostGamesPlayers.length <= 2 ? mostGamesPlayers.join(' & ') : `${mostGamesPlayers.length} spelers`, value: maxGames as string | number, sub: 'aanwezig', click: mostGamesPlayers.length === 1 },
+          ].map(row => (
+            <div
+              key={row.label}
+              onClick={row.click ? () => handlePlayerClick(row.player) : undefined}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-md)', padding: 'var(--spacing-md) 0', borderBottom: '1px solid var(--color-line)', cursor: row.click ? 'pointer' : 'default' }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div className="kicker">{row.label}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', fontSize: 'clamp(1.3rem, 5vw, 1.7rem)', lineHeight: 1.05, color: row.click ? 'var(--color-primary)' : 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.player}</div>
+                <div style={{ fontFamily: 'var(--font-cond)', fontSize: '0.76rem', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{row.sub}</div>
               </div>
+              <div className="scoreboard" style={{ fontSize: 'clamp(2.2rem, 9vw, 3rem)', flexShrink: 0 }}>{row.value}</div>
             </div>
-            <div>
-              <div className="stat-label">{COPY.HOME_ACTIVE_PLAYERS}</div>
-              <div className="stat-value">{activePlayers}</div>
-            </div>
-          </div>
-        </motion.div>
+          ))}
+        </div>
 
-        {/* Top 5 Scorers */}
+        {/* 03 — TOPSCHUTTERS */}
+        <div className="section-head">
+          <span className="section-index">03</span>
+          <span className="section-title">Topschutters</span>
+          <span className="section-rule" />
+        </div>
         <TopScorerTable stats={stats} />
-        
-        {/* Call to Actions */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-          gap: 'var(--spacing-lg)', 
-          marginTop: 'var(--spacing-2xl)' 
-        }}>
-          {/* Volledige Rankings */}
-          <motion.div
-            className="card" 
-            style={{ 
-              textDecoration: 'none', 
-              borderLeft: '4px solid var(--color-primary)',
-              cursor: 'pointer'
-            }} 
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/statistieken')}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-              <Trophy size={32} color="var(--color-primary)" />
-              <div>
-                <h3 style={{ 
-                  fontSize: '1.125rem', 
-                  fontWeight: '700', 
-                  color: 'var(--color-text-primary)', 
-                  margin: 0 
-                }}>
-                  {COPY.HOME_CTA_FULL_RANKINGS}
-                </h3>
-                <p style={{ 
-                  fontSize: '0.875rem', 
-                  color: 'var(--color-text-secondary)', 
-                  margin: 0 
-                }}>
-                  {COPY.HOME_CTA_FULL_RANKINGS_SUB}
-                </p>
-              </div>
-            </div>
-          </motion.div>
 
-          {/* Uitgebreide Statistieken */}
-          <motion.div
-            className="card" 
-            style={{ 
-              textDecoration: 'none', 
-              borderLeft: '4px solid #f59e0b',
-              cursor: 'pointer'
-            }} 
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/statistieken/details')}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-              <BarChart2 size={32} color="#f59e0b" />
-              <div>
-                <h3 style={{ 
-                  fontSize: '1.125rem', 
-                  fontWeight: '700', 
-                  color: 'var(--color-text-primary)', 
-                  margin: 0 
-                }}>
-                  {COPY.HOME_CTA_DETAILED_STATS}
-                </h3>
-                <p style={{ 
-                  fontSize: '0.875rem', 
-                  color: 'var(--color-text-secondary)', 
-                  margin: 0 
-                }}>
-                  {COPY.HOME_CTA_DETAILED_STATS_SUB}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-          
-          {/* Facebook - externe link blijft <a> */}
-          <motion.a 
-            href="https://www.facebook.com/profile.php?id=100067913117622" 
-            target="_blank" 
+        {/* 04 — UIT DE KLEEDKAMER (reviews) */}
+        <div className="section-head">
+          <span className="section-index">04</span>
+          <span className="section-title">Uit de kleedkamer</span>
+          <span className="section-rule" />
+        </div>
+        <ReviewsCarousel />
+        
+        {/* Compacte editoriale links (geen kaarten) */}
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-md) var(--spacing-xl)',
+          marginTop: 'var(--spacing-2xl)', borderTop: '2px solid var(--color-text-primary)',
+          paddingTop: 'var(--spacing-md)',
+        }}>
+          {[
+            { text: COPY.HOME_CTA_FULL_RANKINGS, onClick: () => navigate('/statistieken') },
+            { text: COPY.HOME_CTA_DETAILED_STATS, onClick: () => navigate('/statistieken/details') },
+          ].map(l => (
+            <button
+              key={l.text}
+              onClick={l.onClick}
+              style={{
+                fontFamily: 'var(--font-cond)', fontWeight: 600, textTransform: 'uppercase',
+                letterSpacing: '0.06em', fontSize: '0.95rem', color: 'var(--color-text-primary)',
+                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+              }}
+            >
+              {l.text} <span style={{ color: 'var(--color-primary)' }}>→</span>
+            </button>
+          ))}
+          <a
+            href="https://www.facebook.com/profile.php?id=100067913117622"
+            target="_blank"
             rel="noopener noreferrer"
-            className="card" 
-            style={{ 
-              textDecoration: 'none', 
-              borderLeft: '4px solid #1877F2',
-              cursor: 'pointer'
-            }} 
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            style={{
+              fontFamily: 'var(--font-cond)', fontWeight: 600, textTransform: 'uppercase',
+              letterSpacing: '0.06em', fontSize: '0.95rem', color: 'var(--color-text-primary)',
+              textDecoration: 'none',
+            }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-              <Facebook size={32} color="#1877F2" />
-              <div>
-                <h3 style={{ 
-                  fontSize: '1.125rem', 
-                  fontWeight: '700', 
-                  color: 'var(--color-text-primary)', 
-                  margin: 0 
-                }}>
-                  {COPY.FACEBOOK_LINK_TEXT}
-                </h3>
-                <p style={{ 
-                  fontSize: '0.875rem', 
-                  color: 'var(--color-text-secondary)', 
-                  margin: 0 
-                }}>
-                  {COPY.FACEBOOK_LINK_SUBTITLE}
-                </p>
-              </div>
-            </div>
-          </motion.a>
+            {COPY.FACEBOOK_LINK_TEXT} <span style={{ color: 'var(--color-primary)' }}>→</span>
+          </a>
         </div>
       </div>
     </div>

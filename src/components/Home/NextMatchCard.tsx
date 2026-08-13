@@ -45,44 +45,52 @@ export const NextMatchCard = ({ wedstrijden }: NextMatchCardProps) => {
     weekday: 'long', day: 'numeric', month: 'long' 
   }) : '';
 
-  // Parse laatste wedstrijd uitslag correct (vanuit Ultrawear perspectief)
+  // Laatste wedstrijd als scoreboard-resultaat (beide ploegen + scores).
   const lastMatchDisplay = lastMatch ? (() => {
+    const score = scoreVan(lastMatch) ?? { thuis: 0, uit: 0 };
     const wasHome = lastMatch.thuisploeg === 'Ultrawear Indoor';
-    const opponent = wasHome ? lastMatch.uitploeg : lastMatch.thuisploeg;
-    const location = wasHome ? 'thuis' : 'uit';
-    
-    // Parse uitslag
-    let ultrawearScore = 0;
-    let opponentScore = 0;
-    
-    const score = scoreVan(lastMatch);
-    if (score) {
-      if (wasHome) {
-        // Thuis: eerste score is van Ultrawear
-        ultrawearScore = score.thuis;
-        opponentScore = score.uit;
-      } else {
-        // Uit: tweede score is van Ultrawear (omdraaien!)
-        ultrawearScore = score.uit;
-        opponentScore = score.thuis;
-      }
-    }
-    
-    const result = ultrawearScore > opponentScore ? 'W' : 
+    const ultrawearScore = wasHome ? score.thuis : score.uit;
+    const opponentScore = wasHome ? score.uit : score.thuis;
+    const result = ultrawearScore > opponentScore ? 'W' :
                    ultrawearScore < opponentScore ? 'L' : 'D';
-    
     return {
-      opponent,
-      location,
-      score: `${ultrawearScore}-${opponentScore}`,
+      thuisploeg: lastMatch.thuisploeg,
+      uitploeg: lastMatch.uitploeg,
+      thuisScore: score.thuis,
+      uitScore: score.uit,
+      gelijk: score.thuis === score.uit,
       result,
-      wasHome
     };
   })() : null;
 
-  const resultClass = lastMatchDisplay
-    ? (lastMatchDisplay.result === 'W' ? 'win' : lastMatchDisplay.result === 'L' ? 'loss' : 'draw')
+  const resultWoord = lastMatchDisplay
+    ? (lastMatchDisplay.result === 'W' ? 'Gewonnen' : lastMatchDisplay.result === 'L' ? 'Verloren' : 'Gelijkspel')
     : '';
+  const resultKleur = lastMatchDisplay
+    ? (lastMatchDisplay.result === 'W' ? 'var(--color-success)' : lastMatchDisplay.result === 'L' ? 'var(--color-error)' : 'var(--color-warning)')
+    : '';
+
+  // Eén scoreboard-rij: ploegnaam links, groot getal rechts. Ultrawear in rood,
+  // de verliezer gedimd.
+  const ScoreRow = ({ naam, score, isWinnaar }: { naam: string; score: number; isWinnaar: boolean }) => {
+    const isUs = naam === 'Ultrawear Indoor';
+    const dim = !isWinnaar && !lastMatchDisplay?.gelijk;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-md)', padding: '2px 0', opacity: dim ? 0.5 : 1 }}>
+        <span style={{
+          fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase',
+          fontSize: 'clamp(1.15rem, 5vw, 1.7rem)', lineHeight: 1, letterSpacing: '0.01em',
+          color: isUs ? 'var(--color-primary)' : 'var(--color-text-primary)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {isUs ? 'Ultrawear' : naam}
+        </span>
+        <span className="scoreline" style={{ fontSize: 'clamp(2rem, 9vw, 3rem)', color: 'var(--color-text-primary)', flexShrink: 0 }}>
+          {score}
+        </span>
+      </div>
+    );
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
@@ -160,22 +168,16 @@ export const NextMatchCard = ({ wedstrijden }: NextMatchCardProps) => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)',
-            padding: 'var(--spacing-sm) var(--spacing-xs)',
-            borderTop: '2px solid var(--color-text-primary)',
-          }}
+          style={{ borderTop: '2px solid var(--color-text-primary)', paddingTop: 'var(--spacing-sm)' }}
         >
-          <span className={`result-square ${resultClass}`}>{lastMatchDisplay.result}</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="kicker">Laatste wedstrijd</div>
-            <div style={{ fontFamily: 'var(--font-cond)', fontWeight: 600, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-              {lastMatchDisplay.wasHome ? 'vs' : '@'} {lastMatchDisplay.opponent}
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+            <span className="kicker">Laatste wedstrijd</span>
+            <span style={{ fontFamily: 'var(--font-cond)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.72rem', color: resultKleur }}>
+              {resultWoord}
+            </span>
           </div>
-          <span className="scoreline" style={{ color: 'var(--color-text-primary)' }}>
-            {lastMatchDisplay.score.replace('-', '–')}
-          </span>
+          <ScoreRow naam={lastMatchDisplay.thuisploeg} score={lastMatchDisplay.thuisScore} isWinnaar={lastMatchDisplay.thuisScore > lastMatchDisplay.uitScore} />
+          <ScoreRow naam={lastMatchDisplay.uitploeg} score={lastMatchDisplay.uitScore} isWinnaar={lastMatchDisplay.uitScore > lastMatchDisplay.thuisScore} />
         </motion.div>
       )}
     </div>
