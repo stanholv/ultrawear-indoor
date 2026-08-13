@@ -9,9 +9,18 @@
 -- The app falls back to the built-in SPELERS list if this table is empty or
 -- missing, so it is safe to deploy the code before running this migration.
 --
--- Run once (SQL editor or `supabase db push`). Assumes is_admin() from
--- supabase-schema.sql already exists.
+-- Run once (SQL editor or `supabase db push`).
 -- ================================================
+
+-- Zorg dat de admin-helper bestaat (de live DB heeft hem niet altijd). Deze
+-- SECURITY DEFINER-functie leest `profiles` zonder RLS-recursie te veroorzaken.
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
 CREATE TABLE IF NOT EXISTS spelers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
