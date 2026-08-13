@@ -54,15 +54,10 @@ export const auth = {
       .select('*')
       .eq('id', userId)
       .single();
-    
+
     return { data, error };
   },
-  
-  isAdmin: async () => {
-    const user = await auth.getCurrentUser();
-    if (!user) return false;
-    
-    const { data } = await auth.getProfile(user.id);
-    return data?.role === 'admin';
-  }
+  // NB: admin-status komt uit useAuth().isAdmin (profiles.role === 'admin').
+  // De vroegere auth.isAdmin() hier was ongebruikt en is verwijderd om te
+  // voorkomen dat er meerdere admin-checks naast elkaar bestaan.
 };
