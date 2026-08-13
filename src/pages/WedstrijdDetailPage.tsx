@@ -175,7 +175,7 @@ export const WedstrijdDetailPage = () => {
                   {isThuis ? '🏠 Thuis' : '✈️ Uit'}
                 </span>
               </div>
-              <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: '800', color: 'white', margin: 0 }}>
+              <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: '700', color: 'white', margin: 0 }}>
                 Ultrawear Indoor {isThuis ? 'vs' : '@'} {tegenstander}
               </h1>
               <div style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)', marginTop: 'var(--spacing-sm)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
@@ -197,14 +197,14 @@ export const WedstrijdDetailPage = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'white',
-                  fontWeight: '800',
+                  fontWeight: '700',
                   fontSize: '1.25rem',
                 }}
               >
                 {resultaat}
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 'clamp(2rem, 6vw, 3rem)', fontWeight: '800', color: 'white', lineHeight: 1 }}>
+                <div style={{ fontSize: 'clamp(2rem, 6vw, 3rem)', fontWeight: '700', color: 'white', lineHeight: 1 }}>
                   {ultraGoals} – {tegenGoals}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>eindstand</div>

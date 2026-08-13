@@ -71,7 +71,7 @@ export const SpelersPage = () => {
                       <span style={{
                         background: 'var(--color-primary)', color: 'white',
                         borderRadius: 'var(--radius-sm)', padding: '2px 8px',
-                        fontSize: '0.75rem', fontWeight: '800',
+                        fontSize: '0.75rem', fontWeight: '700',
                       }}>
                         #{profile.rugnummer}
                       </span>

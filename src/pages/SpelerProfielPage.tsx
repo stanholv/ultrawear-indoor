@@ -270,12 +270,12 @@ export const SpelerProfielPage = () => {
                   <span style={{
                     background: 'rgba(255,255,255,0.2)', color: 'white',
                     borderRadius: 'var(--radius-md)', padding: '4px 12px',
-                    fontSize: '1.5rem', fontWeight: '800',
+                    fontSize: '1.5rem', fontWeight: '700',
                   }}>
                     #{profile.rugnummer}
                   </span>
                 )}
-                <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', fontWeight: '800', color: 'white', margin: 0 }}>
+                <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', fontWeight: '700', color: 'white', margin: 0 }}>
                   {spelerNaam}
                 </h1>
               </div>

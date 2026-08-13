@@ -100,7 +100,7 @@ export const NextMatchCard = ({ wedstrijden }: NextMatchCardProps) => {
           </div>
 
           {/* Tegenstander naam */}
-          <div style={{ fontSize: 'clamp(1.1rem, 4vw, 1.5rem)', fontWeight: '800', color: 'white', lineHeight: 1.2, marginBottom: 'var(--spacing-sm)' }}>
+          <div style={{ fontSize: 'clamp(1.1rem, 4vw, 1.5rem)', fontWeight: '700', color: 'white', lineHeight: 1.2, marginBottom: 'var(--spacing-sm)' }}>
             {isHome ? COPY.MATCH_VS : COPY.MATCH_AT} {isHome ? nextMatch.uitploeg : nextMatch.thuisploeg}
           </div>
 
