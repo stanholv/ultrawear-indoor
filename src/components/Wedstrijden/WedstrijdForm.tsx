@@ -18,7 +18,7 @@ interface SpelerInput {
 }
 
 export const WedstrijdForm = () => {
-  const { wedstrijden, createWedstrijd, updateWedstrijd, loading: wedstrijdenLoading } = useWedstrijden();
+  const { wedstrijden, createWedstrijd, updateWedstrijd, loading: wedstrijdenLoading } = useWedstrijden({ alleSeizoenen: true });
   const { isAdmin } = useAuth();
 
   const [matchType, setMatchType] = useState<'competitie' | 'beker' | 'oefenwedstrijd'>('competitie');

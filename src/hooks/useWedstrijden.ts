@@ -1,10 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { Wedstrijd, WedstrijdFormData } from '../lib/types';
+import { seizoenVanDatum, seizoenVanWedstrijd } from '../lib/seizoen';
+import { useSeizoen } from './useSeizoen';
 
-export const useWedstrijden = () => {
-  const [wedstrijden, setWedstrijden] = useState<Wedstrijd[]>([]);
+interface UseWedstrijdenOptions {
+  /** Toon alle seizoenen i.p.v. alleen het geselecteerde (bv. admin-bewerken). */
+  alleSeizoenen?: boolean;
+}
+
+export const useWedstrijden = (options: UseWedstrijdenOptions = {}) => {
+  const { alleSeizoenen = false } = options;
+  const { seizoen } = useSeizoen();
+  const [alleWedstrijden, setAlleWedstrijden] = useState<Wedstrijd[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Zichtbare lijst: alle seizoenen, of gefilterd op het geselecteerde seizoen.
+  const wedstrijden = useMemo(
+    () => (alleSeizoenen ? alleWedstrijden : alleWedstrijden.filter(w => seizoenVanWedstrijd(w) === seizoen)),
+    [alleWedstrijden, alleSeizoenen, seizoen],
+  );
 
   // Fetch functie die we kunnen herbruiken
   const fetchWedstrijden = async () => {
@@ -16,7 +31,7 @@ export const useWedstrijden = () => {
         .order('datum', { ascending: false });
 
       if (error) throw error;
-      setWedstrijden(data || []);
+      setAlleWedstrijden(data || []);
     } catch (error: any) {
       console.error('Error fetching wedstrijden:', error.message);
     } finally {
@@ -44,6 +59,7 @@ export const useWedstrijden = () => {
           type: formData.type,
           forfait: formData.forfait ?? false,
           owngoals: formData.owngoals ?? 0,
+          seizoen: formData.seizoen ?? seizoenVanDatum(formData.datum),
           opmerkingen: formData.opmerkingen,
         })
         .select()
@@ -95,6 +111,7 @@ export const useWedstrijden = () => {
           type: data.type,
           forfait: data.forfait ?? false,
           owngoals: data.owngoals ?? 0,
+          seizoen: data.seizoen ?? seizoenVanDatum(data.datum),
           opmerkingen: data.opmerkingen,
           updated_at: new Date().toISOString(),
         })
@@ -142,7 +159,8 @@ export const useWedstrijden = () => {
   };
 
   return {
-    wedstrijden,
+    wedstrijden,                 // gefilterd op geselecteerd seizoen (tenzij alleSeizoenen)
+    alleWedstrijden,             // volledige lijst, alle seizoenen
     loading,
     createWedstrijd,
     updateWedstrijd,

@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { AggregatedStats, SpelerStat, vandaagISO, isGespeeld } from '../lib/types';
+import { seizoenVanWedstrijd } from '../lib/seizoen';
+import { useSeizoen } from './useSeizoen';
 
 // Sluit stats uit van wedstrijden in de toekomst (nog niet gespeeld) en van
 // forfaits (geen echte spelersprestaties).
@@ -8,6 +10,10 @@ const isGespeeldeStat = (s: SpelerStat): boolean => {
   const datum = s.wedstrijden?.datum;
   return !!datum && datum <= vandaagISO() && !s.wedstrijden?.forfait;
 };
+
+// Hoort deze stat bij het opgegeven seizoen?
+const isSeizoenStat = (s: SpelerStat, seizoen: string): boolean =>
+  seizoenVanWedstrijd({ seizoen: s.wedstrijden?.seizoen, datum: s.wedstrijden?.datum }) === seizoen;
 
 // Aggregeer stats, optioneel gefilterd op wedstrijdtype
 const aggregeerStats = (data: SpelerStat[]): AggregatedStats[] => {
@@ -30,6 +36,7 @@ const aggregeerStats = (data: SpelerStat[]): AggregatedStats[] => {
 };
 
 export const useStats = () => {
+  const { seizoen } = useSeizoen();
   const [rawStats, setRawStats] = useState<SpelerStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +45,7 @@ export const useStats = () => {
     try {
       setLoading(true);
       const { data, error: fetchError } = await supabase
-        .from('speler_stats').select('*, wedstrijden(datum, forfait)');
+        .from('speler_stats').select('*, wedstrijden(datum, forfait, seizoen)');
       if (fetchError) throw fetchError;
       setRawStats(data || []);
       setError(null);
@@ -51,13 +58,17 @@ export const useStats = () => {
 
   useEffect(() => { loadStats(); }, [loadStats]);
 
-  const stats = useMemo(() => aggregeerStats(rawStats.filter(isGespeeldeStat)), [rawStats]);
+  const stats = useMemo(
+    () => aggregeerStats(rawStats.filter(s => isGespeeldeStat(s) && isSeizoenStat(s, seizoen))),
+    [rawStats, seizoen],
+  );
 
   return { stats, loading, error, refetch: loadStats };
 };
 
 // Hook: gefilterde stats op wedstrijdtype (voor DetailedStats)
 export const useFilteredStats = (filter: 'all' | 'competitie' | 'beker') => {
+  const { seizoen } = useSeizoen();
   const [rawStats, setRawStats] = useState<SpelerStat[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +76,7 @@ export const useFilteredStats = (filter: 'all' | 'competitie' | 'beker') => {
     setLoading(true);
     let query = supabase
       .from('speler_stats')
-      .select('*, wedstrijden(type, datum, forfait)');
+      .select('*, wedstrijden(type, datum, forfait, seizoen)');
 
     const { data } = await query;
     setRawStats(data || []);
@@ -77,14 +88,14 @@ export const useFilteredStats = (filter: 'all' | 'competitie' | 'beker') => {
   }, [loadStats]);
 
   const stats = useMemo(() => {
-    // Alleen gespeelde wedstrijden, daarna optioneel op type filteren.
-    const gespeeld = rawStats.filter(isGespeeldeStat);
+    // Alleen gespeelde wedstrijden van het geselecteerde seizoen, daarna op type.
+    const gespeeld = rawStats.filter(s => isGespeeldeStat(s) && isSeizoenStat(s, seizoen));
     const gefilterd = filter === 'all'
       ? gespeeld
       : gespeeld.filter((s) => s.wedstrijden?.type === filter);
 
     return aggregeerStats(gefilterd);
-  }, [rawStats, filter]);
+  }, [rawStats, filter, seizoen]);
 
   return { stats, loading };
 };

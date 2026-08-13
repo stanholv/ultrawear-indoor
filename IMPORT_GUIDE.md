@@ -66,6 +66,12 @@ Nieuwe sheet met unieke wedstrijden:
 - Datum: `YYYY-MM-DD` (bijv. 2026-01-15)
 - Tijd: `HH:MM` (bijv. 20:00)
 
+**Seizoen (bij historische import):** wil je oudere seizoenen toevoegen, voeg
+dan een kolom `seizoen` toe met het label `YYYY-YYYY` (bijv. `2024-2025`). Laat
+je de kolom leeg, dan leidt de app het seizoen af uit de `datum` (augustus–juli),
+dus met correcte datums verschijnt de data vanzelf onder het juiste seizoen.
+Zorg wel dat je eerst de migratie `supabase-seizoen.sql` hebt uitgevoerd.
+
 ### 3.3 Maak Speler Stats Tabel
 
 Voor Supabase heb je een `wedstrijd_id` nodig. We doen dit in 2 stappen:

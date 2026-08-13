@@ -7,6 +7,8 @@ import { TopScorerTable } from './TopScorerTable';
 import { InstallBanner } from './InstallBanner';
 import { useStats } from '../../hooks/useStats';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
+import { useSeizoen } from '../../hooks/useSeizoen';
+import { seizoenSamenvatting } from '../../lib/seizoenArchief';
 import { isGespeeld } from '../../lib/types';
 import { COPY } from '../../lib/copy';
 import { supabase } from '../../lib/supabase';
@@ -216,7 +218,9 @@ export const HomePage = () => {
   const navigate = useNavigate();
   const { stats, loading: statsLoading } = useStats();
   const { wedstrijden, loading: matchesLoading } = useWedstrijden();
-  
+  const { seizoen } = useSeizoen();
+  const samenvatting = seizoenSamenvatting(seizoen);
+
   if (statsLoading || matchesLoading) {
     return (
       <div className="container" style={{ padding: 'var(--spacing-2xl)' }}>
@@ -300,36 +304,40 @@ export const HomePage = () => {
         {/* PWA install banner (mobile only, dismissible) */}
         <InstallBanner />
 
-        {/* Seizoensafsluiting 2025–2026 */}
-        <motion.div
-          className="card card-hero"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ marginBottom: 'var(--spacing-lg)', textAlign: 'center', padding: 'var(--spacing-xl)' }}
-        >
-          <div style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', opacity: 0.85, textTransform: 'uppercase', color: 'white' }}>
-            Seizoen 2025–2026 afgesloten
-          </div>
-          <div style={{ fontSize: 'clamp(1.75rem, 6vw, 2.75rem)', fontWeight: 800, color: 'white', margin: 'var(--spacing-sm) 0' }}>
-            🥈 2de plaats!
-          </div>
-          <div style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)', marginBottom: 'var(--spacing-md)' }}>
-            27 matchen · 18 gewonnen · 1 gelijk · 8 verloren · <strong>+61</strong> doelsaldo
-          </div>
-          <div style={{
-            display: 'inline-block',
-            background: 'rgba(0,0,0,0.25)',
-            borderRadius: 'var(--radius-md)',
-            padding: 'var(--spacing-sm) var(--spacing-md)',
-            marginBottom: 'var(--spacing-md)',
-            fontSize: '0.95rem', fontWeight: 700, color: 'white',
-          }}>
-            🐐 Topscorer: Wanny — 60 goals, 12 hat-tricks
-          </div>
-          <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'white', lineHeight: 1.5 }}>
-            Bedankt aan álle spelers voor dit mooie seizoen — geknokt tot de laatste match! 🔴⚫
-          </div>
-        </motion.div>
+        {/* Seizoensafsluiting — toont de samenvatting van het geselecteerde seizoen */}
+        {samenvatting && (
+          <motion.div
+            className="card card-hero"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{ marginBottom: 'var(--spacing-lg)', textAlign: 'center', padding: 'var(--spacing-xl)' }}
+          >
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', opacity: 0.85, textTransform: 'uppercase', color: 'white' }}>
+              Seizoen {seizoen.replace('-', '–')} afgesloten
+            </div>
+            <div style={{ fontSize: 'clamp(1.75rem, 6vw, 2.75rem)', fontWeight: 800, color: 'white', margin: 'var(--spacing-sm) 0' }}>
+              {samenvatting.eindstand}
+            </div>
+            <div style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)', marginBottom: 'var(--spacing-md)' }}>
+              {samenvatting.record}
+            </div>
+            {samenvatting.topscorer && (
+              <div style={{
+                display: 'inline-block',
+                background: 'rgba(0,0,0,0.25)',
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--spacing-sm) var(--spacing-md)',
+                marginBottom: 'var(--spacing-md)',
+                fontSize: '0.95rem', fontWeight: 700, color: 'white',
+              }}>
+                {samenvatting.topscorer}
+              </div>
+            )}
+            <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'white', lineHeight: 1.5 }}>
+              {samenvatting.bedankt}
+            </div>
+          </motion.div>
+        )}
 
         {/* Next Match Card */}
         <NextMatchCard wedstrijden={wedstrijden} />

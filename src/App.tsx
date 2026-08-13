@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { Analytics } from '@vercel/analytics/react';
 import { Header } from './components/Layout/Header';
 import { Navigation } from './components/Layout/Navigation';
+import { SeizoenSelector } from './components/Layout/SeizoenSelector';
 import { HomePage } from './components/Home/HomePage';
 import { StatsPage } from './components/Stats/StatsPage';
 import { DetailedStatsPage } from './pages/DetailedStats';
@@ -42,7 +43,8 @@ function App() {
       <div className="app">
         <Header />
         <Navigation />
-        
+        <SeizoenSelector />
+
         <main className="main-content">
           <Routes>
             {/* Public Routes */}

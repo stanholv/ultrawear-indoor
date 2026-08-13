@@ -21,6 +21,7 @@ export interface Wedstrijd {
   type?: 'competitie' | 'beker' | 'oefenwedstrijd';
   forfait?: boolean;
   owngoals?: number;
+  seizoen?: string;        // 'YYYY-YYYY', bv. '2025-2026' (zie lib/seizoen.ts)
   opmerkingen?: string;
   created_at: string;
 }
@@ -39,6 +40,7 @@ export interface SpelerStat {
     datum?: string;
     uitslag?: string;
     forfait?: boolean;
+    seizoen?: string;
   };
 }
 
@@ -69,6 +71,7 @@ export interface WedstrijdFormData {
   type?: 'competitie' | 'beker' | 'oefenwedstrijd';
   forfait?: boolean;
   owngoals?: number;
+  seizoen?: string;        // optioneel; standaard afgeleid uit de datum
   opmerkingen?: string;
   spelers: SpelerInput[];
 }
