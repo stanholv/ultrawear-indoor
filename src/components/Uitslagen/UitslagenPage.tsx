@@ -267,21 +267,8 @@ export const UitslagenPage = () => {
                       onClick={() => navigate(`/uitslagen/${wedstrijd.id}`)}
                       className="wedstrijd-row"
                     >
-                      {/* Result Bubble */}
-                      <div
-                        style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: result.color + '20',
-                          color: result.color,
-                          fontWeight: '700',
-                          flexShrink: 0,
-                        }}
-                      >
+                      {/* Result square */}
+                      <div className={`result-square ${result.label === 'W' ? 'win' : result.label === 'L' ? 'loss' : 'draw'}`}>
                         {result.label}
                       </div>
 
@@ -301,8 +288,8 @@ export const UitslagenPage = () => {
 
                       {/* Score */}
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-primary)' }}>
-                          {isThuis ? `${thuis} - ${uit}` : `${uit} - ${thuis}`}
+                        <div className="scoreline" style={{ color: 'var(--color-text-primary)' }}>
+                          {isThuis ? `${thuis}–${uit}` : `${uit}–${thuis}`}
                         </div>
                       </div>
 

@@ -77,22 +77,26 @@ export const Header = () => {
           <div className="header-logo-text">
             <span style={{
               margin: 0,
-              fontSize: '1.25rem',
-              fontWeight: '800',
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.7rem',
+              fontWeight: '700',
               color: 'white',
               textTransform: 'uppercase',
-              letterSpacing: '2px',
-              lineHeight: 1.2,
+              letterSpacing: '1px',
+              lineHeight: 0.95,
             }}>
-              INDOOR
+              Ultrawear <span style={{ color: 'var(--color-primary)' }}>Indoor</span>
             </span>
             <span style={{
-              fontSize: '0.7rem',
-              color: 'rgba(255,255,255,0.6)',
-              fontWeight: '500',
+              fontFamily: 'var(--font-cond)',
+              fontSize: '0.66rem',
+              color: 'rgba(255,255,255,0.55)',
+              fontWeight: '600',
+              textTransform: 'uppercase',
+              letterSpacing: '0.16em',
               display: 'block',
             }}>
-              Minivoetbal statistieken
+              Minivoetbal · Match Centre
             </span>
           </div>
         </motion.button>

@@ -15,18 +15,24 @@
   
   --color-accent: #FFFFFF;
   --color-accent-muted: #F5F5F5;
-  
-  /* Neutrals */
-  --color-bg: #FAFAFA;
-  --color-bg-elevated: #FFFFFF;
-  --color-surface: #F5F5F5;
-  --color-border: #ECECEC;
-  
+
+  /* Ink on warm paper — match-programme feel */
+  --color-bg: #F1EFEA;
+  --color-bg-elevated: #FBFAF7;
+  --color-surface: #E7E4DC;
+  --color-border: #D8D3C8;
+  --color-line: rgba(20, 20, 20, 0.14);   /* pitch/chalk hairlines */
+
   /* Text */
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #666666;
-  --color-text-tertiary: #999999;
-  --color-text-inverse: #FFFFFF;
+  --color-text-primary: #14110F;
+  --color-text-secondary: #5A574F;
+  --color-text-tertiary: #8B877D;
+  --color-text-inverse: #FBFAF7;
+
+  /* Typography — athletic condensed display + readable body */
+  --font-display: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --font-cond: 'Barlow Semi Condensed', 'Barlow Condensed', system-ui, sans-serif;
+  --font-body: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   
   /* Status Colors */
   --color-success: #10b981;
@@ -81,14 +87,15 @@
 }
 
 [data-theme="dark"] {
-  --color-bg: #0A0A0A;
-  --color-bg-elevated: #1A1A1A;
-  --color-surface: #2D2D2D;
-  --color-border: #404040;
-  
-  --color-text-primary: #FAFAFA;
-  --color-text-secondary: #CCCCCC;
-  --color-text-tertiary: #999999;
+  --color-bg: #0C0C0D;
+  --color-bg-elevated: #151517;
+  --color-surface: #1D1D20;
+  --color-border: #2C2C30;
+  --color-line: rgba(255, 255, 255, 0.12);
+
+  --color-text-primary: #F4F2EC;
+  --color-text-secondary: #B4B1A8;
+  --color-text-tertiary: #7E7B73;
   
   --stripe-pattern-subtle: repeating-linear-gradient(
     45deg,
@@ -109,14 +116,73 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--color-bg);
   color: var(--color-text-primary);
-  line-height: 1.7;
+  line-height: 1.55;
   transition: background var(--transition-base), color var(--transition-base);
+}
+
+/* =========================
+   DISPLAY TYPE — condensed, athletic, match-programme
+   ========================= */
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+/* Numbers that should read like a scoreboard: big, condensed, tabular. */
+.scoreboard {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  line-height: 0.9;
+}
+
+/* Small uppercase eyebrow / section kicker used across the app. */
+.kicker {
+  font-family: var(--font-cond);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+}
+
+/* A numbered section header: "01 — KLASSEMENT" with a red rule. */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-2xl) 0 var(--spacing-md);
+}
+.section-head:first-child { margin-top: 0; }
+.section-head .section-index {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-primary);
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+.section-head .section-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.section-head .section-rule {
+  flex: 1;
+  height: 2px;
+  background: var(--color-text-primary);
+  opacity: 0.9;
+  align-self: center;
 }
 
 #root {
@@ -258,7 +324,11 @@ body {
   padding: var(--spacing-md) var(--spacing-lg);
   text-decoration: none;
   color: var(--color-text-secondary);
+  font-family: var(--font-cond);
   font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   white-space: nowrap;
   transition: all var(--transition-fast);
   display: flex;
@@ -324,15 +394,21 @@ body {
 }
 
 .hero-title {
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 8vw, 4rem);
   font-weight: 700;
-  margin-bottom: var(--spacing-md);
-  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  margin-bottom: var(--spacing-sm);
+  line-height: 0.92;
 }
 
 .hero-subtitle {
-  font-size: clamp(1rem, 3vw, 1.5rem);
-  opacity: 0.9;
+  font-family: var(--font-cond);
+  font-size: clamp(0.9rem, 3vw, 1.15rem);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.85;
 }
 
 /* =========================
@@ -390,8 +466,8 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--color-text-primary);
 }
 
 .card-hero .card-header {
@@ -399,8 +475,11 @@ body {
 }
 
 .card-title {
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--color-text-primary);
   display: flex;
   align-items: center;
@@ -443,9 +522,12 @@ body {
 }
 
 .stat-label {
-  font-size: 0.875rem;
+  font-family: var(--font-cond);
+  font-size: 0.72rem;
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
 .stat-icon {
@@ -460,11 +542,14 @@ body {
 }
 
 .stat-value {
-  font-size: 2.5rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 3.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
-  line-height: 1;
-  margin-bottom: var(--spacing-sm);
+  line-height: 0.9;
+  margin-bottom: var(--spacing-xs);
+  letter-spacing: 0.01em;
 }
 
 .stat-detail {
@@ -620,10 +705,13 @@ body {
    ========================= */
 .btn {
   padding: var(--spacing-md) var(--spacing-xl);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   border: none;
+  font-family: var(--font-cond);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   cursor: pointer;
   transition: all var(--transition-fast);
   display: inline-flex;
@@ -636,13 +724,15 @@ body {
 .btn-primary {
   background: var(--color-primary);
   color: white;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .btn-primary:hover {
   background: var(--color-primary-dark);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-red);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
 }
 
 .btn-primary:active {
@@ -671,12 +761,15 @@ body {
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
+  padding: 3px 10px;
   background: var(--color-primary);
   color: white;
   border-radius: var(--radius-sm);
-  font-size: 0.75rem;
+  font-family: var(--font-cond);
+  font-size: 0.72rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .rank-badge {
@@ -1216,19 +1309,75 @@ body {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
+  padding: var(--spacing-md) var(--spacing-sm);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-line);
+  border-left: 3px solid transparent;
+  border-radius: 0;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
 .wedstrijd-row:hover {
-  background: var(--color-primary-glow);
-  border-color: var(--color-primary);
-  transform: translateX(4px);
+  background: var(--color-surface);
+  border-left-color: var(--color-primary);
 }
+
+/* =========================
+   IDENTITY UTILITIES — match-day / scoreboard
+   ========================= */
+
+/* Thin diagonal jersey-stripe accent bar (top of key blocks). */
+.stripe-accent {
+  height: 6px;
+  background: var(--stripe-pattern);
+}
+
+/* W / D / L result block — a scoreboard chip, not a soft pill. */
+.result-square {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: #fff;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.result-square.win { background: var(--color-success); }
+.result-square.draw { background: var(--color-warning); color: #14110F; }
+.result-square.loss { background: var(--color-error); }
+
+/* Big tabular scoreline. */
+.scoreline {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.75rem;
+  line-height: 0.9;
+  letter-spacing: 0.02em;
+}
+
+/* Shirt / squad number. */
+.shirt-number {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.85;
+  letter-spacing: 0.01em;
+}
+
+/* Solid ink block (locker-room / signage). */
+.ink-block {
+  background: var(--color-secondary);
+  color: var(--color-text-inverse);
+}
+[data-theme="dark"] .ink-block { background: #000; }
 
 /* Naam kolom neemt beschikbare ruimte */
 .wedstrijd-row > div:nth-child(2) {
@@ -1244,17 +1393,24 @@ body {
 }
 
 .page-title {
-  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 7vw, 3rem);
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 0.95;
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
 }
 
 .page-subtitle {
+  font-family: var(--font-cond);
   color: var(--color-text-secondary);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .main-content {
