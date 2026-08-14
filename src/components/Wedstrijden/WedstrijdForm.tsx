@@ -823,32 +823,34 @@ export const WedstrijdForm = () => {
                         paddingBottom: speler.aanwezig ? 'var(--spacing-sm)' : 0,
                         borderBottom: speler.aanwezig ? '1px solid var(--color-border)' : 'none',
                       }}>
-                        <span style={{ fontWeight: '700', fontSize: '1.125rem' }}>{speler.naam}</span>
+                        <span style={{
+                          fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase',
+                          fontSize: '1.3rem', letterSpacing: '0.01em', lineHeight: 1,
+                          color: speler.aanwezig ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                        }}>{speler.naam}</span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{COPY.LABEL_AANWEZIG}</span>
+                          <span style={{ fontFamily: 'var(--font-cond)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-secondary)' }}>{COPY.LABEL_AANWEZIG}</span>
                           <input
                             type="checkbox"
                             checked={speler.aanwezig}
                             onChange={e => handleSpelerChange(index, 'aanwezig', e.target.checked)}
-                            style={{ width: '24px', height: '24px', cursor: 'pointer' }}
+                            style={{ width: '26px', height: '26px', cursor: 'pointer', accentColor: 'var(--color-primary)' }}
                           />
                         </span>
                       </label>
 
                       {speler.aanwezig && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-                          <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>⚽ {COPY.LABEL_GOALS}</label>
-                            <NumberInput value={speler.doelpunten} onChange={val => handleSpelerChange(index, 'doelpunten', val)} max={20} />
-                          </div>
-                          <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>🎯 {COPY.LABEL_PENALTIES}</label>
-                            <NumberInput value={speler.penalty} onChange={val => handleSpelerChange(index, 'penalty', val)} max={10} />
-                          </div>
-                          <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>🚩 {COPY.LABEL_CORNERS}</label>
-                            <NumberInput value={speler.corner} onChange={val => handleSpelerChange(index, 'corner', val)} max={20} />
-                          </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+                          {([
+                            { label: `⚽ ${COPY.LABEL_GOALS}`, value: speler.doelpunten, field: 'doelpunten', max: 20 },
+                            { label: `🎯 ${COPY.LABEL_PENALTIES}`, value: speler.penalty, field: 'penalty', max: 10 },
+                            { label: `🚩 ${COPY.LABEL_CORNERS}`, value: speler.corner, field: 'corner', max: 20 },
+                          ] as const).map(row => (
+                            <div key={row.field} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-sm)' }}>
+                              <label style={{ fontFamily: 'var(--font-cond)', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-secondary)' }}>{row.label}</label>
+                              <NumberInput value={row.value} onChange={val => handleSpelerChange(index, row.field, val)} max={row.max} />
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
