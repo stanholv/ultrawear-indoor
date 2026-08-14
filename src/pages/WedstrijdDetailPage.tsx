@@ -153,70 +153,55 @@ export const WedstrijdDetailPage = () => {
           </button>
         </div>
 
-        {/* Match Header Card */}
-        <div className="card card-hero" style={{ marginBottom: 'var(--spacing-xl)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
-            {/* Wedstrijd info */}
+        {/* Match Header — scoreboard uit het matchprogramma */}
+        <div style={{ position: 'relative', overflow: 'hidden', background: 'var(--color-secondary)', color: '#fff', marginBottom: 'var(--spacing-xl)' }}>
+          <div className="stripe-accent" />
+          <div style={{ padding: 'var(--spacing-lg)' }}>
+            {/* Meta: type · locatie · datum */}
+            <div className="kicker" style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 'var(--spacing-md)' }}>
+              {wedstrijd.type === 'beker' ? 'Beker' : wedstrijd.type === 'oefenwedstrijd' ? 'Oefenwedstrijd' : 'Competitie'}
+              {' · '}{isThuis ? 'Thuis' : 'Uit'}
+              {' · '}{new Date(wedstrijd.datum).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </div>
+
+            {/* Scoreboard: twee ploegen, grote scores */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
-                <span
-                  className="badge"
-                  style={{
-                    background: 'rgba(255,255,255,0.2)',
-                    fontSize: '0.75rem',
-                  }}
-                >
-                  {wedstrijd.type === 'beker' ? '🏆 Beker' : wedstrijd.type === 'oefenwedstrijd' ? '⚽ Oefenwedstrijd' : '🥇 Competitie'}
-                </span>
-                <span
-                  className="badge"
-                  style={{ background: 'rgba(255,255,255,0.2)', fontSize: '0.75rem' }}
-                >
-                  {isThuis ? '🏠 Thuis' : '✈️ Uit'}
-                </span>
-              </div>
-              <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: '700', color: 'white', margin: 0 }}>
-                Ultrawear Indoor {isThuis ? 'vs' : '@'} {tegenstander}
-              </h1>
-              <div style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)', marginTop: 'var(--spacing-sm)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                <Calendar size={14} />
-                {new Date(wedstrijd.datum).toLocaleDateString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} • {wedstrijd.tijd}
-              </div>
+              {([
+                { naam: wedstrijd.thuisploeg, s: scoreThuis, won: scoreThuis > scoreUit },
+                { naam: wedstrijd.uitploeg, s: scoreUit, won: scoreUit > scoreThuis },
+              ]).map((row) => {
+                const isUs = row.naam === 'Ultrawear Indoor';
+                const dim = !row.won && scoreThuis !== scoreUit;
+                return (
+                  <div key={row.naam} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-md)', padding: '2px 0', opacity: dim ? 0.5 : 1 }}>
+                    <span style={{
+                      fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase',
+                      fontSize: 'clamp(1.4rem, 6vw, 2.1rem)', lineHeight: 1, letterSpacing: '0.01em',
+                      color: isUs ? 'var(--color-primary-light)' : '#fff',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {isUs ? 'Ultrawear' : row.naam}
+                    </span>
+                    <span className="scoreline" style={{ fontSize: 'clamp(2.4rem, 12vw, 3.75rem)', color: '#fff', flexShrink: 0 }}>{row.s}</span>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Score + Resultaat */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)' }}>
-              <div
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: resultaatKleur + '30',
-                  border: `2px solid ${resultaatKleur}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontWeight: '700',
-                  fontSize: '1.25rem',
-                }}
-              >
-                {resultaat}
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 'clamp(2rem, 6vw, 3rem)', fontWeight: '700', color: 'white', lineHeight: 1 }}>
-                  {ultraGoals} – {tegenGoals}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>eindstand</div>
-              </div>
+            {/* Resultaat */}
+            <div style={{ marginTop: 'var(--spacing-sm)', paddingTop: 'var(--spacing-sm)', borderTop: '1px solid rgba(255,255,255,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span className="kicker" style={{ color: 'rgba(255,255,255,0.5)' }}>Eindstand</span>
+              <span style={{ fontFamily: 'var(--font-cond)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.8rem', color: resultaatKleur }}>
+                {resultaat === 'W' ? 'Gewonnen' : resultaat === 'L' ? 'Verloren' : 'Gelijkspel'}
+              </span>
             </div>
+
+            {wedstrijd.opmerkingen && (
+              <div style={{ marginTop: 'var(--spacing-md)', fontFamily: 'var(--font-cond)', fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)' }}>
+                {wedstrijd.opmerkingen}
+              </div>
+            )}
           </div>
-
-          {wedstrijd.opmerkingen && (
-            <div style={{ marginTop: 'var(--spacing-lg)', padding: 'var(--spacing-md)', background: 'rgba(255,255,255,0.1)', borderRadius: 'var(--radius-md)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.85)' }}>
-              📝 {wedstrijd.opmerkingen}
-            </div>
-          )}
         </div>
 
         {/* Snelle totalen */}

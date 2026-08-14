@@ -121,68 +121,27 @@ export const UitslagenPage = () => {
           </p>
         </div>
 
-        {/* Statistieken Overview */}
-        <div className="stats-grid" style={{ marginBottom: 'var(--spacing-xl)' }}>
-          <motion.div
-            className="stat-card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="stat-card-header">
-              <div>
-                <div className="stat-label">Totaal Punten</div>
-                <div className="stat-value">{punten}</div>
-                <div className="stat-detail">{filteredWedstrijden.length} wedstrijden</div>
-              </div>
-              <div className="stat-icon"><Trophy size={24} /></div>
+        {/* Klassement — editoriale cijferrail */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 'var(--spacing-lg)', marginBottom: 'var(--spacing-xl)' }}>
+          <div>
+            <div style={{ width: 24, height: 3, background: 'var(--color-primary)', marginBottom: 'var(--spacing-sm)' }} />
+            <div className="scoreboard" style={{ fontSize: 'clamp(2.2rem, 9vw, 3rem)' }}>{punten}</div>
+            <div className="kicker" style={{ marginTop: '4px' }}>Punten · {filteredWedstrijden.length} matchen</div>
+          </div>
+          <div>
+            <div style={{ width: 24, height: 3, background: 'var(--color-primary)', marginBottom: 'var(--spacing-sm)' }} />
+            <div className="scoreboard" style={{ fontSize: 'clamp(2.2rem, 9vw, 3rem)' }}>
+              {gewonnen}<span style={{ color: 'var(--color-text-tertiary)' }}>-</span>{gelijk}<span style={{ color: 'var(--color-text-tertiary)' }}>-</span>{verloren}
             </div>
-          </motion.div>
-
-          <motion.div
-            className="stat-card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="stat-card-header">
-              <div>
-                <div className="stat-label">Balans</div>
-                <div style={{ display: 'flex', gap: 'var(--spacing-md)', marginTop: 'var(--spacing-sm)' }}>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-success)' }}>W</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>{gewonnen}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#f59e0b' }}>D</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>{gelijk}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#ef4444' }}>L</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>{verloren}</div>
-                  </div>
-                </div>
-              </div>
+            <div className="kicker" style={{ marginTop: '4px' }}>Winst · Gelijk · Verlies</div>
+          </div>
+          <div>
+            <div style={{ width: 24, height: 3, background: 'var(--color-primary)', marginBottom: 'var(--spacing-sm)' }} />
+            <div className="scoreboard" style={{ fontSize: 'clamp(2.2rem, 9vw, 3rem)' }}>
+              {doelpuntenVoor}<span style={{ color: 'var(--color-text-tertiary)' }}>–</span>{doelpuntenTegen}
             </div>
-          </motion.div>
-
-          <motion.div
-            className="stat-card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="stat-card-header">
-              <div>
-                <div className="stat-label">Doelpunten</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '700', marginTop: 'var(--spacing-sm)' }}>
-                  {doelpuntenVoor} - {doelpuntenTegen}
-                </div>
-                <div className="stat-detail">
-                  Saldo: {doelpuntenVoor - doelpuntenTegen > 0 ? '+' : ''}{doelpuntenVoor - doelpuntenTegen}
-                </div>
-              </div>
-            </div>
-          </motion.div>
+            <div className="kicker" style={{ marginTop: '4px' }}>Doelpunten · saldo {doelpuntenVoor - doelpuntenTegen >= 0 ? '+' : ''}{doelpuntenVoor - doelpuntenTegen}</div>
+          </div>
         </div>
 
         {/* Filter */}
