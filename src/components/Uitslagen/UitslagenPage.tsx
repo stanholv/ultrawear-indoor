@@ -272,69 +272,23 @@ export const UitslagenPage = () => {
                         {result.label}
                       </div>
 
-                      {/* Match Info */}
+                      {/* Match info — naam + compacte meta (datum · thuis/uit · type · ff) */}
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontWeight: '600', fontSize: '1.125rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', fontSize: '1.15rem', lineHeight: 1, letterSpacing: '0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {isThuis ? 'vs' : '@'} {tegenstander}
                         </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                          {new Date(wedstrijd.datum).toLocaleDateString('nl-BE', {
-                            weekday: 'short',
-                            day: 'numeric',
-                            month: 'short'
-                          })} • {wedstrijd.tijd}
+                        <div style={{ fontFamily: 'var(--font-cond)', fontSize: '0.72rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {new Date(wedstrijd.datum).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' })}
+                          {' · '}{isThuis ? 'Thuis' : 'Uit'}
+                          {wedstrijd.type === 'beker' ? ' · Beker' : wedstrijd.type === 'oefenwedstrijd' ? ' · Oefen' : ''}
+                          {wedstrijd.forfait ? ' · FF' : ''}
                         </div>
                       </div>
 
                       {/* Score */}
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div className="scoreline" style={{ color: 'var(--color-text-primary)' }}>
-                          {isThuis ? `${thuis}–${uit}` : `${uit}–${thuis}`}
-                        </div>
+                      <div className="scoreline" style={{ color: 'var(--color-text-primary)', flexShrink: 0 }}>
+                        {isThuis ? `${thuis}–${uit}` : `${uit}–${thuis}`}
                       </div>
-
-                      {/* Forfait Badge */}
-                      {wedstrijd.forfait && (
-                        <span
-                          className="badge"
-                          style={{
-                            background: '#f59e0b',
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            flexShrink: 0,
-                          }}
-                          title="Forfait — telt niet mee voor doelpunten"
-                        >
-                          FF
-                        </span>
-                      )}
-
-                      {/* Type Badge */}
-                      <span
-                        className="badge"
-                        style={{
-                          background: 'var(--color-secondary)',
-                          fontSize: '0.75rem',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {wedstrijd.type === 'beker' ? '🏆' : wedstrijd.type === 'oefenwedstrijd' ? '⚽' : '🥇'}
-                      </span>
-
-                      {/* Location Badge */}
-                      <span
-                        className="badge"
-                        style={{
-                          background: isThuis ? 'var(--color-success)' : '#f59e0b',
-                          fontSize: '0.75rem',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {isThuis ? '🏠' : '✈️'}
-                      </span>
-
-                      {/* Chevron */}
-                      <ChevronRight size={18} color="var(--color-text-tertiary)" style={{ flexShrink: 0 }} />
                     </motion.div>
                   );
                 })}

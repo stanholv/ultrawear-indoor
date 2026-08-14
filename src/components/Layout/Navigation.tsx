@@ -44,7 +44,7 @@ export const Navigation = () => {
         
         <NavLink to="/statistieken" className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}>
           <TrendingUp size={20} />
-          <span>Statistieken</span>
+          <span>Stats</span>
         </NavLink>
         
         <NavLink to="/uitslagen" className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}>
@@ -79,7 +79,7 @@ export const Navigation = () => {
             
             <NavLink to="/wedstrijd-invoeren" className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}>
               <Calendar size={20} />
-              <span>Wedstrijd Invoeren</span>
+              <span>Invoeren</span>
             </NavLink>
           </>
         )}
