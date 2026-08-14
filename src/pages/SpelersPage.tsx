@@ -66,9 +66,6 @@ export const SpelersPage = () => {
               }}>
                 {profile?.rugnummer ?? '–'}
               </span>
-              {profile?.positie && (
-                <span className="kicker" style={{ fontSize: '0.65rem' }}>{profile.positie}</span>
-              )}
             </div>
 
             {/* Naam + stats */}

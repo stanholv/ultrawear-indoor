@@ -13,7 +13,7 @@
  * Het seizoen waaraan nieuwe wedstrijden standaard worden gekoppeld en dat de
  * app als "actueel" toont. Pas dit aan wanneer een nieuw seizoen begint.
  */
-export const HUIDIG_SEIZOEN = '2025-2026';
+export const HUIDIG_SEIZOEN = '2026-2027';
 
 /**
  * De maand (1-12) waarop een nieuw seizoen begint. Augustus = 8.

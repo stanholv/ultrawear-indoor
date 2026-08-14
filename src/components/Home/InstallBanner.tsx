@@ -26,7 +26,9 @@ export const InstallBanner = () => {
   useEffect(() => {
     // Mobile only, not already installed, not previously dismissed.
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    if (!isMobile || isStandalone() || localStorage.getItem(DISMISS_KEY)) return;
+    // sessionStorage (niet localStorage): weggeklikt = weg voor deze sessie,
+    // maar verschijnt weer bij een volgend bezoek.
+    if (!isMobile || isStandalone() || sessionStorage.getItem(DISMISS_KEY)) return;
 
     // Show on any mobile device — don't wait for beforeinstallprompt (which is
     // unreliable / Android-only). The install button adapts to what's available.
@@ -55,7 +57,7 @@ export const InstallBanner = () => {
 
   const dismiss = () => {
     setVisible(false);
-    localStorage.setItem(DISMISS_KEY, '1');
+    sessionStorage.setItem(DISMISS_KEY, '1');
   };
 
   const handleInstall = async () => {

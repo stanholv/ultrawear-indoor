@@ -275,9 +275,6 @@ export const SpelerProfielPage = () => {
                 </span>
               )}
               <div style={{ minWidth: 0 }}>
-                {profile?.positie && (
-                  <div className="kicker" style={{ color: 'rgba(255,255,255,0.55)' }}>{profile.positie}</div>
-                )}
                 <h1 style={{
                   fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase',
                   fontSize: 'clamp(1.9rem, 8vw, 3rem)', color: '#fff', margin: 0, lineHeight: 0.95, letterSpacing: '0.01em',
