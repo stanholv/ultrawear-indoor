@@ -20,10 +20,13 @@ export default defineConfig({
         orientation: 'portrait',
         scope: '/',
         start_url: '/',
+        // NB: de ?v=... query dwingt Android/Chrome om het geïnstalleerde
+        // home-scherm-icoon te vernieuwen (manifest wijzigt). Bump bij een
+        // volgende logowijziging naar v3, v4, ...
         icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'pwa-192x192.png?v=2', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png?v=2', sizes: '512x512', type: 'image/png' },
+          { src: 'maskable-512x512.png?v=2', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
