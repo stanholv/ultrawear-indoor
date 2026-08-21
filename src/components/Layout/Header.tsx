@@ -55,23 +55,11 @@ export const Header = () => {
             flexShrink: 0,
           }}
         >
-          <div style={{
-            height: '46px',
-            minWidth: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'white',
-            borderRadius: '4px',
-            padding: '7px 12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-          }}>
-            <img
-              src="/logo.png"
-              alt="Ultrawear"
-              style={{ height: '100%', width: 'auto', objectFit: 'contain' }}
-            />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Ultrawear Indoor"
+            style={{ height: '52px', width: '52px', objectFit: 'contain', flexShrink: 0, display: 'block' }}
+          />
 
           {/* Naam — verbergen op kleine schermen via CSS */}
           <div className="header-logo-text">
