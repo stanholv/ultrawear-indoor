@@ -12,75 +12,96 @@ export interface MatchCardData {
 }
 
 const RED = '#C8102E';
+const COND = "'Barlow Condensed', Arial, sans-serif";
+const BODY = "'Barlow', Arial, sans-serif";
 
-export function generateMatchCard(d: MatchCardData): Promise<Blob> {
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src; // zelfde origin (public/) → geen CORS-taint op de canvas
+  });
+}
+
+// Zorg dat de merk-fonts geladen zijn vóór we op canvas tekenen.
+async function ensureFonts() {
+  try {
+    const f = (document as any).fonts;
+    if (!f) return;
+    await Promise.all([
+      f.load("700 230px 'Barlow Condensed'"),
+      f.load("600 46px 'Barlow Condensed'"),
+      f.load("500 40px 'Barlow'"),
+    ]);
+  } catch { /* val terug op Arial */ }
+}
+
+export async function generateMatchCard(d: MatchCardData): Promise<Blob> {
   const S = 1080;
   const c = document.createElement('canvas');
   c.width = S;
   c.height = S;
   const x = c.getContext('2d')!;
 
+  await ensureFonts();
+
   // Achtergrond
   x.fillStyle = '#0d0d0d';
   x.fillRect(0, 0, S, S);
 
-  // Rode kopband met diagonale strepen
+  // Dunne rode accentstreep bovenaan (jersey)
   x.fillStyle = RED;
-  x.fillRect(0, 0, S, 180);
-  x.save();
-  x.beginPath();
-  x.rect(0, 0, S, 180);
-  x.clip();
-  x.strokeStyle = 'rgba(0,0,0,0.18)';
-  x.lineWidth = 14;
-  for (let i = -180; i < S; i += 40) {
-    x.beginPath();
-    x.moveTo(i, 180);
-    x.lineTo(i + 180, 0);
-    x.stroke();
-  }
-  x.restore();
+  x.fillRect(0, 0, S, 14);
 
   x.textAlign = 'center';
-  x.fillStyle = '#fff';
-  x.font = '800 66px Arial, sans-serif';
-  x.fillText('ULTRAWEAR INDOOR', S / 2, 118);
+
+  // Crest bovenaan
+  try {
+    const crest = await loadImage('/logo.png');
+    const size = 300;
+    x.drawImage(crest, (S - size) / 2, 44, size, size);
+  } catch {
+    x.fillStyle = '#fff';
+    x.font = `700 72px ${COND}`;
+    x.fillText('ULTRAWEAR INDOOR', S / 2, 240);
+  }
 
   // Matchup
-  x.fillStyle = '#bbbbbb';
-  x.font = '700 42px Arial, sans-serif';
+  x.fillStyle = '#bcb7ad';
+  x.font = `600 46px ${COND}`;
   const matchup = (d.isThuis ? 'THUIS vs ' : 'UIT @ ') + d.opponent;
-  x.fillText(truncate(x, matchup.toUpperCase(), S - 120), S / 2, 380);
+  x.fillText(truncate(x, matchup.toUpperCase(), S - 120), S / 2, 440);
 
   // Score
   x.fillStyle = '#ffffff';
-  x.font = '800 230px Arial, sans-serif';
-  x.fillText(`${d.ultra} – ${d.tegen}`, S / 2, 640);
+  x.font = `700 230px ${COND}`;
+  x.fillText(`${d.ultra} – ${d.tegen}`, S / 2, 700);
 
-  // Resultaat-badge
+  // Resultaat
   const col = d.res === 'W' ? '#10b981' : d.res === 'D' ? '#f59e0b' : '#ef4444';
   const label = d.res === 'W' ? 'GEWONNEN' : d.res === 'D' ? 'GELIJKSPEL' : 'VERLOREN';
   x.fillStyle = col;
-  x.font = '800 76px Arial, sans-serif';
-  x.fillText(label, S / 2, 760);
+  x.font = `700 80px ${COND}`;
+  x.fillText(label, S / 2, 812);
 
   // Datum
-  x.fillStyle = '#999999';
-  x.font = '500 40px Arial, sans-serif';
-  x.fillText(d.datum, S / 2, 826);
+  x.fillStyle = '#8f8b82';
+  x.font = `500 40px ${BODY}`;
+  x.fillText(d.datum, S / 2, 872);
 
   // Scorers (max 2 regels)
   if (d.scorers.length) {
-    x.fillStyle = '#dddddd';
-    x.font = '500 38px Arial, sans-serif';
+    x.fillStyle = '#d8d3c8';
+    x.font = `500 36px ${BODY}`;
     const lines = wrap(x, 'Doelpunten: ' + d.scorers.join('  ·  '), S - 140);
-    lines.slice(0, 2).forEach((ln, i) => x.fillText(ln, S / 2, 910 + i * 52));
+    lines.slice(0, 2).forEach((ln, i) => x.fillText(ln, S / 2, 948 + i * 50));
   }
 
   // Footer
-  x.fillStyle = '#777777';
-  x.font = '500 32px Arial, sans-serif';
-  x.fillText('ultrawear-indoor.vercel.app', S / 2, 1036);
+  x.fillStyle = '#6f6b63';
+  x.font = `500 32px ${BODY}`;
+  x.fillText('ultrawear-indoor.vercel.app', S / 2, 1040);
 
   return new Promise(resolve => c.toBlob(b => resolve(b!), 'image/png'));
 }
