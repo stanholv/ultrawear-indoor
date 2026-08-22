@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
-import { Home, TrendingUp, Calendar, Trophy, Shield, Users, Star, Award } from 'lucide-react';
+// @ts-ignore — lucide-react 0.263.1 type defs missen enkele icoonnamen (bv. Wallet)
+import { Home, TrendingUp, Calendar, Trophy, Shield, Users, Star, Award, Wallet } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useBadges } from '../../hooks/useBadges';
 
@@ -76,7 +77,12 @@ export const Navigation = () => {
               <Shield size={20} />
               <span>Admin</span>
             </NavLink>
-            
+
+            <NavLink to="/financien" className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}>
+              <Wallet size={20} />
+              <span>Financiën</span>
+            </NavLink>
+
             <NavLink to="/wedstrijd-invoeren" className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}>
               <Calendar size={20} />
               <span>Invoeren</span>

@@ -16,6 +16,7 @@ import { AdminPage } from './components/Admin/AdminPage';
 import { UitslagenPage } from './components/Uitslagen/UitslagenPage';
 import { WedstrijdDetailPage } from './pages/WedstrijdDetailPage';
 import { SpelersPage } from './pages/SpelersPage';
+import { FinancienPage } from './pages/FinancienPage';
 import { SpelerProfielPage } from './pages/SpelerProfielPage';
 import { ReviewsPage } from './pages/ReviewsPage';
 import { RecordsPage } from './pages/RecordsPage';
@@ -71,6 +72,12 @@ function App() {
             <Route path="/admin" element={
               <ProtectedRoute adminOnly>
                 <AdminPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/financien" element={
+              <ProtectedRoute adminOnly>
+                <FinancienPage />
               </ProtectedRoute>
             } />
             
