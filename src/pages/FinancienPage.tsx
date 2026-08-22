@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 // @ts-ignore
-import { Wallet, Users, ClipboardCheck, BookOpen, Trash2, Plus, AlertTriangle, Link2, Pencil, X, Check } from 'lucide-react';
+import { Wallet, Users, ClipboardCheck, BookOpen, Trash2, Plus, AlertTriangle, Link2, Pencil, X, Check, Copy, Table as TableIcon, Download, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSeizoen } from '../hooks/useSeizoen';
 import { useSpelers } from '../hooks/useSpelers';
@@ -32,6 +32,7 @@ const LedenPanel = ({ fin }: { fin: Fin }) => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Lid>>({});
   const [nieuw, setNieuw] = useState(false);
+  const [weergave, setWeergave] = useState<'lijst' | 'tabel'>('lijst');
 
   const leeg: Partial<Lid> = { naam: '', speler_id: '', adres: '', geboortedatum: '', telefoon: '' };
 
@@ -64,6 +65,38 @@ const LedenPanel = ({ fin }: { fin: Fin }) => {
     const res = await fin.deleteLid(id);
     if (res.success) { toast.success('Lid verwijderd'); setDeleteConfirm(null); }
     else toast.error(res.error || 'Verwijderen mislukt');
+  };
+
+  // Overzichtstabel voor het competitiedocument: makkelijk kopieerbaar.
+  const kolommen = ['Naam', 'Geboortedatum', 'Adres', 'Telefoon'];
+  const rijen = fin.leden.map((l) => [
+    l.naam,
+    l.geboortedatum ? new Date(l.geboortedatum).toLocaleDateString('nl-BE') : '',
+    l.adres || '',
+    l.telefoon || '',
+  ]);
+
+  const kopieerTabel = async () => {
+    // Tab-gescheiden → plakt netjes als tabel in Word/Excel/Google Docs.
+    const tsv = [kolommen.join('\t'), ...rijen.map((r) => r.join('\t'))].join('\n');
+    try {
+      await navigator.clipboard.writeText(tsv);
+      toast.success('Tabel gekopieerd — plak in je document (Ctrl+V)');
+    } catch {
+      toast.error('Kopiëren mislukt — probeer de CSV-download');
+    }
+  };
+
+  const downloadCsv = () => {
+    const esc = (v: string) => (/[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v);
+    const csv = [kolommen, ...rijen].map((r) => r.map(esc).join(';')).join('\r\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }); // BOM → accenten kloppen in Excel
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'leden-overzicht.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const input = (key: keyof Lid, type = 'text') => (
@@ -108,13 +141,30 @@ const LedenPanel = ({ fin }: { fin: Fin }) => {
     <div className="card">
       <div className="card-header">
         <h2 className="card-title"><Users size={22} /> Leden</h2>
-        <button
-          className="btn btn-primary"
-          onClick={() => { setNieuw(true); setEditId(null); setForm(leeg); }}
-          style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-        >
-          <Plus size={16} /> Nieuw lid
-        </button>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Weergave-schakelaar: lijst (beheren) ↔ tabel (overzicht/kopiëren) */}
+          <div style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+            <button
+              onClick={() => setWeergave('lijst')}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', background: weergave === 'lijst' ? 'var(--color-primary)' : 'transparent', color: weergave === 'lijst' ? 'white' : 'var(--color-text-secondary)' }}
+            >
+              <List size={15} /> Lijst
+            </button>
+            <button
+              onClick={() => setWeergave('tabel')}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', background: weergave === 'tabel' ? 'var(--color-primary)' : 'transparent', color: weergave === 'tabel' ? 'white' : 'var(--color-text-secondary)' }}
+            >
+              <TableIcon size={15} /> Tabel
+            </button>
+          </div>
+          <button
+            className="btn btn-primary"
+            onClick={() => { setNieuw(true); setEditId(null); setForm(leeg); }}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+          >
+            <Plus size={16} /> Nieuw lid
+          </button>
+        </div>
       </div>
 
       {nieuw && formBlok}
@@ -122,6 +172,40 @@ const LedenPanel = ({ fin }: { fin: Fin }) => {
       {fin.leden.length === 0 ? (
         <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
           Nog geen leden. Draai de seed of voeg er één toe.
+        </div>
+      ) : weergave === 'tabel' ? (
+        <div style={{ padding: '0 var(--spacing-lg) var(--spacing-lg)' }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: 'var(--spacing-md)', flexWrap: 'wrap' }}>
+            <button className="btn btn-primary" onClick={kopieerTabel} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Copy size={16} /> Kopieer tabel
+            </button>
+            <button className="btn" onClick={downloadCsv} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Download size={16} /> CSV
+            </button>
+            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-tertiary)', alignSelf: 'center' }}>
+              {fin.leden.length} leden · plakt als tabel in Word/Excel
+            </span>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ textAlign: 'left', color: 'var(--color-text-secondary)', fontSize: '0.75rem', borderBottom: '2px solid var(--color-border)' }}>
+                  {kolommen.map((k) => <th key={k} style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>{k}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {rijen.map((r, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    {r.map((cel, j) => (
+                      <td key={j} style={{ padding: '8px 12px', whiteSpace: j === 2 ? 'normal' : 'nowrap', color: cel ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}>
+                        {cel || '—'}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <div>
