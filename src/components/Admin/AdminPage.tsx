@@ -1,21 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 // @ts-ignore
-import { Shield, Link2, Star, Trash2, AlertTriangle, Users } from 'lucide-react';
+import { Shield, Link2, Star, Trash2, AlertTriangle, Users, Wallet, Calendar, ChevronRight, ArrowLeft } from 'lucide-react';
 import { SpelerKoppelingPanel } from './SpelerKoppelingPanel';
 import { SpelersBeheerPanel } from './SpelersBeheerPanel';
+import { FinancienSection } from '../../pages/FinancienPage';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 import { Review } from '../../lib/types';
-
-type AdminTab = 'selectie' | 'spelers' | 'reviews' | 'users';
-
-const TABS: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
-  { id: 'selectie', label: 'Selectie', icon: <Users size={18} /> },
-  { id: 'spelers', label: 'Speler Koppelingen', icon: <Link2 size={18} /> },
-  { id: 'reviews', label: 'Reviews', icon: <Star size={18} /> },
-  { id: 'users', label: 'Gebruikers', icon: <Users size={18} /> },
-];
 
 const StarDisplay = ({ score }: { score: number }) => (
   <div style={{ display: 'flex', gap: '2px' }}>
@@ -348,71 +341,130 @@ const ReviewModeratie = () => {
   );
 };
 
+// ─── CONTROLEPANEEL ──────────────────────────────────────────────────────────
+// Redactionele hub (geen kaartraster): genummerde secties met een rode rule,
+// en per sectie een lijst van instellingen. Kiezen opent het paneel; een
+// "terug"-link keert naar het overzicht. Financiën en Wedstrijd invoeren wonen
+// hier ook, zodat de hoofdnavigatie maar één Admin-ingang heeft.
+
+type SectieId = 'selectie' | 'koppelingen' | 'gebruikers' | 'financien' | 'reviews';
+
+interface HubItem {
+  id: SectieId | 'invoeren';
+  label: string;
+  omschrijving: string;
+  icon: React.ReactNode;
+  href?: string; // navigeert i.p.v. een paneel te openen
+}
+
+const GROEPEN: { index: string; titel: string; items: HubItem[] }[] = [
+  {
+    index: '01', titel: 'Beheer', items: [
+      { id: 'selectie', label: 'Selectie', omschrijving: 'Actieve spelers in het rooster', icon: <Users size={18} /> },
+      { id: 'koppelingen', label: 'Spelerkoppelingen', omschrijving: 'Accounts aan spelers koppelen', icon: <Link2 size={18} /> },
+      { id: 'gebruikers', label: 'Gebruikers', omschrijving: 'Rollen en toegang beheren', icon: <Shield size={18} /> },
+    ],
+  },
+  {
+    index: '02', titel: 'Financieel', items: [
+      { id: 'financien', label: 'Financiën', omschrijving: 'Leden, inschrijvingen en kasboek', icon: <Wallet size={18} /> },
+    ],
+  },
+  {
+    index: '03', titel: 'Content', items: [
+      { id: 'reviews', label: 'Reviews', omschrijving: 'Reviews modereren', icon: <Star size={18} /> },
+      { id: 'invoeren', label: 'Wedstrijd invoeren', omschrijving: 'Uitslag en statistieken toevoegen', icon: <Calendar size={18} />, href: '/wedstrijd-invoeren' },
+    ],
+  },
+];
+
+const SECTIE_LABEL: Record<SectieId, string> = {
+  selectie: 'Selectie',
+  koppelingen: 'Spelerkoppelingen',
+  gebruikers: 'Gebruikers',
+  financien: 'Financiën',
+  reviews: 'Reviews',
+};
+
+const HubRij = ({ item, onClick }: { item: HubItem; onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    style={{
+      display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)',
+      width: '100%', textAlign: 'left', cursor: 'pointer',
+      background: 'transparent', border: 'none',
+      borderBottom: '1px solid var(--color-border)',
+      padding: 'var(--spacing-md) var(--spacing-xs)',
+      color: 'var(--color-text-primary)', transition: 'background var(--transition-fast)',
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface)')}
+    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+  >
+    <span style={{ color: 'var(--color-primary)', display: 'flex' }}>{item.icon}</span>
+    <span style={{ flex: 1 }}>
+      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.05rem', textTransform: 'uppercase', letterSpacing: '0.02em', display: 'block' }}>
+        {item.label}
+      </span>
+      <span className="kicker" style={{ textTransform: 'none', letterSpacing: 0 }}>{item.omschrijving}</span>
+    </span>
+    <ChevronRight size={18} style={{ color: 'var(--color-text-tertiary)' }} />
+  </button>
+);
+
 export const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState<AdminTab>('selectie');
+  const [actief, setActief] = useState<SectieId | null>(null);
+  const navigate = useNavigate();
+
+  const openen = (item: HubItem) => {
+    if (item.href) navigate(item.href);
+    else setActief(item.id as SectieId);
+  };
 
   return (
     <div className="container" style={{ padding: 'var(--spacing-xl)' }}>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+      {actief ? (
+        <motion.div key={actief} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <button
+            onClick={() => setActief(null)}
+            className="kicker"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 'var(--spacing-md)', color: 'var(--color-text-secondary)' }}
+          >
+            <ArrowLeft size={14} /> Alle instellingen
+          </button>
 
-        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <div className="card-header">
-            <h1 className="card-title"><Shield size={28} /> Admin Dashboard</h1>
-            <p className="page-subtitle" style={{ margin: 0 }}>Beheer spelers en reviews</p>
+          <div className="page-header">
+            <h1 className="page-title">{SECTIE_LABEL[actief]}</h1>
           </div>
-        </div>
 
-        <div style={{
-          display: 'flex', gap: 'var(--spacing-sm)',
-          marginBottom: 'var(--spacing-xl)',
-          borderBottom: '2px solid var(--color-border)',
-          paddingBottom: 'var(--spacing-sm)', flexWrap: 'wrap',
-        }}>
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)',
-                padding: 'var(--spacing-sm) var(--spacing-lg)',
-                background: activeTab === tab.id ? 'var(--color-primary)' : 'var(--color-surface)',
-                color: activeTab === tab.id ? 'white' : 'var(--color-text-secondary)',
-                border: activeTab === tab.id ? 'none' : '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                fontWeight: activeTab === tab.id ? '700' : '500',
-                fontSize: '0.9rem', transition: 'all var(--transition-fast)',
-              }}
-            >
-              {tab.icon} {tab.label}
-            </button>
+          {actief === 'selectie' && <SpelersBeheerPanel />}
+          {actief === 'koppelingen' && <SpelerKoppelingPanel />}
+          {actief === 'gebruikers' && <UserBeheer />}
+          {actief === 'financien' && <FinancienSection />}
+          {actief === 'reviews' && <ReviewModeratie />}
+        </motion.div>
+      ) : (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="page-header">
+            <h1 className="page-title"><Shield size={32} /> Admin</h1>
+            <p className="page-subtitle">Controlepaneel</p>
+          </div>
+
+          {GROEPEN.map((groep) => (
+            <section key={groep.index}>
+              <div className="section-head">
+                <span className="section-index">{groep.index}</span>
+                <span className="section-title">{groep.titel}</span>
+                <span className="section-rule" />
+              </div>
+              <div>
+                {groep.items.map((item) => (
+                  <HubRij key={item.id} item={item} onClick={() => openen(item)} />
+                ))}
+              </div>
+            </section>
           ))}
-        </div>
-
-        {activeTab === 'selectie' && (
-          <motion.div key="selectie" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <SpelersBeheerPanel />
-          </motion.div>
-        )}
-
-        {activeTab === 'spelers' && (
-          <motion.div key="spelers" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <SpelerKoppelingPanel />
-          </motion.div>
-        )}
-
-        {activeTab === 'reviews' && (
-          <motion.div key="reviews" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <ReviewModeratie />
-          </motion.div>
-        )}
-
-        {activeTab === 'users' && (
-          <motion.div key="users" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <UserBeheer />
-          </motion.div>
-        )}
-
-      </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 };

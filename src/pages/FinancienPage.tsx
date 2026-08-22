@@ -548,20 +548,16 @@ const TABS: { id: FinTab; label: string; icon: React.ReactNode }[] = [
   { id: 'kasboek', label: 'Kasboek', icon: <BookOpen size={18} /> },
 ];
 
-export const FinancienPage = () => {
+// Ingesloten in de Admin-controlepaneel (geen eigen page-header — de shell
+// toont de titel "Financiën"). Behoudt de eigen sub-tabs.
+export const FinancienSection = () => {
   const { seizoen } = useSeizoen();
   const fin = useFinancien(seizoen);
   const [tab, setTab] = useState<FinTab>('leden');
 
   return (
-    <div className="container" style={{ padding: 'var(--spacing-xl)' }}>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <div className="card-header">
-            <h1 className="card-title"><Wallet size={28} /> Financiën</h1>
-            <p className="page-subtitle" style={{ margin: 0 }}>Seizoen {seizoen}</p>
-          </div>
-        </div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <p className="page-subtitle" style={{ marginBottom: 'var(--spacing-lg)' }}>Seizoen {seizoen}</p>
 
         <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xl)', borderBottom: '2px solid var(--color-border)', paddingBottom: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
           {TABS.map((t) => (
@@ -599,7 +595,6 @@ export const FinancienPage = () => {
             {tab === 'kasboek' && <KasboekPanel fin={fin} seizoen={seizoen} />}
           </motion.div>
         )}
-      </motion.div>
-    </div>
+    </motion.div>
   );
 };
