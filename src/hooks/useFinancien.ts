@@ -37,6 +37,11 @@ export interface Lid {
   speler_actief?: boolean | null; // roster-status van de gekoppelde speler (null = niet gekoppeld)
 }
 
+// Een lid telt als actief in de financiële views als het lid zelf actief is én
+// (indien gekoppeld) de rooster-speler niet op inactief staat. Zo verdwijnt een
+// gedeactiveerde speler uit zowel Leden als Inschrijvingen.
+export const lidIsActief = (l: Lid) => l.actief && l.speler_actief !== false;
+
 export interface Inschrijving {
   id: string;
   lid_id: string;

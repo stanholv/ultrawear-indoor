@@ -5,7 +5,7 @@ import { Users, ClipboardCheck, BookOpen, Trash2, Plus, AlertTriangle, Link2, Pe
 import { toast } from 'sonner';
 import { useSeizoen } from '../hooks/useSeizoen';
 import { useSpelers } from '../hooks/useSpelers';
-import { useFinancien, Lid } from '../hooks/useFinancien';
+import { useFinancien, lidIsActief, Lid } from '../hooks/useFinancien';
 import { SectieKop } from '../components/UI/editorial';
 
 type Fin = ReturnType<typeof useFinancien>;
@@ -57,9 +57,8 @@ const hairline = '1px solid var(--color-line, var(--color-border))';
 const LedenPanel = ({ fin }: { fin: Fin }) => {
   const { spelers } = useSpelers();
   const koppelbaar = spelers.filter((s) => !s.id.startsWith('fallback:'));
-  // Op de financiële ledenpagina tonen we enkel actieve leden: het lid zelf moet
-  // actief zijn én (indien gekoppeld) de rooster-speler mag niet op inactief staan.
-  const zichtbareLeden = fin.leden.filter((l) => l.actief && l.speler_actief !== false);
+  // Op de financiële ledenpagina tonen we enkel actieve leden (incl. rooster-status).
+  const zichtbareLeden = fin.leden.filter(lidIsActief);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Lid>>({});
@@ -283,7 +282,7 @@ const LedenPanel = ({ fin }: { fin: Fin }) => {
 // ════════════════════════════════════════════════════════════════════════════
 
 const InschrijvingenPanel = ({ fin, seizoen }: { fin: Fin; seizoen: string }) => {
-  const actieveLeden = fin.leden.filter((l) => l.actief);
+  const actieveLeden = fin.leden.filter(lidIsActief);
   const inschrMap = new Map(fin.inschrijvingen.map((i) => [i.lid_id, i]));
 
   const setBevestigd = async (lid_id: string, bevestigd: boolean) => {
