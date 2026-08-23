@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 // @ts-ignore
-import { Wallet, Users, ClipboardCheck, BookOpen, Trash2, Plus, AlertTriangle, Link2, Pencil, X, Check, Copy, Table as TableIcon, Download, List } from 'lucide-react';
+import { Users, ClipboardCheck, BookOpen, Trash2, Plus, AlertTriangle, Link2, Pencil, X, Check, Copy, Table as TableIcon, Download, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSeizoen } from '../hooks/useSeizoen';
 import { useSpelers } from '../hooks/useSpelers';
@@ -10,16 +10,53 @@ import { useFinancien, Lid } from '../hooks/useFinancien';
 type Fin = ReturnType<typeof useFinancien>;
 type FinTab = 'leden' | 'inschrijvingen' | 'kasboek';
 
+const GROEN = '#10b981';
+const ROOD = '#ef4444';
+
 const euro = (n: number) => `€ ${n.toFixed(2)}`;
 const datumKort = (d: string) =>
   new Date(d).toLocaleDateString('nl-BE', { day: '2-digit', month: 'short', year: 'numeric' });
 
+const cijfer: React.CSSProperties = { fontVariantNumeric: 'tabular-nums' };
+
+// Genummerde redactionele sectiekop met rode rule (match-programme stijl).
+const SectieKop = ({ index, titel }: { index?: string; titel: string }) => (
+  <div className="section-head">
+    {index && <span className="section-index">{index}</span>}
+    <span className="section-title">{titel}</span>
+    <span className="section-rule" />
+  </div>
+);
+
+// "Rode tick + groot getal + kicker" — het terugkerende cijfer-rail-motief.
+const Kengetal = ({ label, waarde, kleur, groot, actie }: {
+  label: string; waarde: string; kleur?: string; groot?: boolean; actie?: React.ReactNode;
+}) => (
+  <div style={{ minWidth: 104 }}>
+    <div style={{ width: 26, height: 3, background: 'var(--color-primary)', marginBottom: 6 }} />
+    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: groot ? '2rem' : '1.6rem', lineHeight: 1, color: kleur, display: 'flex', alignItems: 'center', gap: 8, ...cijfer }}>
+      {waarde}{actie}
+    </div>
+    <div className="kicker" style={{ marginTop: 5 }}>{label}</div>
+  </div>
+);
+
 const veld = (label: string, node: React.ReactNode) => (
-  <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
+  <label className="kicker" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
     {label}
     {node}
   </label>
 );
+
+const legeStaat = (tekst: string) => (
+  <div style={{ padding: 'var(--spacing-2xl) var(--spacing-xs)', color: 'var(--color-text-secondary)' }}>{tekst}</div>
+);
+
+// Tabelkop-cel in kicker-stijl.
+const th = (label: string, extra?: React.CSSProperties) => (
+  <th className="kicker" style={{ textAlign: 'left', padding: '8px 12px', whiteSpace: 'nowrap', ...extra }}>{label}</th>
+);
+const hairline = '1px solid var(--color-line, var(--color-border))';
 
 // ════════════════════════════════════════════════════════════════════════════
 //  LEDEN
@@ -28,6 +65,8 @@ const veld = (label: string, node: React.ReactNode) => (
 const LedenPanel = ({ fin }: { fin: Fin }) => {
   const { spelers } = useSpelers();
   const koppelbaar = spelers.filter((s) => !s.id.startsWith('fallback:'));
+  // Op de financiële ledenpagina tonen we enkel actieve leden.
+  const zichtbareLeden = fin.leden.filter((l) => l.actief);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Lid>>({});
@@ -69,7 +108,7 @@ const LedenPanel = ({ fin }: { fin: Fin }) => {
 
   // Overzichtstabel voor het competitiedocument: makkelijk kopieerbaar.
   const kolommen = ['Naam', 'Geboortedatum', 'Adres', 'Telefoon'];
-  const rijen = fin.leden.map((l) => [
+  const rijen = zichtbareLeden.map((l) => [
     l.naam,
     l.geboortedatum ? new Date(l.geboortedatum).toLocaleDateString('nl-BE') : '',
     l.adres || '',
@@ -120,7 +159,7 @@ const LedenPanel = ({ fin }: { fin: Fin }) => {
   );
 
   const formBlok = (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--spacing-md)', padding: 'var(--spacing-lg)', background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--spacing-md)' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--spacing-md)', padding: 'var(--spacing-lg) 0', borderTop: `2px solid var(--color-primary)`, borderBottom: hairline, marginBottom: 'var(--spacing-lg)' }}>
       {veld('Naam *', input('naam'))}
       {veld('Rooster-speler', spelerSelect)}
       {veld('Adres', input('adres'))}
@@ -138,66 +177,52 @@ const LedenPanel = ({ fin }: { fin: Fin }) => {
   );
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="card-title"><Users size={22} /> Leden</h2>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Weergave-schakelaar: lijst (beheren) ↔ tabel (overzicht/kopiëren) */}
-          <div style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-            <button
-              onClick={() => setWeergave('lijst')}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', background: weergave === 'lijst' ? 'var(--color-primary)' : 'transparent', color: weergave === 'lijst' ? 'white' : 'var(--color-text-secondary)' }}
-            >
-              <List size={15} /> Lijst
-            </button>
-            <button
-              onClick={() => setWeergave('tabel')}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', background: weergave === 'tabel' ? 'var(--color-primary)' : 'transparent', color: weergave === 'tabel' ? 'white' : 'var(--color-text-secondary)' }}
-            >
-              <TableIcon size={15} /> Tabel
-            </button>
-          </div>
-          <button
-            className="btn btn-primary"
-            onClick={() => { setNieuw(true); setEditId(null); setForm(leeg); }}
-            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-          >
-            <Plus size={16} /> Nieuw lid
+    <div>
+      <SectieKop titel="Leden" />
+
+      {/* Bedieningsrij: weergave-schakelaar + nieuw lid */}
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginBottom: 'var(--spacing-lg)' }}>
+        <div className="filter-tabs" style={{ margin: 0 }}>
+          <button className={`filter-tab ${weergave === 'lijst' ? 'active' : ''}`} onClick={() => setWeergave('lijst')}>
+            <List size={16} /> Lijst
+          </button>
+          <button className={`filter-tab ${weergave === 'tabel' ? 'active' : ''}`} onClick={() => setWeergave('tabel')}>
+            <TableIcon size={16} /> Tabel
           </button>
         </div>
+        <div style={{ flex: 1 }} />
+        <button className="btn btn-primary" onClick={() => { setNieuw(true); setEditId(null); setForm(leeg); }} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Plus size={16} /> Nieuw lid
+        </button>
       </div>
 
       {nieuw && formBlok}
 
-      {fin.leden.length === 0 ? (
-        <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-          Nog geen leden. Draai de seed of voeg er één toe.
-        </div>
+      {zichtbareLeden.length === 0 ? (
+        legeStaat('Nog geen actieve leden. Draai de seed of voeg er één toe.')
       ) : weergave === 'tabel' ? (
-        <div style={{ padding: '0 var(--spacing-lg) var(--spacing-lg)' }}>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: 'var(--spacing-md)', flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: 'var(--spacing-md)', flexWrap: 'wrap', alignItems: 'center' }}>
             <button className="btn btn-primary" onClick={kopieerTabel} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Copy size={16} /> Kopieer tabel
             </button>
             <button className="btn" onClick={downloadCsv} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Download size={16} /> CSV
             </button>
-            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-tertiary)', alignSelf: 'center' }}>
-              {fin.leden.length} leden · plakt als tabel in Word/Excel
-            </span>
+            <span className="kicker">{zichtbareLeden.length} leden · plakt als tabel in Word/Excel</span>
           </div>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
               <thead>
-                <tr style={{ textAlign: 'left', color: 'var(--color-text-secondary)', fontSize: '0.75rem', borderBottom: '2px solid var(--color-border)' }}>
-                  {kolommen.map((k) => <th key={k} style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>{k}</th>)}
+                <tr style={{ borderBottom: `2px solid var(--color-text-primary)` }}>
+                  {kolommen.map((k) => th(k))}
                 </tr>
               </thead>
               <tbody>
                 {rijen.map((r, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                  <tr key={i} style={{ borderBottom: hairline }}>
                     {r.map((cel, j) => (
-                      <td key={j} style={{ padding: '8px 12px', whiteSpace: j === 2 ? 'normal' : 'nowrap', color: cel ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}>
+                      <td style={{ padding: '10px 12px', whiteSpace: j === 2 ? 'normal' : 'nowrap', color: cel ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }} key={j}>
                         {cel || '—'}
                       </td>
                     ))}
@@ -209,26 +234,26 @@ const LedenPanel = ({ fin }: { fin: Fin }) => {
         </div>
       ) : (
         <div>
-          {fin.leden.map((lid, i) => (
-            <div key={lid.id} style={{ borderBottom: i < fin.leden.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+          {zichtbareLeden.map((lid) => (
+            <div key={lid.id} style={{ borderBottom: hairline }}>
               {editId === lid.id ? (
-                <div style={{ padding: 'var(--spacing-sm)' }}>{formBlok}</div>
+                formBlok
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', padding: 'var(--spacing-md) var(--spacing-lg)', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', padding: 'var(--spacing-md) var(--spacing-xs)', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: '200px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 600 }}>{lid.naam}</span>
+                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.05rem' }}>{lid.naam}</span>
                       {lid.speler_naam && (
-                        <span style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', borderRadius: 'var(--radius-sm)', padding: '1px 8px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <span style={{ background: 'rgba(16,185,129,0.14)', color: GROEN, borderRadius: 'var(--radius-sm)', padding: '1px 8px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                           <Link2 size={11} /> {lid.speler_naam}
                         </span>
                       )}
-                      {!lid.actief && <span style={{ fontSize: '0.72rem', color: 'var(--color-text-tertiary)' }}>(inactief)</span>}
+                      {!lid.actief && <span className="kicker">inactief</span>}
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', marginTop: '3px' }}>
                       {lid.adres || '—'}
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--color-text-tertiary)', marginTop: '2px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <div className="kicker" style={{ marginTop: '3px', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
                       <span>🎂 {lid.geboortedatum ? datumKort(lid.geboortedatum) : '—'}</span>
                       <span>📞 {lid.telefoon || '—'}</span>
                     </div>
@@ -236,18 +261,18 @@ const LedenPanel = ({ fin }: { fin: Fin }) => {
 
                   {deleteConfirm === lid.id ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
-                      <div style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ fontSize: '0.75rem', color: ROOD, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <AlertTriangle size={12} /> Zeker? (wist ook inschrijvingen)
                       </div>
                       <div style={{ display: 'flex', gap: '4px' }}>
-                        <button onClick={() => verwijder(lid.id)} style={{ padding: '4px 12px', fontSize: '0.75rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 600 }}>Ja</button>
+                        <button onClick={() => verwijder(lid.id)} style={{ padding: '4px 12px', fontSize: '0.75rem', background: ROOD, color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 600 }}>Ja</button>
                         <button onClick={() => setDeleteConfirm(null)} style={{ padding: '4px 12px', fontSize: '0.75rem', background: 'var(--color-surface)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Nee</button>
                       </div>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', gap: '4px' }}>
                       <button onClick={() => startEdit(lid)} className="btn" style={{ padding: '6px 10px' }} title="Bewerken"><Pencil size={16} /></button>
-                      <button onClick={() => setDeleteConfirm(lid.id)} className="btn" style={{ padding: '6px 10px', color: '#ef4444' }} title="Verwijderen"><Trash2 size={16} /></button>
+                      <button onClick={() => setDeleteConfirm(lid.id)} className="btn" style={{ padding: '6px 10px', color: ROOD }} title="Verwijderen"><Trash2 size={16} /></button>
                     </div>
                   )}
                 </div>
@@ -293,32 +318,31 @@ const InschrijvingenPanel = ({ fin, seizoen }: { fin: Fin; seizoen: string }) =>
 
   const totVerwacht = actieveLeden.reduce((s, l) => s + (inschrMap.get(l.id)?.verwacht_lidgeld || 0), 0);
   const totBetaald = actieveLeden.reduce((s, l) => s + (fin.lidgeldBetaald.get(l.id) || 0), 0);
+  const totOpen = Math.max(0, totVerwacht - totBetaald);
   const nBevestigd = actieveLeden.filter((l) => inschrMap.get(l.id)?.bevestigd).length;
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="card-title"><ClipboardCheck size={22} /> Inschrijvingen {seizoen}</h2>
-        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-          <span>✅ {nBevestigd}/{actieveLeden.length} bevestigd</span>
-          <span>Verwacht {euro(totVerwacht)}</span>
-          <span>Betaald {euro(totBetaald)}</span>
-          <span style={{ color: totVerwacht - totBetaald > 0 ? '#ef4444' : '#10b981', fontWeight: 600 }}>
-            Openstaand {euro(Math.max(0, totVerwacht - totBetaald))}
-          </span>
-        </div>
+    <div>
+      <SectieKop titel="Inschrijvingen" />
+
+      {/* Cijfer-rail */}
+      <div style={{ display: 'flex', gap: 'var(--spacing-2xl)', flexWrap: 'wrap', margin: 'var(--spacing-md) 0 var(--spacing-xl)' }}>
+        <Kengetal label={`van ${actieveLeden.length} bevestigd`} waarde={String(nBevestigd)} />
+        <Kengetal label="Verwacht" waarde={euro(totVerwacht)} />
+        <Kengetal label="Betaald" waarde={euro(totBetaald)} kleur={GROEN} />
+        <Kengetal label="Openstaand" waarde={euro(totOpen)} kleur={totOpen > 0 ? ROOD : GROEN} groot />
       </div>
 
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
           <thead>
-            <tr style={{ textAlign: 'left', color: 'var(--color-text-secondary)', fontSize: '0.75rem' }}>
-              <th style={{ padding: '8px var(--spacing-lg)' }}>Lid</th>
-              <th style={{ padding: '8px' }}>Speelt mee</th>
-              <th style={{ padding: '8px' }}>Verwacht</th>
-              <th style={{ padding: '8px' }}>Betaald</th>
-              <th style={{ padding: '8px' }}>Openstaand</th>
-              <th style={{ padding: '8px var(--spacing-lg)' }}></th>
+            <tr style={{ borderBottom: `2px solid var(--color-text-primary)` }}>
+              {th('Lid')}
+              {th('Speelt mee')}
+              {th('Verwacht')}
+              {th('Betaald')}
+              {th('Openstaand')}
+              {th('')}
             </tr>
           </thead>
           <tbody>
@@ -328,26 +352,26 @@ const InschrijvingenPanel = ({ fin, seizoen }: { fin: Fin; seizoen: string }) =>
               const betaald = fin.lidgeldBetaald.get(l.id) || 0;
               const open = verwacht - betaald;
               return (
-                <tr key={l.id} style={{ borderTop: '1px solid var(--color-border)' }}>
-                  <td style={{ padding: '10px var(--spacing-lg)', fontWeight: 600 }}>{l.naam}</td>
-                  <td style={{ padding: '10px 8px' }}>
-                    <input type="checkbox" checked={!!ins?.bevestigd} onChange={(e) => setBevestigd(l.id, e.target.checked)} style={{ width: 18, height: 18, cursor: 'pointer' }} />
+                <tr key={l.id} style={{ borderBottom: hairline }}>
+                  <td style={{ padding: '10px 12px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1rem' }}>{l.naam}</td>
+                  <td style={{ padding: '10px 12px' }}>
+                    <input type="checkbox" checked={!!ins?.bevestigd} onChange={(e) => setBevestigd(l.id, e.target.checked)} style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--color-primary)' }} />
                   </td>
-                  <td style={{ padding: '10px 8px' }}>
+                  <td style={{ padding: '10px 12px' }}>
                     <input
                       className="form-input"
                       type="number" min="0" step="0.5"
                       defaultValue={ins?.verwacht_lidgeld ?? ''}
                       onBlur={(e) => setVerwacht(l.id, e.target.value)}
-                      style={{ width: 90 }}
+                      style={{ width: 90, ...cijfer }}
                       placeholder="—"
                     />
                   </td>
-                  <td style={{ padding: '10px 8px' }}>{euro(betaald)}</td>
-                  <td style={{ padding: '10px 8px', color: open > 0 ? '#ef4444' : '#10b981', fontWeight: 600 }}>
+                  <td style={{ padding: '10px 12px', ...cijfer }}>{euro(betaald)}</td>
+                  <td style={{ padding: '10px 12px', color: open > 0 ? ROOD : GROEN, fontWeight: 700, ...cijfer }}>
                     {open > 0 ? euro(open) : (betaald > 0 ? '✓ betaald' : '—')}
                   </td>
-                  <td style={{ padding: '10px var(--spacing-lg)' }}>
+                  <td style={{ padding: '10px 12px' }}>
                     {open > 0 && (
                       <button className="btn" style={{ padding: '4px 10px', fontSize: '0.78rem' }} onClick={() => boekBetaling(l.id, open)}>
                         Boek {euro(open)}
@@ -360,8 +384,8 @@ const InschrijvingenPanel = ({ fin, seizoen }: { fin: Fin; seizoen: string }) =>
           </tbody>
         </table>
       </div>
-      <p style={{ fontSize: '0.72rem', color: 'var(--color-text-tertiary)', padding: 'var(--spacing-md) var(--spacing-lg) 0' }}>
-        "Verwacht" bewaart automatisch bij het verlaten van het veld. "Boek" maakt een lidgeld-betaling in het kasboek voor het openstaande bedrag.
+      <p className="kicker" style={{ marginTop: 'var(--spacing-md)', textTransform: 'none', letterSpacing: 0 }}>
+        "Verwacht" bewaart bij het verlaten van het veld. "Boek" maakt een lidgeld-betaling in het kasboek voor het openstaande bedrag.
       </p>
     </div>
   );
@@ -370,13 +394,6 @@ const InschrijvingenPanel = ({ fin, seizoen }: { fin: Fin; seizoen: string }) =>
 // ════════════════════════════════════════════════════════════════════════════
 //  KASBOEK
 // ════════════════════════════════════════════════════════════════════════════
-
-const SaldoTegel = ({ label, bedrag, kleur }: { label: string; bedrag: number; kleur?: string }) => (
-  <div style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', padding: 'var(--spacing-md) var(--spacing-lg)', flex: 1, minWidth: 130 }}>
-    <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)' }}>{label}</div>
-    <div style={{ fontSize: '1.25rem', fontWeight: 700, color: kleur }}>{euro(bedrag)}</div>
-  </div>
-);
 
 const KasboekPanel = ({ fin, seizoen }: { fin: Fin; seizoen: string }) => {
   const [datum, setDatum] = useState(new Date().toISOString().slice(0, 10));
@@ -424,132 +441,121 @@ const KasboekPanel = ({ fin, seizoen }: { fin: Fin; seizoen: string }) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-      {/* Saldo */}
-      <div className="card">
-        <div className="card-header"><h2 className="card-title"><Wallet size={22} /> Saldo {seizoen}</h2></div>
-        <div style={{ display: 'flex', gap: 'var(--spacing-md)', padding: '0 var(--spacing-lg) var(--spacing-lg)', flexWrap: 'wrap' }}>
-          <div style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', padding: 'var(--spacing-md) var(--spacing-lg)', flex: 1, minWidth: 150 }}>
-            <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)' }}>Startsaldo</div>
-            {startEdit ? (
-              <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                <input className="form-input" type="number" step="0.01" value={startVal} onChange={(e) => setStartVal(e.target.value)} style={{ width: 100 }} />
-                <button className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={bewaarStart}><Check size={14} /></button>
-                <button className="btn" style={{ padding: '4px 8px' }} onClick={() => { setStartEdit(false); setStartVal(String(fin.saldo.startsaldo)); }}><X size={14} /></button>
-              </div>
-            ) : (
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-                {euro(fin.saldo.startsaldo)}
-                <button className="btn" style={{ padding: '2px 6px' }} onClick={() => { setStartVal(String(fin.saldo.startsaldo)); setStartEdit(true); }}><Pencil size={13} /></button>
-              </div>
-            )}
+    <div>
+      {/* 01 — Saldo */}
+      <SectieKop index="01" titel="Saldo" />
+      <div style={{ display: 'flex', gap: 'var(--spacing-2xl)', flexWrap: 'wrap', margin: 'var(--spacing-md) 0 var(--spacing-xl)' }}>
+        {startEdit ? (
+          <div style={{ minWidth: 104 }}>
+            <div style={{ width: 26, height: 3, background: 'var(--color-primary)', marginBottom: 6 }} />
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <input className="form-input" type="number" step="0.01" value={startVal} onChange={(e) => setStartVal(e.target.value)} style={{ width: 100, ...cijfer }} />
+              <button className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={bewaarStart}><Check size={14} /></button>
+              <button className="btn" style={{ padding: '4px 8px' }} onClick={() => { setStartEdit(false); setStartVal(String(fin.saldo.startsaldo)); }}><X size={14} /></button>
+            </div>
+            <div className="kicker" style={{ marginTop: 5 }}>Startsaldo</div>
           </div>
-          <SaldoTegel label="Inkomsten" bedrag={fin.saldo.inkomsten} kleur="#10b981" />
-          <SaldoTegel label="Uitgaven" bedrag={fin.saldo.uitgaven} kleur="#ef4444" />
-          <SaldoTegel label="Eindsaldo" bedrag={fin.saldo.eindsaldo} kleur={fin.saldo.eindsaldo < 0 ? '#ef4444' : 'var(--color-primary)'} />
-        </div>
-      </div>
-
-      {/* Nieuwe transactie */}
-      <div className="card">
-        <div className="card-header"><h2 className="card-title"><Plus size={20} /> Nieuwe boeking</h2></div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 'var(--spacing-md)', padding: 'var(--spacing-lg)' }}>
-          {veld('Datum', <input className="form-input" type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />)}
-          {veld('Categorie', (
-            <select className="form-input" value={categorieId} onChange={(e) => setCategorieId(e.target.value)}>
-              <option value="">— kies —</option>
-              <optgroup label="Inkomsten">{inCats.map((c) => <option key={c.id} value={c.id}>{c.naam}</option>)}</optgroup>
-              <optgroup label="Uitgaven">{uitCats.map((c) => <option key={c.id} value={c.id}>{c.naam}</option>)}</optgroup>
-            </select>
-          ))}
-          {veld('Bedrag (€)', <input className="form-input" type="number" min="0" step="0.01" value={bedrag} onChange={(e) => setBedrag(e.target.value)} />)}
-          {veld('Lid (optioneel)', (
-            <select className="form-input" value={lidId} onChange={(e) => setLidId(e.target.value)}>
-              <option value="">— geen —</option>
-              {fin.leden.map((l) => <option key={l.id} value={l.id}>{l.naam}</option>)}
-            </select>
-          ))}
-          {veld('Omschrijving', <input className="form-input" value={omschrijving} onChange={(e) => setOmschrijving(e.target.value)} />)}
-          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-            <button className="btn btn-primary" onClick={boek} style={{ width: '100%' }}>Boeken</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Transactielijst */}
-      <div className="card">
-        <div className="card-header">
-          <h2 className="card-title"><BookOpen size={20} /> Kasboek</h2>
-          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{fin.transacties.length} boekingen</span>
-        </div>
-        {fin.transacties.length === 0 ? (
-          <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>Nog geen boekingen dit seizoen.</div>
         ) : (
-          <div>
-            {fin.transacties.map((t, i) => (
-              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', padding: 'var(--spacing-sm) var(--spacing-lg)', borderTop: i === 0 ? '1px solid var(--color-border)' : 'none', borderBottom: '1px solid var(--color-border)', flexWrap: 'wrap' }}>
-                <div style={{ width: 90, fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>{datumKort(t.datum)}</div>
-                <div style={{ flex: 1, minWidth: 160 }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{t.categorie_naam}{t.lid_naam ? ` · ${t.lid_naam}` : ''}</div>
-                  {t.omschrijving && <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{t.omschrijving}</div>}
-                </div>
-                <div style={{ fontWeight: 700, color: t.categorie_richting === 'in' ? '#10b981' : '#ef4444', minWidth: 90, textAlign: 'right' }}>
-                  {t.categorie_richting === 'in' ? '+' : '−'} {euro(t.bedrag)}
-                </div>
-                {deleteConfirm === t.id ? (
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <button onClick={() => verwijder(t.id)} style={{ padding: '4px 10px', fontSize: '0.72rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Ja</button>
-                    <button onClick={() => setDeleteConfirm(null)} style={{ padding: '4px 10px', fontSize: '0.72rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Nee</button>
-                  </div>
-                ) : (
-                  <button onClick={() => setDeleteConfirm(t.id)} className="btn" style={{ padding: '4px 8px', color: '#ef4444' }}><Trash2 size={14} /></button>
-                )}
-              </div>
-            ))}
-          </div>
+          <Kengetal
+            label="Startsaldo"
+            waarde={euro(fin.saldo.startsaldo)}
+            actie={<button className="btn" style={{ padding: '2px 6px' }} onClick={() => { setStartVal(String(fin.saldo.startsaldo)); setStartEdit(true); }}><Pencil size={13} /></button>}
+          />
         )}
+        <Kengetal label="Inkomsten" waarde={euro(fin.saldo.inkomsten)} kleur={GROEN} />
+        <Kengetal label="Uitgaven" waarde={euro(fin.saldo.uitgaven)} kleur={ROOD} />
+        <Kengetal label="Eindsaldo" waarde={euro(fin.saldo.eindsaldo)} kleur={fin.saldo.eindsaldo < 0 ? ROOD : 'var(--color-primary)'} groot />
       </div>
 
-      {/* Categoriebeheer */}
-      <div className="card">
-        <div className="card-header"><h2 className="card-title">Categorieën</h2></div>
-        <div style={{ display: 'flex', gap: 'var(--spacing-md)', padding: 'var(--spacing-lg)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          {veld('Nieuwe categorie', <input className="form-input" value={nieuweCat} onChange={(e) => setNieuweCat(e.target.value)} placeholder="bv. Materiaal" />)}
-          {veld('Richting', (
-            <select className="form-input" value={nieuweCatRichting} onChange={(e) => setNieuweCatRichting(e.target.value as 'in' | 'uit')}>
-              <option value="in">Inkomst</option>
-              <option value="uit">Uitgave</option>
-            </select>
-          ))}
-          <button className="btn btn-primary" onClick={voegCatToe} style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Plus size={16} /> Toevoegen</button>
+      {/* 02 — Nieuwe boeking */}
+      <SectieKop index="02" titel="Nieuwe boeking" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 'var(--spacing-md)', margin: 'var(--spacing-md) 0 var(--spacing-xl)' }}>
+        {veld('Datum', <input className="form-input" type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />)}
+        {veld('Categorie', (
+          <select className="form-input" value={categorieId} onChange={(e) => setCategorieId(e.target.value)}>
+            <option value="">— kies —</option>
+            <optgroup label="Inkomsten">{inCats.map((c) => <option key={c.id} value={c.id}>{c.naam}</option>)}</optgroup>
+            <optgroup label="Uitgaven">{uitCats.map((c) => <option key={c.id} value={c.id}>{c.naam}</option>)}</optgroup>
+          </select>
+        ))}
+        {veld('Bedrag (€)', <input className="form-input" type="number" min="0" step="0.01" value={bedrag} onChange={(e) => setBedrag(e.target.value)} style={cijfer} />)}
+        {veld('Lid (optioneel)', (
+          <select className="form-input" value={lidId} onChange={(e) => setLidId(e.target.value)}>
+            <option value="">— geen —</option>
+            {fin.leden.map((l) => <option key={l.id} value={l.id}>{l.naam}</option>)}
+          </select>
+        ))}
+        {veld('Omschrijving', <input className="form-input" value={omschrijving} onChange={(e) => setOmschrijving(e.target.value)} />)}
+        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+          <button className="btn btn-primary" onClick={boek} style={{ width: '100%' }}>Boeken</button>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '0 var(--spacing-lg) var(--spacing-lg)' }}>
-          {fin.categorieen.map((c) => (
-            <span key={c.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontSize: '0.78rem', background: c.actief ? (c.richting === 'in' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)') : 'var(--color-surface)', color: c.actief ? (c.richting === 'in' ? '#10b981' : '#ef4444') : 'var(--color-text-tertiary)', opacity: c.actief ? 1 : 0.6 }}>
-              {c.naam}{c.is_lidgeld ? ' ⭐' : ''}
-              <button onClick={() => fin.updateCategorie(c.id, { actief: !c.actief }).then((r) => r.success && toast.success(c.actief ? 'Gearchiveerd' : 'Heractiveerd'))} title={c.actief ? 'Archiveren' : 'Heractiveren'} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'inherit', padding: 0, display: 'flex' }}>
-                {c.actief ? <X size={12} /> : <Check size={12} />}
-              </button>
-            </span>
+      </div>
+
+      {/* 03 — Kasboek */}
+      <SectieKop index="03" titel="Kasboek" />
+      {fin.transacties.length === 0 ? (
+        legeStaat('Nog geen boekingen dit seizoen.')
+      ) : (
+        <div style={{ margin: 'var(--spacing-md) 0 var(--spacing-xl)' }}>
+          {fin.transacties.map((t) => (
+            <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', padding: 'var(--spacing-sm) var(--spacing-xs)', borderBottom: hairline, flexWrap: 'wrap' }}>
+              <div className="kicker" style={{ width: 88, ...cijfer }}>{datumKort(t.datum)}</div>
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.98rem' }}>{t.categorie_naam}{t.lid_naam ? ` · ${t.lid_naam}` : ''}</div>
+                {t.omschrijving && <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)' }}>{t.omschrijving}</div>}
+              </div>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.05rem', color: t.categorie_richting === 'in' ? GROEN : ROOD, minWidth: 96, textAlign: 'right', ...cijfer }}>
+                {t.categorie_richting === 'in' ? '+' : '−'} {euro(t.bedrag)}
+              </div>
+              {deleteConfirm === t.id ? (
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button onClick={() => verwijder(t.id)} style={{ padding: '4px 10px', fontSize: '0.72rem', background: ROOD, color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Ja</button>
+                  <button onClick={() => setDeleteConfirm(null)} style={{ padding: '4px 10px', fontSize: '0.72rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Nee</button>
+                </div>
+              ) : (
+                <button onClick={() => setDeleteConfirm(t.id)} className="btn" style={{ padding: '4px 8px', color: ROOD }}><Trash2 size={14} /></button>
+              )}
+            </div>
           ))}
         </div>
+      )}
+
+      {/* 04 — Categorieën */}
+      <SectieKop index="04" titel="Categorieën" />
+      <div style={{ display: 'flex', gap: 'var(--spacing-md)', margin: 'var(--spacing-md) 0 var(--spacing-md)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        {veld('Nieuwe categorie', <input className="form-input" value={nieuweCat} onChange={(e) => setNieuweCat(e.target.value)} placeholder="bv. Materiaal" />)}
+        {veld('Richting', (
+          <select className="form-input" value={nieuweCatRichting} onChange={(e) => setNieuweCatRichting(e.target.value as 'in' | 'uit')}>
+            <option value="in">Inkomst</option>
+            <option value="uit">Uitgave</option>
+          </select>
+        ))}
+        <button className="btn btn-primary" onClick={voegCatToe} style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Plus size={16} /> Toevoegen</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {fin.categorieen.map((c) => (
+          <span key={c.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontSize: '0.78rem', fontWeight: 600, background: c.actief ? (c.richting === 'in' ? 'rgba(16,185,129,0.14)' : 'rgba(239,68,68,0.14)') : 'var(--color-surface)', color: c.actief ? (c.richting === 'in' ? GROEN : ROOD) : 'var(--color-text-tertiary)', opacity: c.actief ? 1 : 0.6 }}>
+            {c.naam}{c.is_lidgeld ? ' ⭐' : ''}
+            <button onClick={() => fin.updateCategorie(c.id, { actief: !c.actief }).then((r) => r.success && toast.success(c.actief ? 'Gearchiveerd' : 'Heractiveerd'))} title={c.actief ? 'Archiveren' : 'Heractiveren'} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'inherit', padding: 0, display: 'flex' }}>
+              {c.actief ? <X size={12} /> : <Check size={12} />}
+            </button>
+          </span>
+        ))}
       </div>
     </div>
   );
 };
 
 // ════════════════════════════════════════════════════════════════════════════
-//  PAGE
+//  SECTIE (ingesloten in Admin-controlepaneel)
 // ════════════════════════════════════════════════════════════════════════════
 
 const TABS: { id: FinTab; label: string; icon: React.ReactNode }[] = [
-  { id: 'leden', label: 'Leden', icon: <Users size={18} /> },
-  { id: 'inschrijvingen', label: 'Inschrijvingen', icon: <ClipboardCheck size={18} /> },
-  { id: 'kasboek', label: 'Kasboek', icon: <BookOpen size={18} /> },
+  { id: 'leden', label: 'Leden', icon: <Users size={16} /> },
+  { id: 'inschrijvingen', label: 'Inschrijvingen', icon: <ClipboardCheck size={16} /> },
+  { id: 'kasboek', label: 'Kasboek', icon: <BookOpen size={16} /> },
 ];
 
-// Ingesloten in de Admin-controlepaneel (geen eigen page-header — de shell
-// toont de titel "Financiën"). Behoudt de eigen sub-tabs.
 export const FinancienSection = () => {
   const { seizoen } = useSeizoen();
   const fin = useFinancien(seizoen);
@@ -559,42 +565,30 @@ export const FinancienSection = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <p className="page-subtitle" style={{ marginBottom: 'var(--spacing-lg)' }}>Seizoen {seizoen}</p>
 
-        <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xl)', borderBottom: '2px solid var(--color-border)', paddingBottom: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)',
-                padding: 'var(--spacing-sm) var(--spacing-lg)',
-                background: tab === t.id ? 'var(--color-primary)' : 'var(--color-surface)',
-                color: tab === t.id ? 'white' : 'var(--color-text-secondary)',
-                border: tab === t.id ? 'none' : '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                fontWeight: tab === t.id ? 700 : 500, fontSize: '0.9rem',
-              }}
-            >
-              {t.icon} {t.label}
-            </button>
-          ))}
+      <div className="filter-tabs">
+        {TABS.map((t) => (
+          <button key={t.id} className={`filter-tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
+            {t.icon} {t.label}
+          </button>
+        ))}
+      </div>
+
+      {fin.error && (
+        <div style={{ borderLeft: `3px solid ${ROOD}`, padding: 'var(--spacing-sm) var(--spacing-md)', color: ROOD, marginBottom: 'var(--spacing-lg)' }}>
+          <AlertTriangle size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+          {fin.error} — draai je <code>supabase-financien.sql</code> al?
         </div>
+      )}
 
-        {fin.error && (
-          <div className="card" style={{ padding: 'var(--spacing-lg)', color: '#ef4444', marginBottom: 'var(--spacing-lg)' }}>
-            <AlertTriangle size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-            {fin.error} — draai je <code>supabase-financien.sql</code> al?
-          </div>
-        )}
-
-        {fin.loading ? (
-          <div className="animate-pulse" style={{ padding: 'var(--spacing-xl)' }}>Laden...</div>
-        ) : (
-          <motion.div key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            {tab === 'leden' && <LedenPanel fin={fin} />}
-            {tab === 'inschrijvingen' && <InschrijvingenPanel fin={fin} seizoen={seizoen} />}
-            {tab === 'kasboek' && <KasboekPanel fin={fin} seizoen={seizoen} />}
-          </motion.div>
-        )}
+      {fin.loading ? (
+        <div className="animate-pulse" style={{ padding: 'var(--spacing-xl)' }}>Laden...</div>
+      ) : (
+        <motion.div key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          {tab === 'leden' && <LedenPanel fin={fin} />}
+          {tab === 'inschrijvingen' && <InschrijvingenPanel fin={fin} seizoen={seizoen} />}
+          {tab === 'kasboek' && <KasboekPanel fin={fin} seizoen={seizoen} />}
+        </motion.div>
+      )}
     </motion.div>
   );
 };
