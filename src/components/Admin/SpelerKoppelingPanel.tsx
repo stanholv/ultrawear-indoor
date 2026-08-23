@@ -5,6 +5,7 @@ import { Link2, Check, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
 import { useSpelers } from '../../hooks/useSpelers';
+import { SectieKop, HAIRLINE } from '../UI/editorial';
 
 interface AccountInfo {
   id: string;
@@ -67,24 +68,15 @@ export const SpelerKoppelingPanel = () => {
   }
 
   return (
-    <motion.div
-      className="card"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div className="card-header">
-        <h2 className="card-title">
-          <Link2 size={24} /> Account ↔ Speler Koppeling
-        </h2>
-        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-          <Users size={14} style={{ display: 'inline', marginRight: '4px' }} />
-          {accounts.length} accounts
-        </div>
-      </div>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+      <SectieKop titel="Spelerkoppelingen" />
+      <p className="kicker" style={{ margin: 'var(--spacing-xs) 0 var(--spacing-lg)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <Users size={13} /> {accounts.length} accounts
+      </p>
 
-      <div style={{ padding: 'var(--spacing-sm) 0' }}>
+      <div>
         {accounts.length === 0 ? (
-          <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+          <div style={{ padding: 'var(--spacing-2xl) var(--spacing-xs)', color: 'var(--color-text-secondary)' }}>
             Geen accounts gevonden.
           </div>
         ) : (
@@ -95,22 +87,22 @@ export const SpelerKoppelingPanel = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 'var(--spacing-md)',
-                padding: 'var(--spacing-md) var(--spacing-lg)',
-                borderBottom: '1px solid var(--color-border)',
+                padding: 'var(--spacing-md) var(--spacing-xs)',
+                borderBottom: HAIRLINE,
                 flexWrap: 'wrap',
               }}
             >
               {/* Account info */}
               <div style={{ flex: 1, minWidth: '150px' }}>
-                <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>{account.full_name}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{account.email}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.05rem' }}>{account.full_name}</div>
+                <div className="kicker" style={{ textTransform: 'none', letterSpacing: 0 }}>{account.email}</div>
               </div>
 
               {/* Huidige koppeling indicator */}
               {account.speler_naam && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '4px',
-                  background: 'rgba(16,185,129,0.1)', color: '#10b981',
+                  background: 'rgba(16,185,129,0.14)', color: '#10b981',
                   borderRadius: 'var(--radius-sm)', padding: '2px 8px',
                   fontSize: '0.75rem', fontWeight: '600',
                 }}>

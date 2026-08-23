@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useSeizoen } from '../hooks/useSeizoen';
 import { useSpelers } from '../hooks/useSpelers';
 import { useFinancien, Lid } from '../hooks/useFinancien';
+import { SectieKop } from '../components/UI/editorial';
 
 type Fin = ReturnType<typeof useFinancien>;
 type FinTab = 'leden' | 'inschrijvingen' | 'kasboek';
@@ -18,15 +19,6 @@ const datumKort = (d: string) =>
   new Date(d).toLocaleDateString('nl-BE', { day: '2-digit', month: 'short', year: 'numeric' });
 
 const cijfer: React.CSSProperties = { fontVariantNumeric: 'tabular-nums' };
-
-// Genummerde redactionele sectiekop met rode rule (match-programme stijl).
-const SectieKop = ({ index, titel }: { index?: string; titel: string }) => (
-  <div className="section-head">
-    {index && <span className="section-index">{index}</span>}
-    <span className="section-title">{titel}</span>
-    <span className="section-rule" />
-  </div>
-);
 
 // "Rode tick + groot getal + kicker" — het terugkerende cijfer-rail-motief.
 const Kengetal = ({ label, waarde, kleur, groot, actie }: {

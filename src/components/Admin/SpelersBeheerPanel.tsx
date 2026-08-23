@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Users, UserPlus, Trash2, AlertTriangle, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSpelers } from '../../hooks/useSpelers';
+import { SectieKop, HAIRLINE } from '../UI/editorial';
 
 // ─── SELECTIE-/ROSTERBEHEER ──────────────────────────────────────────────────
 // Beheert de `spelers`-tabel: toevoegen, activeren/deactiveren en verwijderen.
@@ -44,21 +45,17 @@ export const SpelersBeheerPanel = () => {
   if (loading) return <div className="animate-pulse" style={{ padding: 'var(--spacing-lg)' }}>Laden...</div>;
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="card-title"><Users size={22} /> Selectiebeheer</h2>
-        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-          {spelers.filter(s => s.actief).length} actief · {spelers.length} totaal
-        </div>
-      </div>
+    <div>
+      <SectieKop titel="Selectie" />
+      <p className="kicker" style={{ margin: 'var(--spacing-xs) 0 var(--spacing-lg)' }}>
+        {spelers.filter(s => s.actief).length} actief · {spelers.length} totaal
+      </p>
 
       {!tabelAanwezig && (
         <div style={{
-          margin: '0 var(--spacing-lg) var(--spacing-md)',
-          padding: 'var(--spacing-md)',
-          background: 'rgba(245, 158, 11, 0.1)',
-          border: '1px solid #f59e0b',
-          borderRadius: 'var(--radius-sm)',
+          margin: '0 0 var(--spacing-md)',
+          padding: 'var(--spacing-sm) var(--spacing-md)',
+          borderLeft: '3px solid #f59e0b',
           fontSize: '0.8rem',
           display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'flex-start',
         }}>
@@ -72,7 +69,7 @@ export const SpelersBeheerPanel = () => {
       )}
 
       {/* Nieuwe speler toevoegen */}
-      <div style={{ display: 'flex', gap: 'var(--spacing-sm)', padding: '0 var(--spacing-lg) var(--spacing-md)', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-lg)', flexWrap: 'wrap' }}>
         <input
           className="form-input"
           value={nieuweNaam}
@@ -101,12 +98,12 @@ export const SpelersBeheerPanel = () => {
             transition={{ delay: i * 0.02 }}
             style={{
               display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)',
-              padding: 'var(--spacing-md) var(--spacing-lg)',
-              borderBottom: i < spelers.length - 1 ? '1px solid var(--color-border)' : 'none',
+              padding: 'var(--spacing-md) var(--spacing-xs)',
+              borderBottom: HAIRLINE,
               opacity: speler.actief ? 1 : 0.55,
             }}
           >
-            <span style={{ fontWeight: 700, fontSize: '0.95rem', flex: 1 }}>{speler.naam}</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.05rem', flex: 1 }}>{speler.naam}</span>
 
             <span style={{
               fontSize: '0.7rem', fontWeight: 700,
@@ -157,7 +154,7 @@ export const SpelersBeheerPanel = () => {
         ))}
       </div>
 
-      <p style={{ padding: 'var(--spacing-md) var(--spacing-lg)', margin: 0, fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+      <p className="kicker" style={{ marginTop: 'var(--spacing-md)', textTransform: 'none', letterSpacing: 0, lineHeight: 1.5 }}>
         Op <strong>inactief</strong> zetten haalt een speler uit het invoerformulier, maar bewaart de
         statistieken. <strong>Verwijderen</strong> doe je alleen voor per ongeluk toegevoegde namen —
         het raakt bestaande stats (die op naam staan) niet.

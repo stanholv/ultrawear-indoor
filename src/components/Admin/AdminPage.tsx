@@ -6,6 +6,7 @@ import { Shield, Link2, Star, Trash2, AlertTriangle, Users, Wallet, Calendar, Ch
 import { SpelerKoppelingPanel } from './SpelerKoppelingPanel';
 import { SpelersBeheerPanel } from './SpelersBeheerPanel';
 import { FinancienSection } from '../../pages/FinancienPage';
+import { SectieKop, HAIRLINE } from '../UI/editorial';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 import { Review } from '../../lib/types';
@@ -83,16 +84,12 @@ const UserBeheer = () => {
   if (loading) return <div className="animate-pulse" style={{ padding: 'var(--spacing-lg)' }}>Laden...</div>;
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="card-title"><Users size={22} /> Gebruikersbeheer</h2>
-        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-          {users.length} gebruikers
-        </div>
-      </div>
+    <div>
+      <SectieKop titel="Gebruikers" />
+      <p className="kicker" style={{ margin: 'var(--spacing-xs) 0 var(--spacing-lg)' }}>{users.length} gebruikers</p>
 
       {users.length === 0 ? (
-        <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+        <div style={{ padding: 'var(--spacing-2xl) var(--spacing-xs)', color: 'var(--color-text-secondary)' }}>
           Geen gebruikers gevonden.
         </div>
       ) : (
@@ -107,17 +104,17 @@ const UserBeheer = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 'var(--spacing-md)',
-                padding: 'var(--spacing-md) var(--spacing-lg)',
-                borderBottom: i < users.length - 1 ? '1px solid var(--color-border)' : 'none',
+                padding: 'var(--spacing-md) var(--spacing-xs)',
+                borderBottom: HAIRLINE,
                 flexWrap: 'wrap',
               }}
             >
               {/* User info */}
               <div style={{ flex: 1, minWidth: '180px' }}>
-                <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>{user.full_name || '(geen naam)'}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{user.email}</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--color-text-tertiary)', marginTop: '2px' }}>
-                  Geregistreerd: {new Date(user.created_at).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.05rem' }}>{user.full_name || '(geen naam)'}</div>
+                <div className="kicker" style={{ textTransform: 'none', letterSpacing: 0 }}>{user.email}</div>
+                <div className="kicker" style={{ marginTop: '2px' }}>
+                  Sinds {new Date(user.created_at).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </div>
               </div>
 
@@ -239,16 +236,12 @@ const ReviewModeratie = () => {
   if (loading) return <div className="animate-pulse" style={{ padding: 'var(--spacing-lg)' }}>Laden...</div>;
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="card-title"><Star size={22} /> Review Moderatie</h2>
-        <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-          {reviews.length} reviews totaal
-        </div>
-      </div>
+    <div>
+      <SectieKop titel="Reviews" />
+      <p className="kicker" style={{ margin: 'var(--spacing-xs) 0 var(--spacing-lg)' }}>{reviews.length} reviews totaal</p>
 
       {/* Filter */}
-      <div style={{ padding: '0 var(--spacing-lg) var(--spacing-md)' }}>
+      <div style={{ marginBottom: 'var(--spacing-md)' }}>
         <select
           className="form-input"
           value={filter}
@@ -261,7 +254,7 @@ const ReviewModeratie = () => {
       </div>
 
       {gefilterd.length === 0 ? (
-        <div style={{ padding: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+        <div style={{ padding: 'var(--spacing-2xl) var(--spacing-xs)', color: 'var(--color-text-secondary)' }}>
           Geen reviews gevonden.
         </div>
       ) : (
@@ -276,8 +269,8 @@ const ReviewModeratie = () => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
-                padding: 'var(--spacing-md) var(--spacing-lg)',
-                borderBottom: i < gefilterd.length - 1 ? '1px solid var(--color-border)' : 'none',
+                padding: 'var(--spacing-md) var(--spacing-xs)',
+                borderBottom: HAIRLINE,
                 gap: 'var(--spacing-md)',
                 flexWrap: 'wrap',
               }}
