@@ -33,7 +33,8 @@ export interface Lid {
   geboortedatum: string | null;
   telefoon: string | null;
   actief: boolean;
-  speler_naam?: string | null; // afgeleid uit join met spelers
+  speler_naam?: string | null;   // afgeleid uit join met spelers
+  speler_actief?: boolean | null; // roster-status van de gekoppelde speler (null = niet gekoppeld)
 }
 
 export interface Inschrijving {
@@ -74,13 +75,14 @@ export const useFinancien = (seizoen: string) => {
   const loadLeden = useCallback(async () => {
     const { data, error } = await supabase
       .from('leden')
-      .select('*, spelers(naam)')
+      .select('*, spelers(naam, actief)')
       .order('naam', { ascending: true });
     if (error) throw error;
     setLeden(
       (data || []).map((r: any) => ({
         ...r,
         speler_naam: r.spelers?.naam ?? null,
+        speler_actief: r.spelers?.actief ?? null,
       })),
     );
   }, []);

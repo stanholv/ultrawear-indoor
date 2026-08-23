@@ -57,8 +57,9 @@ const hairline = '1px solid var(--color-line, var(--color-border))';
 const LedenPanel = ({ fin }: { fin: Fin }) => {
   const { spelers } = useSpelers();
   const koppelbaar = spelers.filter((s) => !s.id.startsWith('fallback:'));
-  // Op de financiële ledenpagina tonen we enkel actieve leden.
-  const zichtbareLeden = fin.leden.filter((l) => l.actief);
+  // Op de financiële ledenpagina tonen we enkel actieve leden: het lid zelf moet
+  // actief zijn én (indien gekoppeld) de rooster-speler mag niet op inactief staan.
+  const zichtbareLeden = fin.leden.filter((l) => l.actief && l.speler_actief !== false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Lid>>({});
