@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
-import { Shield, Link2, Star, Trash2, AlertTriangle, Users, Wallet, Calendar, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Shield, Link2, Star, Trash2, AlertTriangle, Users, Wallet, Calendar, ChevronRight, ArrowLeft, FileText, Copy, ExternalLink, Check, FolderOpen, Download } from 'lucide-react';
 import { SpelerKoppelingPanel } from './SpelerKoppelingPanel';
 import { SpelersBeheerPanel } from './SpelersBeheerPanel';
 import { FinancienSection } from '../../pages/FinancienPage';
@@ -334,13 +334,167 @@ const ReviewModeratie = () => {
   );
 };
 
+// ─── WEDSTRIJDFORMULIEREN ────────────────────────────────────────────────────
+// Login voor het externe portaal waar wedstrijdformulieren worden ingevuld/
+// ingediend. Gedeelde teamlogin — enkel zichtbaar in het admin-controlepaneel.
+
+const WEDSTRIJDFORMULIEREN = {
+  url: 'https://www.mvvkuurne.be/profile',
+  gebruikersnaam: 'ultrawear.indoor',
+  wachtwoord: 'VH44GH8P',
+};
+
+const KopieerVeld = ({ label, waarde, mono }: { label: string; waarde: string; mono?: boolean }) => {
+  const [gekopieerd, setGekopieerd] = useState(false);
+
+  const kopieer = async () => {
+    try {
+      await navigator.clipboard.writeText(waarde);
+      setGekopieerd(true);
+      toast.success(`${label} gekopieerd`);
+      setTimeout(() => setGekopieerd(false), 1500);
+    } catch {
+      toast.error('Kopiëren mislukt');
+    }
+  };
+
+  return (
+    <div style={{ padding: 'var(--spacing-md) 0', borderBottom: HAIRLINE }}>
+      <div className="kicker" style={{ marginBottom: '4px' }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+        <span style={{
+          flex: 1,
+          fontFamily: mono ? 'monospace' : 'inherit',
+          fontSize: '1rem',
+          fontWeight: 600,
+          wordBreak: 'break-all',
+        }}>
+          {waarde}
+        </span>
+        <button
+          onClick={kopieer}
+          className="btn"
+          style={{ padding: '6px 10px', color: gekopieerd ? '#10b981' : 'var(--color-primary)', flexShrink: 0 }}
+          title={`${label} kopiëren`}
+        >
+          {gekopieerd ? <Check size={16} /> : <Copy size={16} />}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const Wedstrijdformulieren = () => (
+  <div>
+    <SectieKop titel="Wedstrijdformulieren" />
+    <p className="kicker" style={{ margin: 'var(--spacing-xs) 0 var(--spacing-lg)', textTransform: 'none', letterSpacing: 0 }}>
+      Login voor het portaal waar de wedstrijdformulieren ingevuld en ingediend worden.
+    </p>
+
+    <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+      <a
+        href={WEDSTRIJDFORMULIEREN.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn"
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: '8px',
+          background: 'var(--color-primary)', color: 'white',
+          padding: '10px 16px', borderRadius: 'var(--radius-sm)',
+          fontWeight: 600, textDecoration: 'none',
+        }}
+      >
+        <ExternalLink size={16} /> Open portaal
+      </a>
+    </div>
+
+    <KopieerVeld label="Website" waarde={WEDSTRIJDFORMULIEREN.url} />
+    <KopieerVeld label="Gebruikersnaam" waarde={WEDSTRIJDFORMULIEREN.gebruikersnaam} mono />
+    <KopieerVeld label="Wachtwoord" waarde={WEDSTRIJDFORMULIEREN.wachtwoord} mono />
+  </div>
+);
+
+// ─── DOCUMENTEN ──────────────────────────────────────────────────────────────
+// Clubdocumenten om te bekijken of te downloaden. Bestanden staan in
+// public/documenten/ en worden statisch geserveerd.
+
+interface DocItem {
+  titel: string;
+  omschrijving: string;
+  bestand: string; // pad t.o.v. public/
+}
+
+const DOCUMENTEN: DocItem[] = [
+  {
+    titel: 'Procedure bij ongeval / kwetsuur',
+    omschrijving: 'Stappenplan voor de aangifte van een lichamelijk ongeval (Ethias).',
+    bestand: '/documenten/procedure-ongeval.pdf',
+  },
+  {
+    titel: 'Aangifteformulier lichamelijk ongeval',
+    omschrijving: 'Officieel Ethias-aangifteformulier om in te vullen.',
+    bestand: '/documenten/aangifteformulier-lichamelijk-ongeval.pdf',
+  },
+];
+
+const Documenten = () => (
+  <div>
+    <SectieKop titel="Documenten" />
+    <p className="kicker" style={{ margin: 'var(--spacing-xs) 0 var(--spacing-lg)', textTransform: 'none', letterSpacing: 0 }}>
+      Clubdocumenten om te bekijken of te downloaden.
+    </p>
+
+    <div>
+      {DOCUMENTEN.map((doc) => (
+        <div
+          key={doc.bestand}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)',
+            padding: 'var(--spacing-md) var(--spacing-xs)', borderBottom: HAIRLINE,
+            flexWrap: 'wrap',
+          }}
+        >
+          <span style={{ color: 'var(--color-primary)', display: 'flex', flexShrink: 0 }}>
+            <FileText size={20} />
+          </span>
+          <div style={{ flex: 1, minWidth: '180px' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.05rem' }}>{doc.titel}</div>
+            <div className="kicker" style={{ textTransform: 'none', letterSpacing: 0 }}>{doc.omschrijving}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexShrink: 0 }}>
+            <a
+              href={doc.bestand}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', color: 'var(--color-primary)', textDecoration: 'none' }}
+              title="Bekijken"
+            >
+              <ExternalLink size={16} /> Bekijk
+            </a>
+            <a
+              href={doc.bestand}
+              download
+              className="btn"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', color: 'var(--color-text-primary)', textDecoration: 'none' }}
+              title="Downloaden"
+            >
+              <Download size={16} /> Download
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 // ─── CONTROLEPANEEL ──────────────────────────────────────────────────────────
 // Redactionele hub (geen kaartraster): genummerde secties met een rode rule,
 // en per sectie een lijst van instellingen. Kiezen opent het paneel; een
 // "terug"-link keert naar het overzicht. Financiën en Wedstrijd invoeren wonen
 // hier ook, zodat de hoofdnavigatie maar één Admin-ingang heeft.
 
-type SectieId = 'selectie' | 'koppelingen' | 'gebruikers' | 'financien' | 'reviews';
+type SectieId = 'selectie' | 'koppelingen' | 'gebruikers' | 'financien' | 'reviews' | 'wedstrijdformulieren' | 'documenten';
 
 interface HubItem {
   id: SectieId | 'invoeren';
@@ -369,6 +523,12 @@ const GROEPEN: { index: string; titel: string; items: HubItem[] }[] = [
       { id: 'invoeren', label: 'Wedstrijd invoeren', omschrijving: 'Uitslag en statistieken toevoegen', icon: <Calendar size={18} />, href: '/wedstrijd-invoeren' },
     ],
   },
+  {
+    index: '04', titel: 'Externe toegang', items: [
+      { id: 'wedstrijdformulieren', label: 'Wedstrijdformulieren', omschrijving: 'Login voor het formulierenportaal', icon: <FileText size={18} /> },
+      { id: 'documenten', label: 'Documenten', omschrijving: 'Ongevalsprocedure en aangifteformulier', icon: <FolderOpen size={18} /> },
+    ],
+  },
 ];
 
 const SECTIE_LABEL: Record<SectieId, string> = {
@@ -377,6 +537,8 @@ const SECTIE_LABEL: Record<SectieId, string> = {
   gebruikers: 'Gebruikers',
   financien: 'Financiën',
   reviews: 'Reviews',
+  wedstrijdformulieren: 'Wedstrijdformulieren',
+  documenten: 'Documenten',
 };
 
 const HubRij = ({ item, onClick }: { item: HubItem; onClick: () => void }) => (
@@ -434,6 +596,8 @@ export const AdminPage = () => {
           {actief === 'gebruikers' && <UserBeheer />}
           {actief === 'financien' && <FinancienSection />}
           {actief === 'reviews' && <ReviewModeratie />}
+          {actief === 'wedstrijdformulieren' && <Wedstrijdformulieren />}
+          {actief === 'documenten' && <Documenten />}
         </motion.div>
       ) : (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
