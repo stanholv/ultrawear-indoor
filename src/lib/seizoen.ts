@@ -37,6 +37,21 @@ export const seizoenVanDatum = (datum?: string | null): string => {
 };
 
 /**
+ * Vanaf dit seizoen levert een overwinning 3 punten op i.p.v. 2.
+ * (Gelijkspel = 1 punt, verlies = 0 punten — dat blijft ongewijzigd.)
+ * Seizoenslabels 'YYYY-YYYY' zijn lexicografisch chronologisch, dus een
+ * simpele string-vergelijking volstaat.
+ */
+export const DRIE_PUNTEN_VANAF_SEIZOEN = '2026-2027';
+
+/**
+ * Aantal punten voor een overwinning in het opgegeven seizoen.
+ * 3 punten vanaf DRIE_PUNTEN_VANAF_SEIZOEN, daarvoor 2 punten.
+ */
+export const puntenVoorWinst = (seizoen: string): number =>
+  seizoen >= DRIE_PUNTEN_VANAF_SEIZOEN ? 3 : 2;
+
+/**
  * Korte weergave van een seizoenslabel, bv. '2025-2026' → "'25-'26".
  * Handig voor compacte selectors op mobiel.
  */

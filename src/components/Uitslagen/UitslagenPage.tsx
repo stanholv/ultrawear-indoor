@@ -4,6 +4,7 @@ import { Trophy, TrendingUp, TrendingDown, Minus, Calendar, Filter, ChevronRight
 import { useNavigate } from 'react-router-dom';
 import { useWedstrijden } from '../../hooks/useWedstrijden';
 import { isGespeeld, scoreVan, teltVoorStats } from '../../lib/types';
+import { puntenVoorWinst, seizoenVanWedstrijd } from '../../lib/seizoen';
 import { useBadges } from '../../hooks/useBadges';
 
 export const UitslagenPage = () => {
@@ -80,7 +81,7 @@ export const UitslagenPage = () => {
 
     if (ultraGoals > tegenGoals) {
       gewonnen++;
-      punten += 2;
+      punten += puntenVoorWinst(seizoenVanWedstrijd(w));
     } else if (ultraGoals === tegenGoals) {
       gelijk++;
       punten += 1;

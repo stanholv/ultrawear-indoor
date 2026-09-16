@@ -5,6 +5,7 @@ import { useWedstrijden } from '../../hooks/useWedstrijden';
 import { useAuth } from '../../hooks/useAuth';
 import { useSpelers } from '../../hooks/useSpelers';
 import { WedstrijdFormData, vandaagISO, scoreVan } from '../../lib/types';
+import { puntenVoorWinst, seizoenVanDatum } from '../../lib/seizoen';
 import { toast } from 'sonner';
 import { NumberInput } from '../UI/NumberInput';
 import { COPY } from '../../lib/copy';
@@ -185,8 +186,9 @@ export const WedstrijdForm = () => {
   let resultaat = '';
   let punten = 0;
   if (thuisGoals && uitGoals) {
-    // Competitiepunten: winst = 2, gelijk = 1, verlies = 0 (zelfde als het klassement).
-    if (ultraWearGoals > tegenstanderGoals) { resultaat = 'Gewonnen 🎉'; punten = 2; }
+    // Competitiepunten: winst = 3 (vanaf seizoen 2026-2027, daarvoor 2), gelijk = 1,
+    // verlies = 0 — zelfde regel als het klassement (zie puntenVoorWinst).
+    if (ultraWearGoals > tegenstanderGoals) { resultaat = 'Gewonnen 🎉'; punten = puntenVoorWinst(seizoenVanDatum(datum)); }
     else if (ultraWearGoals === tegenstanderGoals) { resultaat = 'Gelijkspel'; punten = 1; }
     else { resultaat = 'Verloren'; punten = 0; }
   }
