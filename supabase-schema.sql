@@ -8,6 +8,8 @@
 --   1. This file
 --   2. supabase-rls-fix.sql          (profiles privileged-column trigger)
 --   3. supabase-reviews-ratelimit.sql (review submission RPC + rate limit)
+--   4. supabase-privacy-columns.sql   (email / ip_adres niet publiek leesbaar
+--                                      + admin_list_profiles())
 -- ================================================
 
 -- ================================================
@@ -19,6 +21,12 @@ CREATE TABLE IF NOT EXISTS profiles (
   full_name TEXT,
   role TEXT DEFAULT 'speler' CHECK (role IN ('speler', 'admin', 'coach')),
   speler_naam TEXT,                       -- account ↔ player coupling (admin-managed)
+  rugnummer INTEGER,
+  positie TEXT,
+  bio TEXT,
+  profile_photo_url TEXT,
+  facebook_url TEXT,
+  shirt_number INTEGER,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -60,7 +68,7 @@ CREATE TABLE IF NOT EXISTS speler_stats (
 -- 4. REVIEWS TABLE
 -- ================================================
 -- Anonymous player reviews. Writes go through the submit_review() function
--- (see supabase-reviews-ratelimit.sql); reads are public.
+-- (see supabase-reviews-ratelimit.sql); reads are public except ip_adres.
 CREATE TABLE IF NOT EXISTS reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   speler_naam TEXT NOT NULL,
@@ -99,11 +107,13 @@ RETURNS BOOLEAN AS $$
   );
 $$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public;
 
--- Profiles: a user can read their own profile; admins can read all.
+-- Profiles: rows are public (the Spelers page shows them to anonymous
+-- visitors). The `email` COLUMN is not: SELECT is granted per column in
+-- supabase-privacy-columns.sql, and admins read email via admin_list_profiles().
 DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
-CREATE POLICY "Users can read own profile"
-  ON profiles FOR SELECT
-  USING (auth.uid() = id OR is_admin());
+DROP POLICY IF EXISTS "Profiles leesbaar voor iedereen" ON profiles;
+CREATE POLICY "Profiles leesbaar voor iedereen"
+  ON profiles FOR SELECT USING (true);
 
 -- Profiles: a user can update their own row; admins can update any.
 -- Privileged columns (role, speler_naam) are guarded by the trigger in
@@ -143,10 +153,12 @@ DROP POLICY IF EXISTS "Alleen admins kunnen stats beheren" ON speler_stats;
 CREATE POLICY "Alleen admins kunnen stats beheren"
   ON speler_stats FOR ALL USING (is_admin());
 
--- Reviews: public read. Inserts only via submit_review() (no INSERT policy);
--- admins can delete for moderation.
+-- Reviews: rows are public, but the `ip_adres` COLUMN is not (column grants
+-- in supabase-privacy-columns.sql). Inserts only via submit_review() (no
+-- INSERT policy); admins can delete for moderation.
 DROP POLICY IF EXISTS "Reviews zijn zichtbaar voor iedereen" ON reviews;
-CREATE POLICY "Reviews zijn zichtbaar voor iedereen"
+DROP POLICY IF EXISTS "Reviews leesbaar voor iedereen" ON reviews;
+CREATE POLICY "Reviews leesbaar voor iedereen"
   ON reviews FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Admins kunnen reviews verwijderen" ON reviews;
@@ -188,5 +200,5 @@ GRANT SELECT ON speler_totalen TO authenticated;
 GRANT SELECT ON speler_totalen TO anon;
 
 -- ================================================
--- SETUP COMPLETE — now run the two migration files (see header).
+-- SETUP COMPLETE — now run the migration files listed in the header.
 -- ================================================

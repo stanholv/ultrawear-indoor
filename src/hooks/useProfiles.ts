@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { Profile, Review } from '../lib/types';
+import { Profile, Review, PROFILE_COLUMNS, REVIEW_COLUMNS } from '../lib/types';
 
 export const useProfiles = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -11,7 +11,7 @@ export const useProfiles = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(PROFILE_COLUMNS)
         .not('speler_naam', 'is', null) // alleen gekoppelde spelers
         .order('speler_naam');
       if (error) throw error;
@@ -39,7 +39,7 @@ export const useReviews = (spelerNaam?: string) => {
       setLoading(true);
       let query = supabase
         .from('reviews')
-        .select('*')
+        .select(REVIEW_COLUMNS)
         .order('created_at', { ascending: false });
 
       if (spelerNaam) {

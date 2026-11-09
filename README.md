@@ -186,6 +186,13 @@ Edit [src/lib/copy.ts](src/lib/copy.ts) voor alle UI teksten.
 - **Environment Variables** - Credentials buiten code gehouden
 - **HTTPS/SSL** - Vercel hosting met automatische encryption
 - **Spam Protection** - IP-based review limiting
+- **Privacy** - `profiles.email` en `reviews.ip_adres` zijn niet leesbaar via de publieke anon key (kolomrechten); admins zien e-mailadressen via de RPC `admin_list_profiles()`
+
+### Openstaande punten
+
+- [ ] **`supabase-privacy-columns.sql` uitvoeren op productie** (na OK van de eigenaar). Volgorde: (1) alleen stap 3 uit het bestand (`admin_list_profiles()`) draaien — onschadelijk, de oude frontend gebruikt hem niet; (2) de frontend deployen (vraagt geen `email`/`ip_adres` meer op); (3) het hele bestand draaien (idempotent). Zonder stap 1 zijn de admin-schermen Gebruikers en Speler-koppeling leeg tot de SQL draait; tot stap 3 zijn e-mailadressen en reviewer-IP's nog publiek leesbaar. Controle als anon: `GET /rest/v1/profiles?select=email` moet *permission denied* geven.
+- [ ] Nieuwe kolommen op `profiles`/`reviews` zijn na deze migratie niet automatisch publiek leesbaar: voeg ze toe aan de `GRANT SELECT (...)` in `supabase-privacy-columns.sql` en `supabase-schema.sql` als dat wel moet. Gebruik nooit `select('*')` op deze tabellen.
+- [ ] Er staat nog een ongebruikte policy `"Iedereen mag review toevoegen"` (INSERT) op `reviews`; onschadelijk omdat het INSERT-recht ingetrokken is, maar mag opgeruimd worden.
 
 ## 🚀 Deployment
 

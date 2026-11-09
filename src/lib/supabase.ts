@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { PROFILE_COLUMNS } from './types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -51,7 +52,7 @@ export const auth = {
   getProfile: async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select(PROFILE_COLUMNS) // geen email: niet leesbaar; gebruik user.email
       .eq('id', userId)
       .single();
 
