@@ -340,6 +340,30 @@ BEGIN
 END;
 $function$;
 
+-- Admin-only accountlijst mét e-mail (email is niet direct leesbaar, zie
+-- de kolomrechten in sectie 5).
+CREATE OR REPLACE FUNCTION public.admin_list_profiles()
+ RETURNS TABLE(id uuid, full_name text, email text, role text, speler_naam text, created_at timestamp with time zone)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Alleen admins mogen accounts opvragen'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN QUERY
+    SELECT p.id, p.full_name, p.email, p.role, p.speler_naam, p.created_at
+    FROM public.profiles p
+    ORDER BY p.created_at DESC;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.admin_list_profiles() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_list_profiles() TO authenticated;
+
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -393,13 +417,16 @@ CREATE POLICY "Stats zijn zichtbaar voor iedereen" ON public.speler_stats FOR SE
 CREATE POLICY "Admins kunnen stats beheren" ON public.speler_stats FOR ALL TO public USING (is_admin());
 
 -- Profielen
--- NB: dit maakt ook e-mailadressen publiek leesbaar; zie supabase/README.md.
+-- De rijen zijn publiek (spelerspagina), de kolom `email` niet: zie de
+-- kolomrechten hieronder. Admins lezen e-mail via admin_list_profiles().
 CREATE POLICY "Profiles leesbaar voor iedereen" ON public.profiles FOR SELECT TO public USING (true);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE TO public USING ((auth.uid() = id));
 CREATE POLICY "Admins kunnen alle profielen updaten" ON public.profiles FOR UPDATE TO public
   USING (is_admin()) WITH CHECK (is_admin());
 
 -- Reviews
+-- De rijen zijn publiek, de kolom `ip_adres` niet (kolomrechten hieronder;
+-- submit_review() is SECURITY DEFINER en leest hem wel voor de rate limit).
 -- NB: de INSERT-policy laat directe inserts toe en omzeilt zo de rate limit
 -- van submit_review(); zie supabase/README.md.
 CREATE POLICY "Reviews leesbaar voor iedereen" ON public.reviews FOR SELECT TO public USING (true);
@@ -412,5 +439,20 @@ CREATE POLICY "Categorieen alleen voor admins" ON public.fin_categorieen FOR ALL
 CREATE POLICY "Fin-seizoenen alleen voor admins" ON public.fin_seizoenen FOR ALL TO public USING (is_admin());
 CREATE POLICY "Inschrijvingen alleen voor admins" ON public.inschrijvingen FOR ALL TO public USING (is_admin());
 CREATE POLICY "Transacties alleen voor admins" ON public.fin_transacties FOR ALL TO public USING (is_admin());
+
+-- Kolomrechten: email en ip_adres zijn niet leesbaar voor anon/authenticated
+-- (supabase/privacy-kolommen.sql). Nieuwe kolommen moeten hier expliciet bij
+-- als ze publiek leesbaar moeten zijn; gebruik in de app nooit select('*')
+-- op deze twee tabellen.
+REVOKE SELECT ON public.profiles FROM anon, authenticated;
+GRANT SELECT (
+  id, full_name, role, speler_naam, rugnummer, positie, bio,
+  profile_photo_url, facebook_url, shirt_number, created_at
+) ON public.profiles TO anon, authenticated;
+
+REVOKE SELECT ON public.reviews FROM anon, authenticated;
+GRANT SELECT (
+  id, speler_naam, score, commentaar, reviewer_naam, created_at
+) ON public.reviews TO anon, authenticated;
 
 -- seizoenen: RLS aan, geen policies → via de API niet bereikbaar (ongebruikt).

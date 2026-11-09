@@ -9,7 +9,7 @@ import { FinancienSection } from '../../pages/FinancienPage';
 import { SectieKop, HAIRLINE } from '../UI/editorial';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
-import { Review } from '../../lib/types';
+import { Review, AdminProfile, REVIEW_COLUMNS } from '../../lib/types';
 
 const StarDisplay = ({ score }: { score: number }) => (
   <div style={{ display: 'flex', gap: '2px' }}>
@@ -21,14 +21,7 @@ const StarDisplay = ({ score }: { score: number }) => (
 
 // ─── USER BEHEER ────────────────────────────────────────────────────────────
 
-interface UserInfo {
-  id: string;
-  full_name: string;
-  email: string;
-  role: 'admin' | 'speler';
-  speler_naam?: string;
-  created_at: string;
-}
+type UserInfo = AdminProfile;
 
 const UserBeheer = () => {
   const [users, setUsers] = useState<UserInfo[]>([]);
@@ -38,11 +31,10 @@ const UserBeheer = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, role, speler_naam, created_at')
-      .order('created_at', { ascending: false });
-    setUsers(data || []);
+    // email is niet direct leesbaar; de admin-RPC controleert is_admin().
+    const { data, error } = await supabase.rpc('admin_list_profiles');
+    if (error) toast.error('Fout bij laden gebruikers: ' + error.message);
+    setUsers((data as AdminProfile[]) || []);
     setLoading(false);
   };
 
@@ -211,7 +203,7 @@ const ReviewModeratie = () => {
     setLoading(true);
     const { data } = await supabase
       .from('reviews')
-      .select('*')
+      .select(REVIEW_COLUMNS)
       .order('created_at', { ascending: false });
     setReviews(data || []);
     setLoading(false);

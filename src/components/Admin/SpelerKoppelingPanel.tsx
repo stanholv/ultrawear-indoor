@@ -23,11 +23,11 @@ export const SpelerKoppelingPanel = () => {
   useEffect(() => {
     const fetchAccounts = async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, speler_naam')
-        .order('full_name');
-      setAccounts(data || []);
+      // email is niet direct leesbaar; de admin-RPC controleert is_admin().
+      const { data, error } = await supabase.rpc('admin_list_profiles');
+      if (error) toast.error('Fout bij laden accounts: ' + error.message);
+      const rows = (data as AccountInfo[]) || [];
+      setAccounts([...rows].sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '')));
       setLoading(false);
     };
     fetchAccounts();

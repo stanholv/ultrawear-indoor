@@ -1,15 +1,33 @@
 // Database types
 import { HUIDIG_SEIZOEN, puntenVoorWinst } from './seizoen';
 
+// Publieke profielvelden. `email` staat hier bewust NIET in: anon en
+// gewone gebruikers hebben geen SELECT-recht op die kolom (zie
+// supabase-privacy-columns.sql). Admins krijgen e-mail via
+// admin_list_profiles() → AdminProfile.
 export interface Profile {
   id: string;
   full_name: string;
-  email: string;
   role: 'admin' | 'speler';
   speler_naam?: string;
   rugnummer?: number;
   positie?: string;
   bio?: string;
+  created_at: string;
+}
+
+// Kolommen die anon/authenticated mogen lezen; gebruik dit i.p.v. select('*'),
+// want '*' omvat email en geeft dan "permission denied".
+export const PROFILE_COLUMNS =
+  'id, full_name, role, speler_naam, rugnummer, positie, bio, created_at';
+
+// Resultaat van de admin-only RPC admin_list_profiles().
+export interface AdminProfile {
+  id: string;
+  full_name: string;
+  email: string;
+  role: 'admin' | 'speler';
+  speler_naam?: string;
   created_at: string;
 }
 
@@ -100,9 +118,13 @@ export interface Review {
   score: number; // 1-5
   commentaar?: string;
   reviewer_naam?: string;
-  ip_adres?: string;
   created_at: string;
 }
+
+// ip_adres (voor de rate limit van submit_review) is niet leesbaar voor
+// anon/authenticated; selecteer dus altijd expliciet deze kolommen.
+export const REVIEW_COLUMNS =
+  'id, speler_naam, score, commentaar, reviewer_naam, created_at';
 
 // Posities
 export const POSITIES = [

@@ -186,6 +186,7 @@ Edit [src/lib/copy.ts](src/lib/copy.ts) voor alle UI teksten.
 - **Environment Variables** - Credentials buiten code gehouden
 - **HTTPS/SSL** - Vercel hosting met automatische encryption
 - **Spam Protection** - IP-based review limiting
+- **Privacy** - `profiles.email` en `reviews.ip_adres` zijn niet leesbaar via de publieke anon key (kolomrechten); admins zien e-mailadressen via de RPC `admin_list_profiles()`. Zie [supabase/README.md](supabase/README.md).
 
 ## 🚀 Deployment
 
