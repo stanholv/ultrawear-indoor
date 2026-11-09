@@ -62,7 +62,7 @@ export const SpelersBeheerPanel = () => {
           <AlertTriangle size={16} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
           <span>
             De <strong>spelers</strong>-tabel is nog niet gevonden. Dit is de ingebouwde terugvallijst
-            (alleen-lezen). Voer de migratie <code>supabase-spelers.sql</code> uit om de selectie
+            (alleen-lezen). Voer de migratie <code>supabase/schema.sql</code> uit om de selectie
             te kunnen beheren.
           </span>
         </div>

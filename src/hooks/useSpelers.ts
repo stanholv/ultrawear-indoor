@@ -6,7 +6,7 @@ import { SPELERS } from '../lib/types';
 // SPELERS (ROSTER) HOOK
 // ================================================
 // Leest de selectie uit de `spelers`-tabel. Bestaat de tabel nog niet of is hij
-// leeg (bv. vóór de migratie supabase-spelers.sql), dan valt de hook terug op de
+// leeg (bv. vóór het schema in supabase/schema.sql), dan valt de hook terug op de
 // ingebouwde SPELERS-lijst, zodat de app blijft werken. Schrijfacties (toevoegen,
 // activeren/deactiveren, verwijderen) vereisen wél de tabel + admin-rechten.
 
