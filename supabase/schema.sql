@@ -180,6 +180,19 @@ CREATE TABLE public.fin_transacties (
   CONSTRAINT fin_transacties_bedrag_check CHECK ((bedrag > (0)::numeric))
 );
 
+-- ---- Externe logins (alleen admins) ----
+-- Gedeelde logins voor externe portalen (wedstrijdformulieren). NOOIT
+-- wachtwoorden in de code of in dit bestand zetten: de repo is publiek.
+-- Invullen via Admin → Wedstrijdformulieren. Zie supabase/externe-logins.sql.
+CREATE TABLE public.externe_logins (
+  id text NOT NULL,
+  url text,
+  gebruikersnaam text,
+  wachtwoord text,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT externe_logins_pkey PRIMARY KEY (id)
+);
+
 
 -- ---------------------------------------------------------------------
 -- 2. INDEXEN
@@ -390,6 +403,9 @@ CREATE TRIGGER update_wedstrijden_modtime BEFORE UPDATE ON public.wedstrijden
 CREATE TRIGGER update_wedstrijden_updated_at BEFORE UPDATE ON public.wedstrijden
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+CREATE TRIGGER update_externe_logins_updated_at BEFORE UPDATE ON public.externe_logins
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
 
 -- ---------------------------------------------------------------------
 -- 5. ROW LEVEL SECURITY
@@ -405,6 +421,7 @@ ALTER TABLE public.fin_categorieen ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fin_seizoenen   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inschrijvingen  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fin_transacties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.externe_logins  ENABLE ROW LEVEL SECURITY;
 
 -- Publiek leesbaar, alleen admins schrijven
 CREATE POLICY "Spelers zijn zichtbaar voor iedereen" ON public.spelers FOR SELECT TO public USING (true);
@@ -454,5 +471,11 @@ REVOKE SELECT ON public.reviews FROM anon, authenticated;
 GRANT SELECT (
   id, speler_naam, score, commentaar, reviewer_naam, created_at
 ) ON public.reviews TO anon, authenticated;
+
+-- Externe logins: alleen admins; anon heeft geen enkel recht op de tabel.
+REVOKE ALL ON public.externe_logins FROM PUBLIC, anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.externe_logins TO authenticated;
+CREATE POLICY "Externe logins alleen voor admins" ON public.externe_logins
+  FOR ALL TO authenticated USING (is_admin()) WITH CHECK (is_admin());
 
 -- seizoenen: RLS aan, geen policies → via de API niet bereikbaar (ongebruikt).
