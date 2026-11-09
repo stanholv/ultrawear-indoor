@@ -10,7 +10,7 @@ Volg deze stappen in volgorde voor een snelle setup:
 ## 1️⃣ Supabase Setup (10 min)
 - [ ] Account aanmaken op supabase.com
 - [ ] Nieuw project: "ultrawear-indoor"
-- [ ] Database schema uitvoeren (supabase-schema.sql)
+- [ ] Database schema uitvoeren (supabase/schema.sql)
 - [ ] Eerste admin user aanmaken via Auth UI
 - [ ] Admin rol toekennen in profiles tabel
 - [ ] API credentials kopiëren (URL + anon key)
