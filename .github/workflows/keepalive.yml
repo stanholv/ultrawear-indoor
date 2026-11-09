@@ -1,0 +1,32 @@
+# Reserve keep-alive voor de Supabase database (de hoofdroute is de Vercel
+# cron in vercel.json). Faalt deze job, dan mailt GitHub de repo-eigenaar:
+# dat is het signaal dat de database gepauzeerd of onbereikbaar is.
+#
+# Let op: GitHub schakelt geplande workflows uit na 60 dagen zonder commits.
+# Je krijgt daar vooraf een mail over; één klik op "Enable workflow" volstaat.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '23 5 */2 * *' # om de 2 dagen, 05:23 UTC
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping /api/keepalive
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -sS -o body.json -w '%{http_code}' \
+              ${CRON_SECRET:+-H "Authorization: Bearer $CRON_SECRET"} \
+              https://ultrawear-indoor.vercel.app/api/keepalive) || code=000
+            cat body.json 2>/dev/null; echo
+            [ "$code" = "200" ] && exit 0
+            echo "Poging $i gaf HTTP $code, opnieuw over 30s..."; sleep 30
+          done
+          echo "::error::Supabase keep-alive faalt. Check of het project gepauzeerd is: https://supabase.com/dashboard/project/ziuwzvlttdzegmvsdiim"
+          exit 1

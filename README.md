@@ -217,7 +217,8 @@ Edit [src/lib/copy.ts](src/lib/copy.ts) voor alle UI teksten.
 
 Meer details vinden in:
 - [PROJECT_KNOWLEDGE_V25.md](PROJECT_KNOWLEDGE_V25.md) - Complete technical reference
-- [supabase-schema.sql](supabase-schema.sql) - Database schema
+- [supabase/README.md](supabase/README.md) - Database: keep-alive, back-up, herstel
+- [supabase/schema.sql](supabase/schema.sql) - Volledig databaseschema
 - [SETUP.md](SETUP.md) - Gedetailleerde setup instructies
 
 ## 👥 Team

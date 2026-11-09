@@ -33,6 +33,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // SPA fallback so deep links work offline.
         navigateFallback: '/index.html',
+        // /api/* zijn serverless functies (bv. keepalive), niet de SPA.
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             // Google Fonts stylesheets

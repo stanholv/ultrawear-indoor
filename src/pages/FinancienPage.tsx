@@ -568,7 +568,7 @@ export const FinancienSection = () => {
       {fin.error && (
         <div style={{ borderLeft: `3px solid ${ROOD}`, padding: 'var(--spacing-sm) var(--spacing-md)', color: ROOD, marginBottom: 'var(--spacing-lg)' }}>
           <AlertTriangle size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-          {fin.error} — draai je <code>supabase-financien.sql</code> al?
+          {fin.error} — is <code>supabase/schema.sql</code> volledig uitgevoerd?
         </div>
       )}
 

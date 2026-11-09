@@ -48,6 +48,9 @@ PROJECT_KNOWLEDGE_V25.md
 
 # Financiën seed — bevat persoonsgegevens (adressen/geboortedata/telefoon), niet committen
 supabase-financien-seed.sql
+supabase/*seed*.sql
+*.dump
+backups/
 
 .vercel
 .env*.local
