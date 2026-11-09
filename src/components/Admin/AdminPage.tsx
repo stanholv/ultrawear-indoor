@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
-import { Shield, Link2, Star, Trash2, AlertTriangle, Users, Wallet, Calendar, ChevronRight, ArrowLeft, FileText, Copy, ExternalLink, Check, FolderOpen, Download } from 'lucide-react';
+import { Shield, Link2, Star, Trash2, AlertTriangle, Users, Wallet, Calendar, ChevronRight, ArrowLeft, FileText, Copy, ExternalLink, Check, FolderOpen, Download, Eye, EyeOff, Pencil } from 'lucide-react';
 import { SpelerKoppelingPanel } from './SpelerKoppelingPanel';
 import { SpelersBeheerPanel } from './SpelersBeheerPanel';
 import { FinancienSection } from '../../pages/FinancienPage';
@@ -328,16 +328,21 @@ const ReviewModeratie = () => {
 
 // ─── WEDSTRIJDFORMULIEREN ────────────────────────────────────────────────────
 // Login voor het externe portaal waar wedstrijdformulieren worden ingevuld/
-// ingediend. Gedeelde teamlogin — enkel zichtbaar in het admin-controlepaneel.
+// ingediend. Gedeelde teamlogin. Staat in de tabel `externe_logins`, die
+// alleen admins kunnen lezen (RLS); NOOIT als tekst in de code zetten — de
+// repo is publiek en de code zit in de JavaScript van elke bezoeker.
 
-const WEDSTRIJDFORMULIEREN = {
-  url: 'https://www.mvvkuurne.be/profile',
-  gebruikersnaam: 'ultrawear.indoor',
-  wachtwoord: 'VH44GH8P',
-};
+const LOGIN_ID = 'wedstrijdformulieren';
 
-const KopieerVeld = ({ label, waarde, mono }: { label: string; waarde: string; mono?: boolean }) => {
+interface ExterneLogin {
+  url: string;
+  gebruikersnaam: string;
+  wachtwoord: string;
+}
+
+const KopieerVeld = ({ label, waarde, mono, geheim }: { label: string; waarde: string; mono?: boolean; geheim?: boolean }) => {
   const [gekopieerd, setGekopieerd] = useState(false);
+  const [zichtbaar, setZichtbaar] = useState(!geheim);
 
   const kopieer = async () => {
     try {
@@ -360,51 +365,179 @@ const KopieerVeld = ({ label, waarde, mono }: { label: string; waarde: string; m
           fontSize: '1rem',
           fontWeight: 600,
           wordBreak: 'break-all',
+          color: waarde ? 'inherit' : 'var(--color-text-secondary)',
         }}>
-          {waarde}
+          {!waarde ? 'Nog niet ingesteld' : zichtbaar ? waarde : '•'.repeat(Math.min(waarde.length, 12))}
         </span>
-        <button
-          onClick={kopieer}
-          className="btn"
-          style={{ padding: '6px 10px', color: gekopieerd ? '#10b981' : 'var(--color-primary)', flexShrink: 0 }}
-          title={`${label} kopiëren`}
-        >
-          {gekopieerd ? <Check size={16} /> : <Copy size={16} />}
-        </button>
+        {geheim && waarde && (
+          <button
+            onClick={() => setZichtbaar(v => !v)}
+            className="btn"
+            style={{ padding: '6px 10px', color: 'var(--color-primary)', flexShrink: 0 }}
+            title={zichtbaar ? 'Verbergen' : 'Tonen'}
+          >
+            {zichtbaar ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        )}
+        {waarde && (
+          <button
+            onClick={kopieer}
+            className="btn"
+            style={{ padding: '6px 10px', color: gekopieerd ? '#10b981' : 'var(--color-primary)', flexShrink: 0 }}
+            title={`${label} kopiëren`}
+          >
+            {gekopieerd ? <Check size={16} /> : <Copy size={16} />}
+          </button>
+        )}
       </div>
     </div>
   );
 };
 
-const Wedstrijdformulieren = () => (
-  <div>
-    <SectieKop titel="Wedstrijdformulieren" />
-    <p className="kicker" style={{ margin: 'var(--spacing-xs) 0 var(--spacing-lg)', textTransform: 'none', letterSpacing: 0 }}>
-      Login voor het portaal waar de wedstrijdformulieren ingevuld en ingediend worden.
-    </p>
+const invoerStijl: CSSProperties = {
+  width: '100%',
+  padding: '10px 12px',
+  borderRadius: 'var(--radius-sm)',
+  border: HAIRLINE,
+  background: 'var(--color-surface)',
+  color: 'inherit',
+  fontSize: '1rem',
+};
 
-    <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-      <a
-        href={WEDSTRIJDFORMULIEREN.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn"
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: '8px',
-          background: 'var(--color-primary)', color: 'white',
-          padding: '10px 16px', borderRadius: 'var(--radius-sm)',
-          fontWeight: 600, textDecoration: 'none',
-        }}
-      >
-        <ExternalLink size={16} /> Open portaal
-      </a>
+const Wedstrijdformulieren = () => {
+  const [login, setLogin] = useState<ExterneLogin | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bewerken, setBewerken] = useState(false);
+  const [concept, setConcept] = useState<ExterneLogin>({ url: '', gebruikersnaam: '', wachtwoord: '' });
+  const [opslaan, setOpslaan] = useState(false);
+
+  useEffect(() => {
+    const laad = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('externe_logins')
+        .select('url, gebruikersnaam, wachtwoord')
+        .eq('id', LOGIN_ID)
+        .maybeSingle();
+      if (error) toast.error('Fout bij laden login: ' + error.message);
+      setLogin({
+        url: data?.url || '',
+        gebruikersnaam: data?.gebruikersnaam || '',
+        wachtwoord: data?.wachtwoord || '',
+      });
+      setLoading(false);
+    };
+    laad();
+  }, []);
+
+  const startBewerken = () => {
+    setConcept(login || { url: '', gebruikersnaam: '', wachtwoord: '' });
+    setBewerken(true);
+  };
+
+  const bewaar = async () => {
+    setOpslaan(true);
+    const nieuw = {
+      url: concept.url.trim(),
+      gebruikersnaam: concept.gebruikersnaam.trim(),
+      wachtwoord: concept.wachtwoord,
+    };
+    const { error } = await supabase
+      .from('externe_logins')
+      .upsert({ id: LOGIN_ID, ...nieuw });
+    if (error) {
+      toast.error('Fout bij opslaan: ' + error.message);
+    } else {
+      toast.success('Login opgeslagen ✅');
+      setLogin(nieuw);
+      setBewerken(false);
+    }
+    setOpslaan(false);
+  };
+
+  if (loading) return <div className="animate-pulse" style={{ padding: 'var(--spacing-lg)' }}>Laden...</div>;
+
+  return (
+    <div>
+      <SectieKop titel="Wedstrijdformulieren" />
+      <p className="kicker" style={{ margin: 'var(--spacing-xs) 0 var(--spacing-lg)', textTransform: 'none', letterSpacing: 0 }}>
+        Login voor het portaal waar de wedstrijdformulieren ingevuld en ingediend worden.
+      </p>
+
+      {bewerken ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+          {([
+            ['url', 'Website', 'url'],
+            ['gebruikersnaam', 'Gebruikersnaam', 'text'],
+            ['wachtwoord', 'Wachtwoord', 'text'],
+          ] as const).map(([veld, label, type]) => (
+            <label key={veld} style={{ display: 'block' }}>
+              <div className="kicker" style={{ marginBottom: '4px' }}>{label}</div>
+              <input
+                type={type}
+                value={concept[veld]}
+                onChange={e => setConcept(c => ({ ...c, [veld]: e.target.value }))}
+                autoComplete="off"
+                spellCheck={false}
+                style={{ ...invoerStijl, fontFamily: veld === 'url' ? 'inherit' : 'monospace' }}
+              />
+            </label>
+          ))}
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+            <button
+              onClick={bewaar}
+              disabled={opslaan}
+              className="btn"
+              style={{ background: 'var(--color-primary)', color: 'white', padding: '10px 16px', borderRadius: 'var(--radius-sm)', fontWeight: 600 }}
+            >
+              {opslaan ? 'Opslaan...' : 'Opslaan'}
+            </button>
+            <button
+              onClick={() => setBewerken(false)}
+              disabled={opslaan}
+              className="btn"
+              style={{ padding: '10px 16px', borderRadius: 'var(--radius-sm)' }}
+            >
+              Annuleren
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap', marginBottom: 'var(--spacing-lg)' }}>
+            {login?.url && (
+              <a
+                href={login.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                  background: 'var(--color-primary)', color: 'white',
+                  padding: '10px 16px', borderRadius: 'var(--radius-sm)',
+                  fontWeight: 600, textDecoration: 'none',
+                }}
+              >
+                <ExternalLink size={16} /> Open portaal
+              </a>
+            )}
+            <button
+              onClick={startBewerken}
+              className="btn"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: 'var(--radius-sm)', fontWeight: 600 }}
+            >
+              <Pencil size={16} /> Wijzigen
+            </button>
+          </div>
+
+          <KopieerVeld label="Website" waarde={login?.url || ''} />
+          <KopieerVeld label="Gebruikersnaam" waarde={login?.gebruikersnaam || ''} mono />
+          <KopieerVeld label="Wachtwoord" waarde={login?.wachtwoord || ''} mono geheim />
+        </>
+      )}
     </div>
-
-    <KopieerVeld label="Website" waarde={WEDSTRIJDFORMULIEREN.url} />
-    <KopieerVeld label="Gebruikersnaam" waarde={WEDSTRIJDFORMULIEREN.gebruikersnaam} mono />
-    <KopieerVeld label="Wachtwoord" waarde={WEDSTRIJDFORMULIEREN.wachtwoord} mono />
-  </div>
-);
+  );
+};
 
 // ─── DOCUMENTEN ──────────────────────────────────────────────────────────────
 // Clubdocumenten om te bekijken of te downloaden. Bestanden staan in

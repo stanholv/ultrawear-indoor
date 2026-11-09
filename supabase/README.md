@@ -8,7 +8,8 @@ Dashboard: https://supabase.com/dashboard/project/ziuwzvlttdzegmvsdiim
 |---|---|
 | `schema.sql` | Het volledige, actuele schema (uit de live database gehaald). Hiermee bouw je een nieuw project op. |
 | `opschoning-voorstel.sql` | Kleine veiligheids- en opruimfixes, **nog niet uitgevoerd**. Zie onderaan. |
-| `privacy-kolommen.sql` | Schermt `profiles.email` en `reviews.ip_adres` af, **nog niet uitgevoerd**. Zie onderaan. |
+| `privacy-kolommen.sql` | Schermt `profiles.email` en `reviews.ip_adres` af. Uitgevoerd op 9 november 2026. |
+| `externe-logins.sql` | Admin-only tabel voor de login van het wedstrijdformulierenportaal, **nog niet uitgevoerd**. Zie onderaan. |
 | `history/` | De oude losse `supabase-*.sql` patches, alleen nog als naslag. |
 
 ## Waarom het project steeds gepauzeerd werd
@@ -84,36 +85,41 @@ getest op een kopie van het schema en verandert niets aan wat je in de app ziet:
   anon key de rate limit van `submit_review()` omzeilen door rechtstreeks
   te inserten.
 
-**Privacy: `privacy-kolommen.sql` (code is klaar, SQL nog uitvoeren):**
+**Wachtwoord wedstrijdformulieren: `externe-logins.sql` (code is klaar, SQL nog uitvoeren):**
 
-Nu zijn via de publieke anon key de **e-mailadressen** van alle accounts
-(`profiles.email`) en de **IP-adressen** van reviewers (`reviews.ip_adres`)
-op te vragen. De app vraagt die kolommen niet meer op; het SQL-bestand trekt
-de leesrechten erop in voor `anon`/`authenticated` (kolomrechten). Admins
-krijgen e-mailadressen via de functie `admin_list_profiles()`, die zelf
-`is_admin()` controleert. De rate limit van `submit_review()` blijft werken.
+De login voor het wedstrijdformulierenportaal stond als tekst in
+`AdminPage.tsx`. De repo is publiek en die code zit in de JavaScript van
+elke bezoeker, dus het wachtwoord was voor iedereen leesbaar en blijft in de
+git-geschiedenis staan. Het staat nu in de tabel `externe_logins`, die alleen
+admins kunnen lezen en wijzigen.
 
-Volgorde, anders werkt de site even niet:
+1. **Het wachtwoord op het portaal veranderen** (www.mvvkuurne.be). Het oude
+   is publiek en blijft dat.
+2. `externe-logins.sql` uitvoeren in de SQL Editor. Onschadelijk voor de
+   huidige site.
+3. De nieuwe frontend deployen (merge naar `main`).
+4. Admin → Wedstrijdformulieren → **Wijzigen** → nieuw wachtwoord invullen →
+   Opslaan.
 
-1. Alleen stap 3 uit `privacy-kolommen.sql` (`admin_list_profiles()`)
-   uitvoeren. Onschadelijk: de huidige site gebruikt hem niet.
-2. De nieuwe frontend deployen (merge naar `main`). Controleer daarna de
-   Spelers-pagina, een spelersprofiel met reviews, en als admin
-   Gebruikers en Speler-koppeling.
-3. Het hele bestand uitvoeren (idempotent).
-4. Controle in de SQL Editor; moet *permission denied* geven:
+Regel: **nooit wachtwoorden, tokens of andere geheimen in de code of in deze
+SQL-bestanden zetten.** Alles in `src/` is publiek leesbaar.
 
-   ```sql
-   begin; set local role anon; select email from public.profiles; rollback;
-   ```
+## Afgehandeld
 
-Terugdraaien bij problemen (zet het lek weer open):
+**Privacy (`privacy-kolommen.sql`, uitgevoerd op 9 november 2026):** de
+e-mailadressen van accounts (`profiles.email`) en de IP-adressen van
+reviewers (`reviews.ip_adres`) zijn niet meer leesbaar via de publieke anon
+key (kolomrechten). Admins krijgen e-mailadressen via `admin_list_profiles()`.
+
+Let op: nieuwe kolommen op `profiles`/`reviews` zijn niet automatisch
+leesbaar. Voeg ze toe aan de `GRANT SELECT (...)` in `schema.sql` (en voer die
+GRANT uit) als dat nodig is, en gebruik in de app nooit `select('*')` op deze
+twee tabellen.
+
+Terugdraaien bij nood (zet het lek weer open):
 `GRANT SELECT ON public.profiles, public.reviews TO anon, authenticated;`
 
-Let op: na deze migratie zijn nieuwe kolommen op `profiles`/`reviews` niet
-automatisch leesbaar. Voeg ze toe aan de `GRANT SELECT (...)` in
-`schema.sql` als dat nodig is, en gebruik in de app nooit `select('*')` op
-deze twee tabellen.
+## Overige opmerkingen
 
 **Ongebruikt:** tabel `seizoenen`, view `speler_totalen` en de kolommen
 `wedstrijden.seizoen_id`, `profiles.shirt_number`, `profile_photo_url` en
