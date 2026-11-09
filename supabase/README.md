@@ -8,6 +8,7 @@ Dashboard: https://supabase.com/dashboard/project/ziuwzvlttdzegmvsdiim
 |---|---|
 | `schema.sql` | Het volledige, actuele schema (uit de live database gehaald). Hiermee bouw je een nieuw project op. |
 | `opschoning-voorstel.sql` | Kleine veiligheids- en opruimfixes, **nog niet uitgevoerd**. Zie onderaan. |
+| `privacy-kolommen.sql` | Schermt `profiles.email` en `reviews.ip_adres` af, **nog niet uitgevoerd**. Zie onderaan. |
 | `history/` | De oude losse `supabase-*.sql` patches, alleen nog als naslag. |
 
 ## Waarom het project steeds gepauzeerd werd
@@ -83,16 +84,36 @@ getest op een kopie van het schema en verandert niets aan wat je in de app ziet:
   anon key de rate limit van `submit_review()` omzeilen door rechtstreeks
   te inserten.
 
-**Privacy (vraagt ook een code-aanpassing):**
+**Privacy: `privacy-kolommen.sql` (code is klaar, SQL nog uitvoeren):**
 
-- `profiles` is voor iedereen leesbaar (`select *` op de spelerspagina), dus
-  ook de **e-mailadressen** van alle accounts zijn via de publieke API op te
-  vragen.
-- `reviews` is voor iedereen leesbaar, inclusief de kolom **`ip_adres`**.
+Nu zijn via de publieke anon key de **e-mailadressen** van alle accounts
+(`profiles.email`) en de **IP-adressen** van reviewers (`reviews.ip_adres`)
+op te vragen. De app vraagt die kolommen niet meer op; het SQL-bestand trekt
+de leesrechten erop in voor `anon`/`authenticated` (kolomrechten). Admins
+krijgen e-mailadressen via de functie `admin_list_profiles()`, die zelf
+`is_admin()` controleert. De rate limit van `submit_review()` blijft werken.
 
-Fix: de publieke queries alleen de nodige kolommen laten opvragen, en in de
-database de leesrechten op `email` en `ip_adres` intrekken voor de rollen
-`anon`/`authenticated` (admins via een `SECURITY DEFINER`-functie).
+Volgorde, anders werkt de site even niet:
+
+1. Alleen stap 3 uit `privacy-kolommen.sql` (`admin_list_profiles()`)
+   uitvoeren. Onschadelijk: de huidige site gebruikt hem niet.
+2. De nieuwe frontend deployen (merge naar `main`). Controleer daarna de
+   Spelers-pagina, een spelersprofiel met reviews, en als admin
+   Gebruikers en Speler-koppeling.
+3. Het hele bestand uitvoeren (idempotent).
+4. Controle in de SQL Editor; moet *permission denied* geven:
+
+   ```sql
+   begin; set local role anon; select email from public.profiles; rollback;
+   ```
+
+Terugdraaien bij problemen (zet het lek weer open):
+`GRANT SELECT ON public.profiles, public.reviews TO anon, authenticated;`
+
+Let op: na deze migratie zijn nieuwe kolommen op `profiles`/`reviews` niet
+automatisch leesbaar. Voeg ze toe aan de `GRANT SELECT (...)` in
+`schema.sql` als dat nodig is, en gebruik in de app nooit `select('*')` op
+deze twee tabellen.
 
 **Ongebruikt:** tabel `seizoenen`, view `speler_totalen` en de kolommen
 `wedstrijden.seizoen_id`, `profiles.shirt_number`, `profile_photo_url` en

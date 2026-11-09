@@ -24,11 +24,14 @@
 --
 -- LET OP: nieuwe kolommen op profiles/reviews zijn na deze migratie NIET
 -- automatisch leesbaar voor anon/authenticated. Voeg ze toe aan de GRANT
--- hieronder (en in supabase-schema.sql) als ze publiek moeten zijn.
+-- hieronder (en in supabase/schema.sql) als ze publiek moeten zijn.
 --
--- Uitvoeren: één keer in de Supabase SQL Editor (project ziuwzvlttdzegmvsdiim),
--- NA het deployen van de bijbehorende frontend (die geen `select('*')` meer
--- doet op deze tabellen). Idempotent.
+-- Uitvoeren in de Supabase SQL Editor (project ziuwzvlttdzegmvsdiim).
+-- Volgorde (zie supabase/README.md):
+--   1. alleen stap 3 (admin_list_profiles) — onschadelijk voor de oude site;
+--   2. de bijbehorende frontend deployen (geen `select('*')` meer op deze
+--      tabellen);
+--   3. dit hele bestand. Idempotent.
 -- ================================================
 
 BEGIN;
