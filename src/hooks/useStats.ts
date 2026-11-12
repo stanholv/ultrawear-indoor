@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { AggregatedStats, SpelerStat, vandaagISO, isGespeeld, teltVoorStats } from '../lib/types';
 import { seizoenVanWedstrijd } from '../lib/seizoen';
 import { useSeizoen } from './useSeizoen';
+import { useVisibilityRefresh } from './useVisibilityRefresh';
 
 // Sluit stats uit van wedstrijden in de toekomst (nog niet gespeeld), van
 // forfaits (geen echte spelersprestaties) en van oefenwedstrijden (tellen niet
@@ -42,9 +43,9 @@ export const useStats = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadStats = useCallback(async () => {
+  const loadStats = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const { data, error: fetchError } = await supabase
         .from('speler_stats').select('*, wedstrijden(datum, forfait, seizoen, type)');
       if (fetchError) throw fetchError;
@@ -53,11 +54,12 @@ export const useStats = () => {
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => { loadStats(); }, [loadStats]);
+  useVisibilityRefresh(() => loadStats({ silent: true }));
 
   const stats = useMemo(
     () => aggregeerStats(rawStats.filter(s => isGespeeldeStat(s) && isSeizoenStat(s, seizoen))),

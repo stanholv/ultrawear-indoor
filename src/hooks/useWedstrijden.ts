@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Wedstrijd, WedstrijdFormData } from '../lib/types';
 import { seizoenVanDatum, seizoenVanWedstrijd } from '../lib/seizoen';
 import { useSeizoen } from './useSeizoen';
+import { useVisibilityRefresh } from './useVisibilityRefresh';
 
 interface UseWedstrijdenOptions {
   /** Toon alle seizoenen i.p.v. alleen het geselecteerde (bv. admin-bewerken). */
@@ -21,10 +22,11 @@ export const useWedstrijden = (options: UseWedstrijdenOptions = {}) => {
     [alleWedstrijden, alleSeizoenen, seizoen],
   );
 
-  // Fetch functie die we kunnen herbruiken
-  const fetchWedstrijden = async () => {
+  // Fetch functie die we kunnen herbruiken. `silent` laat de laadspinner weg
+  // (voor een achtergrondvernieuwing wanneer de app weer actief wordt).
+  const fetchWedstrijden = async ({ silent = false }: { silent?: boolean } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const { data, error } = await supabase
         .from('wedstrijden')
         .select('*')
@@ -35,7 +37,7 @@ export const useWedstrijden = (options: UseWedstrijdenOptions = {}) => {
     } catch (error: any) {
       console.error('Error fetching wedstrijden:', error.message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -43,6 +45,10 @@ export const useWedstrijden = (options: UseWedstrijdenOptions = {}) => {
   useEffect(() => {
     fetchWedstrijden();
   }, []);
+
+  // Opnieuw ophalen wanneer de app weer actief wordt (geïnstalleerde PWA) —
+  // stil, zodat de reeds getoonde lijst niet door een laadspinner vervangen wordt.
+  useVisibilityRefresh(() => fetchWedstrijden({ silent: true }));
 
   // Create wedstrijd
   const createWedstrijd = async (formData: WedstrijdFormData) => {

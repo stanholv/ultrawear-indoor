@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { SPELERS } from '../lib/types';
+import { useVisibilityRefresh } from './useVisibilityRefresh';
 
 // ================================================
 // SPELERS (ROSTER) HOOK
@@ -28,9 +29,9 @@ export const useSpelers = () => {
   const [loading, setLoading] = useState(true);
   const [tabelAanwezig, setTabelAanwezig] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const { data, error } = await supabase
         .from('spelers')
         .select('*')
@@ -50,11 +51,13 @@ export const useSpelers = () => {
       setSpelers(fallbackSpelers());
       setTabelAanwezig(false);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useVisibilityRefresh(() => load({ silent: true }));
+  useVisibilityRefresh(load);
 
   const addSpeler = useCallback(async (naam: string) => {
     const schoon = naam.trim();
